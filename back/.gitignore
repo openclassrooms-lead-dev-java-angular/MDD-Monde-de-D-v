@@ -32,5 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
-
+### Environement ###
 .env
+
+### Keys ###
+src/main/resources/keys/*
