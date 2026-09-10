@@ -5,15 +5,15 @@ CREATE DATABASE IF NOT EXISTS mdd
 
 CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(255) NOT NULL,
-    username VARCHAR(100) NOT NULL,
+    email VARCHAR(50) NOT NULL,
+    username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    firstname VARCHAR(100) NOT NULL,
-    lastname VARCHAR(100) NOT NULL,
+    firstname VARCHAR(50) NOT NULL,
+    lastname VARCHAR(50) NOT NULL,
     role VARCHAR(10) NOT NULL,
     last_login_at TIMESTAMP DEFAULT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 
     CONSTRAINT uk_user_email
         UNIQUE (email),
@@ -30,9 +30,8 @@ CREATE TABLE articles (
     content TEXT,
     media VARCHAR(255),
     status VARCHAR(15) NOT NULL ,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 
     CONSTRAINT uk_article_slug
         UNIQUE (slug)
@@ -43,9 +42,8 @@ CREATE TABLE topics (
     name VARCHAR(50) NOT NULL,
     slug VARCHAR(90) NOT NULL,
     description VARCHAR(255),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 
     CONSTRAINT uk_topic_slug
         UNIQUE (slug)
@@ -54,7 +52,7 @@ CREATE TABLE topics (
 CREATE TABLE subscriptions (
     user_id BIGINT NOT NULL,
     topic_id BIGINT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL,
 
     CONSTRAINT pk_subscription
         PRIMARY KEY (user_id, topic_id)
@@ -65,7 +63,7 @@ CREATE TABLE comments (
     article_id BIGINT NOT NULL,
     author_id BIGINT NOT NULL,
     content VARCHAR(255),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL
 );
 
 ALTER TABLE articles
