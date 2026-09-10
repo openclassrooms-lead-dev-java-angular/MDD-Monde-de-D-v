@@ -1,0 +1,19 @@
+# Application and Spring configuration for development
+
+spring:
+  mail:
+    properties.mail.smtp:
+      auth: false
+      starttls:
+        enable: false
+
+app:
+  environment: DEV
+
+logging:
+  level:
+    root: INFO
+    com.openclassrooms.mddapi: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
