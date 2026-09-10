@@ -178,9 +178,10 @@
 
                 <configuration>
                     <excludes>
-                        <exclude>com/openclassrooms/mddapi/dto/**</exclude>
-                        <exclude>com/openclassrooms/mddapi/models/**</exclude>
-                        <exclude>com/openclassrooms/mddapi/repository/**</exclude>
+                        <exclude>com/openclassrooms/mddapi/**/dto/**</exclude>
+                        <exclude>com/openclassrooms/mddapi/**/entity/**</exclude>
+                        <exclude>com/openclassrooms/mddapi/**/enums/**</exclude>
+                        <!-- <exclude>com/openclassrooms/mddapi/**/repository/**</exclude> -->
                     </excludes>
                 </configuration>
 
