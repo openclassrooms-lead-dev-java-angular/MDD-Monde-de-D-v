@@ -1,6 +1,6 @@
 package com.openclassrooms.mddapi.cli;
 
-
+import com.openclassrooms.mddapi.MddApiApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import picocli.CommandLine.Command;
@@ -8,26 +8,24 @@ import picocli.CommandLine;
 
 @Command(
         name = "mdd",
-        description = "MDD application CLI",
-        subcommands = {
-                SeedCommand.class
-        }
+        description = "MDD application CLI"
 )
 public class MddCli implements Runnable {
 
     public static void main(String[] args) {
-
-        var context = new SpringApplicationBuilder(
-                com.openclassrooms.mddapi.MddApiApplication.class
-        )
+        var context = new SpringApplicationBuilder(MddApiApplication.class)
                 .web(WebApplicationType.NONE)
                 .run(args);
 
-        int exitCode = new CommandLine(new MddCli())
-                .execute(args);
+        CommandLine commandLine = new CommandLine(new MddCli());
+
+        commandLine.addSubcommand(
+                context.getBean(SeedCommand.class)
+        );
+
+        int exitCode = commandLine.execute(args);
 
         context.close();
-
         System.exit(exitCode);
     }
 

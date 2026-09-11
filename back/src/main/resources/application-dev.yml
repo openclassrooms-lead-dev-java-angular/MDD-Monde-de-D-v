@@ -17,6 +17,7 @@ logging:
     root: INFO
     com.openclassrooms.mddapi: DEBUG
     com.openclassrooms.mddapi.seeder: INFO
+    com.openclassrooms.mddapi.cli: INFO
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE

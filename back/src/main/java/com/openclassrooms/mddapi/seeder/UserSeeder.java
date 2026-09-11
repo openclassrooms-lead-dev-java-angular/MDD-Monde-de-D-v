@@ -16,8 +16,13 @@ public class UserSeeder {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public void seed() {
+    public void seed(Boolean clear) {
         log.info("Seeding Users ");
+
+        if(clear) {
+            log.info("Clearing Users ");
+            userRepository.deleteAll();
+        }
 
         User user1 = generateUser("John", "Doe", true);
         User user2 = generateUser("Jane", "Doe", false);
