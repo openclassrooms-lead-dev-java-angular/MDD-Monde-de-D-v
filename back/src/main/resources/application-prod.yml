@@ -8,6 +8,8 @@ spring:
         enable: true
 
 app:
+  seed:
+    enabled: false
   environment: PROD
 
 logging:

@@ -8,12 +8,15 @@ spring:
         enable: false
 
 app:
+  seed:
+    enabled: true
   environment: DEV
 
 logging:
   level:
     root: INFO
     com.openclassrooms.mddapi: DEBUG
+    com.openclassrooms.mddapi.seeder: INFO
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
