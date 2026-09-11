@@ -28,6 +28,18 @@ public class SeedCommand implements ApplicationRunner {
 
         log.info("Seed command start");
 
+        if (args.containsOption("seed-users")) {
+            userSeeder.seed();
+        }
+
+        if (args.containsOption("seed-all")) {
+            seedAll();
+        }
+
         log.info("Seed command finished");
+    }
+
+    private void seedAll() {
+        userSeeder.seed();
     }
 }
