@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Setter
 @Accessors(chain = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class User extends BaseEntity {

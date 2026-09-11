@@ -1,6 +1,7 @@
 package com.openclassrooms.mddapi.common.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -12,7 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class BaseEntity {
+@MappedSuperclass
+public abstract class BaseEntity {
 
     @CreatedDate
     @Column(
