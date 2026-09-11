@@ -4,7 +4,7 @@ import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import com.openclassrooms.mddapi.common.exception.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,16 +27,10 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponseDto getById(final Long id) throws NotFoundException {
-        User user = userRepository
+        return  userRepository
                 .findById(id)
+                .map(userMapper::toDto)
                 .orElseThrow(NotFoundException::new);
-        log.info("createdAt = {}", user.getCreatedAt());
-
-        return userMapper.toDto(user);
-//        return  userRepository
-//                .findById(id)
-//                .map(userMapper::toDto)
-//                .orElseThrow(NotFoundException::new);
     }
 
     @Transactional

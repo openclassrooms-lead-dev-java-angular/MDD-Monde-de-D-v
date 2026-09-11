@@ -23,10 +23,6 @@ public record UserResponseDto(
         @Size(max = 20)
         String username,
 
-        @JsonIgnore
-        @Size(max = 120)
-        String password,
-
         @NotBlank
         @Size(max = 50)
         String firstName,
