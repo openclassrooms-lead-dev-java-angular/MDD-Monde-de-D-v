@@ -48,18 +48,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         JwtResponseDto error = new JwtResponseDto(
                 HttpStatus.UNAUTHORIZED,
-                "Forbidden",
-                "You do not have permission to access this resource"
+                "Unauthorized",
+                "Authentication required"
         );
 
-        response.getWriter().write(objectMapper.writeValueAsString(error));
-
-        response.getWriter().write("""
-            {
-                "status": 401,
-                "error": "Unauthorized",
-                "message": "Authentication required"
-            }
-            """);
+        response.getWriter()
+                .write(objectMapper.writeValueAsString(error));
     }
 }
