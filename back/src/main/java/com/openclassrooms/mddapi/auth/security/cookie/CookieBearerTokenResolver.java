@@ -34,6 +34,7 @@ public class CookieBearerTokenResolver implements BearerTokenResolver {
         return Arrays.stream(request.getCookies())
                 .filter(cookie -> COOKIE_NAME.equals(cookie.getName()))
                 .map(Cookie::getValue)
+                .filter(value -> value != null && !value.isBlank())
                 .findFirst()
                 .orElse(null);
     }

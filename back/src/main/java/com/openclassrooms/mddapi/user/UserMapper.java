@@ -1,5 +1,6 @@
 package com.openclassrooms.mddapi.user;
 
+import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import org.mapstruct.Mapper;
@@ -16,4 +17,6 @@ public interface UserMapper {
             UpdateUserDto dto,
             @MappingTarget User entity
     );
+
+    User fromRegisterDto(RegisterRequestDto registerDto);
 }
