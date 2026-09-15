@@ -35,7 +35,7 @@ public class UserSeeder {
 
         User user = new User();
         user.setUsername(firstName + "_" + lastName);
-        user.setPassword(passwordEncoder.encode("password1234"));
+        user.setPassword(passwordEncoder.encode("Password/1234"));
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(user.getFirstName() + "@email.com");

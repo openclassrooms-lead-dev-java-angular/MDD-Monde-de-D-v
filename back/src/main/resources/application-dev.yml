@@ -8,8 +8,9 @@ spring:
         enable: false
 
 app:
-  seed:
-    enabled: true
+  jwt:
+    cookie:
+      secure: false
   environment: DEV
 
 logging:

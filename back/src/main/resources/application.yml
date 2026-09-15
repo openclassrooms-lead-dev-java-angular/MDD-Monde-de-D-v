@@ -30,6 +30,10 @@ app:
   jwt:
     private-key-path: ${JWT_PRIVATE_KEY_PATH}
     public-key-path: ${JWT_PUBLIC_KEY_PATH}
+    expiration:
+      access-token: 15 # MIN
+      refresh-token: 30 # DAYS
+
 
   ## MINIO
   minio:
