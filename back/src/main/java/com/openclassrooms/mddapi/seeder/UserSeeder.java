@@ -3,32 +3,33 @@ package com.openclassrooms.mddapi.seeder;
 import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.user.User;
 import com.openclassrooms.mddapi.user.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-@Log4j2
-@RequiredArgsConstructor
-@Component
-public class UserSeeder {
+import java.util.List;
 
-    private final UserRepository userRepository;
+@Log4j2
+@Component
+public class UserSeeder extends AbstractSeeder<User> {
+
     private final PasswordEncoder passwordEncoder;
 
-    public void seed(Boolean clear) {
+    public UserSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        super(userRepository);
+        this.passwordEncoder = passwordEncoder;
+        log.info("UserSeeder - userRepository: {}", userRepository);
+    }
+
+
+    public List<User> getEntities() {
         log.info("Seeding Users ");
 
-        if(clear) {
-            log.info("Clearing Users ");
-            userRepository.deleteAll();
-        }
-
-        User user1 = generateUser("John", "Doe", true);
-        User user2 = generateUser("Jane", "Doe", false);
-
-        userRepository.save(user1);
-        userRepository.save(user2);
+        return List.of(
+                generateUser("John", "Doe", true),
+                generateUser("Jane", "Doe", true),
+                generateUser("John", "Smith", true)
+        );
     }
 
     private User generateUser(String firstName, String lastName, Boolean isAdmin) {
@@ -38,7 +39,12 @@ public class UserSeeder {
         user.setPassword(passwordEncoder.encode("password1234"));
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        user.setEmail(user.getFirstName() + "@email.com");
+        user.setEmail(
+                user.getFirstName().toLowerCase()
+                + "-" +
+                user.getLastName().toLowerCase()
+                + "@email.com"
+        );
         user.setRole(isAdmin ? Role.ADMIN : Role.USER);
 
         return user;
