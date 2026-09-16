@@ -1,5 +1,6 @@
 package com.openclassrooms.mddapi.cli;
 
+import com.openclassrooms.mddapi.seeder.TopicSeeder;
 import com.openclassrooms.mddapi.seeder.UserSeeder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -16,43 +17,44 @@ import picocli.CommandLine.Option;
 @RequiredArgsConstructor
 public class SeedCommand implements Runnable {
 
-    @Option(
-            names = "--clear",
-            description = "Clear the database before seeding"
-    )
-    private boolean clear;
-
-    @Option(
-            names = "--users",
-            description = "Seed users"
-    )
+    @Option(names = "--users", description = "Seed users")
     private boolean users;
 
-    @Option(
-            names = "--all",
-            description = "Seed all"
-    )
+    @Option(names = "--topics", description = "Seed topics")
+    private boolean topics;
+
+    @Option(names = "--all", description = "Seed all")
     private boolean all;
 
     private final UserSeeder userSeeder;
+    private final TopicSeeder topicSeeder;
 
     @Override
     public void run() {
-
         log.info("Seed command start");
 
-        if (users) {
-            userSeeder.seed(clear);
-        }
-
         if (all) {
-            seedAll(clear);
+            seedAll();
+        } else {
+            if (users) {
+                userSeeder.clear();
+                userSeeder.seed();
+            }
+
+            if (topics) {
+                topicSeeder.clear();
+                topicSeeder.seed();
+            }
         }
 
         log.info("Seed command finished");
     }
 
-    private void seedAll(Boolean clear) {
-        userSeeder.seed(clear);
+    private void seedAll() {
+        userSeeder.clear();
+        topicSeeder.clear();
+
+        userSeeder.seed();
+        topicSeeder.seed();
     }
 }

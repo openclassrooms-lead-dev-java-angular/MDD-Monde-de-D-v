@@ -19,6 +19,8 @@ fi
 
 SPRING_ARGS="$*"
 
+export SPRING_PROFILES_ACTIVE=dev
+
 mvn \
     "-Dspring-boot.run.main-class=com.openclassrooms.mddapi.cli.MddCli" \
     "-Dspring-boot.run.arguments=$SPRING_ARGS" \
