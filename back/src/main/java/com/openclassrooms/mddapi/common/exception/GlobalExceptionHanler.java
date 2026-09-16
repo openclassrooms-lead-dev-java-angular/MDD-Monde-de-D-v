@@ -1,6 +1,8 @@
 package com.openclassrooms.mddapi.common.exception;
 
 import com.openclassrooms.mddapi.common.dto.ErrorResponseDto;
+import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
+import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,12 +15,38 @@ import java.time.Instant;
 @Slf4j
 public class GlobalExceptionHanler {
 
-    // Not found exception
+    // Not found exceptions
+
     @ExceptionHandler(value = NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponseDto handleNotFoundException(NotFoundException e) {
-        log.warn(e.getMessage());
+        log.warn(e.getMessage(), e);
         return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(value = TopicNotFoundException.class)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    public ErrorResponseDto handleTopicNotFoundException(TopicNotFoundException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    // Conflict exceptions
+
+    @ExceptionHandler(value = TopicSlugAlreadyExists.class)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    public ErrorResponseDto handleTopicSlugAlreadyExists(TopicSlugAlreadyExists e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    // Internal server error exceptions
+
+    @ExceptionHandler(value = Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponseDto handleException(Exception e) {
+        log.error(e.getMessage(), e);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 
     /**
@@ -35,5 +63,7 @@ public class GlobalExceptionHanler {
                 Instant.now().toString()
         );
     }
+
+
 
 }
