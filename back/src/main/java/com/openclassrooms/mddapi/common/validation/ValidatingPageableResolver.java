@@ -1,15 +1,12 @@
 package com.openclassrooms.mddapi.common.validation;
 
 import com.openclassrooms.mddapi.common.exception.InvalidPaginationException;
-import com.openclassrooms.mddapi.common.pagination.AllowedSortFields;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
-
-import java.util.Set;
 
 public class ValidatingPageableResolver extends PageableHandlerMethodArgumentResolver {
 
@@ -91,25 +88,12 @@ public class ValidatingPageableResolver extends PageableHandlerMethodArgumentRes
             return;
         }
 
-        AllowedSortFields annotation =
-                methodParameter.getParameterAnnotation(
-                        AllowedSortFields.class
-                );
-
-        if (annotation == null) {
-            return;
-        }
-
-        Set<String> allowedFields = Set.of(annotation.value());
-
         for (String sort : sorts) {
             String[] parts = sort.split(",");
 
-            String field = parts[0];
-
-            if (!allowedFields.contains(field)) {
+            if (parts.length == 0 || parts[0].isBlank()) {
                 throw new InvalidPaginationException(
-                        "Invalid sort field: " + field
+                        "Invalid sort parameter"
                 );
             }
 

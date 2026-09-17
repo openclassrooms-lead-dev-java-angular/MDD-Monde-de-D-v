@@ -1,7 +1,6 @@
 package com.openclassrooms.mddapi.topic;
 
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
-import com.openclassrooms.mddapi.common.pagination.AllowedSortFields;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import jakarta.validation.Valid;
@@ -35,15 +34,7 @@ public class TopicController {
      * @return a paginated list of topics
      */
     @GetMapping("")
-
     public Page<TopicResponseDto> findAll(
-            @AllowedSortFields({
-                    "id",
-                    "name",
-                    "slug",
-                    "createdAt",
-                    "updatedAt"
-            })
             Pageable pageable
     ) {
         return topicService.findAll(pageable);
