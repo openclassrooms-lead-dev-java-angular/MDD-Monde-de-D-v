@@ -46,7 +46,7 @@ public class TopicControllerTest {
 
     @Test
     void shouldReturnPaginatedTopics() throws Exception {
-        Page<TopicResponseDto> page = TopicTestFactory.createTopicsRequestDto();
+        Page<TopicResponseDto> page = TopicTestFactory.createPageableTopicsResponseDto();
         Pageable pageable = PageRequest.of(0, 10);
 
         when(topicService.findAll(any(Pageable.class)))
@@ -160,7 +160,6 @@ public class TopicControllerTest {
                 .andExpect(jsonPath("$.description").value(topicResponseDto.description()));
 
         verify(topicService).create(topicRequestDto);
-        ;
     }
 
     @Test
