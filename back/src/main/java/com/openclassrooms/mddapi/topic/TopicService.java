@@ -126,8 +126,7 @@ public class TopicService {
      */
     @Transactional(readOnly = true)
     public AvailableSlugDto availableSlug(String slug) {
-
-        boolean  exists = !topicRepository.existsBySlug(slug);
+        boolean  exists = topicRepository.existsBySlug(slug);
 
         return new AvailableSlugDto(!exists);
     }
