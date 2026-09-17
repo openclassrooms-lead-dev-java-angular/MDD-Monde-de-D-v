@@ -1,8 +1,10 @@
 package com.openclassrooms.mddapi.topic;
 
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
+import com.openclassrooms.mddapi.common.pagination.AllowedSortFields;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -33,7 +35,17 @@ public class TopicController {
      * @return a paginated list of topics
      */
     @GetMapping("")
-    public Page<TopicResponseDto> findAll(Pageable pageable) {
+
+    public Page<TopicResponseDto> findAll(
+            @AllowedSortFields({
+                    "id",
+                    "name",
+                    "slug",
+                    "createdAt",
+                    "updatedAt"
+            })
+            Pageable pageable
+    ) {
         return topicService.findAll(pageable);
     }
 
@@ -58,7 +70,7 @@ public class TopicController {
      */
     @PostMapping("")
     public TopicResponseDto save(
-            @RequestBody TopicRequestDto topicDto
+            @Valid @RequestBody TopicRequestDto topicDto
     ) {
         return topicService.create(topicDto);
     }
@@ -73,7 +85,7 @@ public class TopicController {
     @PutMapping("/{slug}")
     public TopicResponseDto update(
             @PathVariable String slug,
-            @RequestBody TopicRequestDto topicDto
+            @Valid @RequestBody TopicRequestDto topicDto
     ) {
         return topicService.update(slug, topicDto);
     }
