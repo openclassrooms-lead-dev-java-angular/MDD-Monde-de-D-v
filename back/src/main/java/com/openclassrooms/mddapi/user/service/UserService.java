@@ -1,8 +1,8 @@
-package com.openclassrooms.mddapi.user;
+package com.openclassrooms.mddapi.user.service;
 
-import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
-import com.openclassrooms.mddapi.common.enums.Role;
-import com.openclassrooms.mddapi.common.exception.*;
+import com.openclassrooms.mddapi.user.entity.User;
+import com.openclassrooms.mddapi.user.mapper.UserMapper;
+import com.openclassrooms.mddapi.user.repository.UserRepository;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+
 
     @Transactional
     public User createUser(final User user) {
@@ -40,6 +41,7 @@ public class UserService {
 
     @Transactional
     public UserResponseDto updateUser(final Long id, final UpdateUserDto userDto) {
+
 
         User user = userRepository.getReferenceById(id);
 

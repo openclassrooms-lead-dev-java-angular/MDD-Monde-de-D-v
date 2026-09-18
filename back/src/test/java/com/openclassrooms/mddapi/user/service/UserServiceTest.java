@@ -1,7 +1,10 @@
-package com.openclassrooms.mddapi.user;
+package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.common.exception.NotFoundException;
 import com.openclassrooms.mddapi.factory.UserTestFactory;
+import com.openclassrooms.mddapi.user.entity.User;
+import com.openclassrooms.mddapi.user.mapper.UserMapper;
+import com.openclassrooms.mddapi.user.repository.UserRepository;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import org.junit.jupiter.api.Test;

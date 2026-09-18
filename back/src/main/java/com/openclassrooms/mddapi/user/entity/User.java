@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.user;
+package com.openclassrooms.mddapi.user.entity;
 
 import com.openclassrooms.mddapi.common.entity.BaseEntity;
 import com.openclassrooms.mddapi.common.enums.Role;

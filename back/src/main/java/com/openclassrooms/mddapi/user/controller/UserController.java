@@ -1,10 +1,10 @@
-package com.openclassrooms.mddapi.user;
+package com.openclassrooms.mddapi.user.controller;
 
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
+import com.openclassrooms.mddapi.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +19,7 @@ public class UserController {
     @GetMapping("/{id}")
     public UserResponseDto findById(
             @PathVariable Long id
-    ) throws NotFoundException {
+    ) {
         return userService.getById(id);
     }
 

@@ -1,7 +1,8 @@
-package com.openclassrooms.mddapi.user;
+package com.openclassrooms.mddapi.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mddapi.factory.UserTestFactory;
+import com.openclassrooms.mddapi.user.service.UserService;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import org.junit.jupiter.api.Test;
