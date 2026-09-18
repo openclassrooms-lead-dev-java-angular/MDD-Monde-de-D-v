@@ -1,13 +1,17 @@
 package com.openclassrooms.mddapi.auth.security.userDetails;
 
-import com.openclassrooms.mddapi.common.exception.UserNotFoundException;
-import com.openclassrooms.mddapi.user.User;
-import com.openclassrooms.mddapi.user.UserRepository;
+import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
+import com.openclassrooms.mddapi.user.entity.User;
+import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
+import com.openclassrooms.mddapi.user.repository.UserRepository;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
@@ -92,5 +96,65 @@ public class UserDetailsServiceImplTest {
 
         verify(userRepository).findById(userId);
         verifyNoInteractions(userDetailsMapper);
+    }
+
+    // getPrincipalUserId
+
+    @Test
+    void shouldReturnPrincipalUserIdWhenUserIsAuthenticated() {
+        Long userId = 42L;
+        UserDetailsImpl userDetails = new UserDetailsImpl();
+        userDetails.setId(userId);
+
+        Authentication authentication = mock(Authentication.class);
+
+        when(authentication.isAuthenticated())
+                .thenReturn(true);
+        when(authentication.getPrincipal())
+                .thenReturn(userDetails);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        Long result = userDetailsService.getPrincipalUserId();
+        assertThat(result).isEqualTo(userId);
+    }
+
+    @Test
+    void shouldThrowUnauthorizedExceptionWhenAuthenticationIsNull() {
+        SecurityContextHolder.clearContext();
+
+        Assertions.assertThatThrownBy(() -> userDetailsService.getPrincipalUserId())
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("User is not authenticated");
+    }
+
+    @Test
+    void shouldThrowUnauthorizedExceptionWhenUserIsNotAuthenticated() {
+        Authentication authentication = mock(Authentication.class);
+
+        when(authentication.isAuthenticated())
+                .thenReturn(false);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        Assertions.assertThatThrownBy(() -> userDetailsService.getPrincipalUserId())
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("User is not authenticated");
+    }
+
+    @Test
+    void shouldThrowUnauthorizedExceptionWhenPrincipalIsInvalid() {
+        Authentication authentication = mock(Authentication.class);
+
+        when(authentication.isAuthenticated())
+                .thenReturn(true);
+        when(authentication.getPrincipal())
+                .thenReturn("invalid-principal");
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        Assertions.assertThatThrownBy(() -> userDetailsService.getPrincipalUserId())
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("Invalid authenticated user");
     }
 }

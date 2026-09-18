@@ -1,6 +1,5 @@
 package com.openclassrooms.mddapi.user.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.openclassrooms.mddapi.common.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

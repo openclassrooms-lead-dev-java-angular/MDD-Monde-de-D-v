@@ -1,11 +1,8 @@
-package com.openclassrooms.mddapi.topic;
+package com.openclassrooms.mddapi.topic.entity;
 
 import com.openclassrooms.mddapi.common.entity.BaseEntity;
-import jakarta.annotation.Resource;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.*;
-import lombok.experimental.Accessors;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity

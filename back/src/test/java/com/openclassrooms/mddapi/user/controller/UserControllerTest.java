@@ -1,7 +1,8 @@
-package com.openclassrooms.mddapi.user;
+package com.openclassrooms.mddapi.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mddapi.factory.UserTestFactory;
+import com.openclassrooms.mddapi.user.service.UserService;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import org.junit.jupiter.api.Test;
@@ -39,10 +40,10 @@ public class UserControllerTest {
     void getUserByIdSouldReturnUserResponseDto() throws Exception {
         UserResponseDto userDto = UserTestFactory.createUserResponseDto();
 
-        when(userService.getById(1L))
+        when(userService.getMe())
                 .thenReturn(userDto);
 
-        mockMvc.perform(get("/api/v1/users/1"))
+        mockMvc.perform(get("/api/v1/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userDto.id()))
                 .andExpect(jsonPath("$.email").value(userDto.email()))
@@ -55,7 +56,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.createdAt").value("2026-06-01T10:00:00"))
                 .andExpect(jsonPath("$.updatedAt").value("2026-07-01T10:00:00"));
 
-        verify(userService).getById(userDto.id());
+        verify(userService).getMe();
     }
 
 
@@ -67,11 +68,11 @@ public class UserControllerTest {
         UserResponseDto userDto =
                 UserTestFactory.createUserResponseDto();
 
-        when(userService.updateUser(1L, updateUserDto))
+        when(userService.updateUser(updateUserDto))
                 .thenReturn(userDto);
 
         mockMvc.perform(
-                        patch("/api/v1/users/1")
+                        patch("/api/v1/users/me")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateUserDto))
                 )
@@ -87,6 +88,6 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.createdAt").value("2026-06-01T10:00:00"))
                 .andExpect(jsonPath("$.updatedAt").value("2026-07-01T10:00:00"));
 
-        verify(userService).updateUser(1L, updateUserDto);
+        verify(userService).updateUser(updateUserDto);
     }
 }

@@ -1,6 +1,7 @@
-package com.openclassrooms.mddapi.topic;
+package com.openclassrooms.mddapi.topic.controller;
 
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
+import com.openclassrooms.mddapi.topic.service.TopicService;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import jakarta.validation.Valid;

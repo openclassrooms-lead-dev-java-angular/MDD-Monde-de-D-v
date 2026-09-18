@@ -1,7 +1,8 @@
-package com.openclassrooms.mddapi.user;
+package com.openclassrooms.mddapi.user.mapper;
 
 import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.factory.UserTestFactory;
+import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import org.junit.jupiter.api.Test;

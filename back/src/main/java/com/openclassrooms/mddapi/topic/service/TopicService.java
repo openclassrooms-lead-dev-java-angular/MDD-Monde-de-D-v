@@ -1,12 +1,15 @@
-package com.openclassrooms.mddapi.topic;
+package com.openclassrooms.mddapi.topic.service;
 
 import com.openclassrooms.mddapi.auth.service.AuthService;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.subscription.SubscriptionService;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
+import com.openclassrooms.mddapi.topic.mapper.TopicMapper;
+import com.openclassrooms.mddapi.topic.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;

@@ -1,6 +1,6 @@
 package com.openclassrooms.mddapi.factory;
 
-import com.openclassrooms.mddapi.topic.Topic;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import org.springframework.data.domain.Page;

@@ -1,7 +1,8 @@
 package com.openclassrooms.mddapi.factory;
 
+import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.common.enums.Role;
-import com.openclassrooms.mddapi.user.User;
+import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 
@@ -16,7 +17,7 @@ public class UserTestFactory {
                 .setUsername("John_Doe")
                 .setFirstName("John")
                 .setLastName("doe")
-                .setPassword("password")
+                .setPassword("Password/1234")
                 .setRole(Role.ADMIN)
                 .setLastLoginAt(LocalDateTime.of(2026, 3, 1, 10, 0))
                 .setCreatedAt(LocalDateTime.of(2026, 1, 1, 10, 0));
@@ -32,7 +33,7 @@ public class UserTestFactory {
                 .setUsername("Jane_Doe")
                 .setFirstName("Jane")
                 .setLastName("Doe")
-                .setPassword("password")
+                .setPassword("Password/1234")
                 .setRole(Role.USER)
                 .setLastLoginAt(LocalDateTime.of(2026, 9, 1, 10, 0))
                 .setCreatedAt(LocalDateTime.of(2026, 6, 1, 10, 0));
@@ -58,6 +59,16 @@ public class UserTestFactory {
     public static UpdateUserDto createUpdateUserDto() {
         return new UpdateUserDto(
                 "jane@email.com",
+                "Jane Doe",
+                "Jane",
+                "Doe"
+        );
+    }
+
+    public static RegisterRequestDto createRegisterRequestDto() {
+        return new RegisterRequestDto(
+                "jane@email.com",
+                "Password/1234",
                 "Jane Doe",
                 "Jane",
                 "Doe"

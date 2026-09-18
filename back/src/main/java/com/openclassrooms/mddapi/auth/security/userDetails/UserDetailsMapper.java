@@ -1,7 +1,8 @@
 package com.openclassrooms.mddapi.auth.security.userDetails;
 
-import com.openclassrooms.mddapi.user.User;
 
+
+import com.openclassrooms.mddapi.user.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

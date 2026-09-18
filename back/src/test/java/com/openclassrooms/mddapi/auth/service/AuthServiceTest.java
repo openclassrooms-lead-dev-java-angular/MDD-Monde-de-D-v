@@ -3,14 +3,16 @@ package com.openclassrooms.mddapi.auth.service;
 import com.openclassrooms.mddapi.auth.dto.LoginRequestDto;
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.dto.UsernameAvailableDto;
+import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.auth.security.cookie.CookieService;
 import com.openclassrooms.mddapi.auth.security.jwt.JwtTokenService;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsImpl;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.common.exception.InvalidTokenException;
-import com.openclassrooms.mddapi.user.UserService;
+import com.openclassrooms.mddapi.auth.exception.InvalidTokenException;
+import com.openclassrooms.mddapi.user.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.Map;
@@ -58,9 +61,13 @@ public class AuthServiceTest {
         authService = new AuthService(authenticationManager, jwtTokenService, userDetailsServiceImpl, userService, cookieService);
     }
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void shouldAuthenticateSuccessfully() {
-        // Given
         LoginRequestDto loginRequest = new LoginRequestDto("john.doe@test.com", "Password1!");
         String accessToken = "access-token";
         String refreshToken = "refresh-token";
@@ -68,7 +75,6 @@ public class AuthServiceTest {
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken).build();
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken).build();
 
-        // When
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal())
@@ -84,7 +90,6 @@ public class AuthServiceTest {
 
         Map<String, ResponseCookie> result = authService.authenticate(loginRequest);
 
-        // Then
         assertThat(result)
                 .containsOnlyKeys("accessTokenCookie", "refreshTokenCookie");
         assertThat(result.get("accessTokenCookie"))
@@ -111,15 +116,12 @@ public class AuthServiceTest {
 
     @Test
     void shouldPropagateAuthenticationException() {
-        // Given
         LoginRequestDto loginRequest = new LoginRequestDto("john.doe@test.com", "WrongPassword1!");
         AuthenticationException exception = new AuthenticationException("Authentication failed") {
         };
 
-        // When
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenThrow(exception);
 
-        // Then
         assertThatThrownBy(() -> authService.authenticate(loginRequest))
                 .isSameAs(exception);
 
@@ -135,7 +137,6 @@ public class AuthServiceTest {
 
     @Test
     void shouldRefreshAccessTokenSuccessfully() throws Exception {
-        // Given
         Long userId = 42L;
         String refreshToken = "refresh-token";
         String accessToken = "new-access-token";
@@ -143,7 +144,6 @@ public class AuthServiceTest {
         Jwt jwt = mockRefreshJwt(userId);
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", accessToken).build();
 
-        // When
         when(request.getCookies())
                 .thenReturn(new Cookie[]{refreshCookie});
         when(jwtTokenService.decodeAndValidate(refreshToken))
@@ -157,7 +157,6 @@ public class AuthServiceTest {
 
         ResponseCookie result = authService.refreshAccessToken(request);
 
-        // Then
         assertThat(result).isSameAs(accessTokenCookie);
         verify(jwtTokenService).decodeAndValidate(refreshToken);
         verify(userDetailsServiceImpl).loadUserByUserId(userId);
@@ -167,11 +166,9 @@ public class AuthServiceTest {
 
     @Test
     void shouldRejectRefreshWhenRefreshCookieIsMissing() {
-        // When
         when(request.getCookies())
                 .thenReturn(null);
 
-        // Then
         assertThatThrownBy(() -> authService.refreshAccessToken(request))
                 .isInstanceOf(InvalidTokenException.class);
         verify(jwtTokenService, never())
@@ -192,12 +189,10 @@ public class AuthServiceTest {
 
     @Test
     void shouldRejectRefreshWhenTokenTypeIsInvalid() {
-        // Given
         String refreshToken = "refresh-token";
         Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
         Jwt jwt = mock(Jwt.class);
 
-        // When
         when(request.getCookies())
                 .thenReturn(new Cookie[]{refreshCookie});
         when(jwtTokenService.decodeAndValidate(refreshToken))
@@ -205,7 +200,6 @@ public class AuthServiceTest {
         when(jwt.getClaims())
                 .thenReturn(Map.of("type", "access"));
 
-        // Then
         assertThatThrownBy(() -> authService.refreshAccessToken(request))
                 .isInstanceOf(InvalidTokenException.class)
                 .hasMessage("Invalid token type");
@@ -222,10 +216,9 @@ public class AuthServiceTest {
 
     @Test
     void shouldRejectRefreshWhenCookiesArrayIsEmpty() {
-        // When
+
         when(request.getCookies()).thenReturn(new Cookie[0]);
 
-        // Then
         assertThatThrownBy(() -> authService.refreshAccessToken(request))
                 .isInstanceOf(InvalidTokenException.class);
         verify(jwtTokenService, never())
@@ -234,25 +227,20 @@ public class AuthServiceTest {
 
     @Test
     void shouldRegisterSuccessfully() {
-        // Given
         RegisterRequestDto registerRequest = new RegisterRequestDto("john.doe@test.com", "Password1!", "john", "John", "Doe");
         authService.register(registerRequest);
 
-        // Then
         verify(userService).register(registerRequest);
     }
 
     @Test
     void shouldPropagateExceptionWhenRegistrationFails() {
-        // Given
         RegisterRequestDto registerRequest = new RegisterRequestDto("john.doe@test.com", "Password1!", "john", "John", "Doe");
         RuntimeException exception = new RuntimeException("Registration failed");
 
-        // When
         doThrow(exception)
                 .when(userService).register(registerRequest);
 
-        // Then
         assertThatThrownBy(() -> authService.register(registerRequest))
                 .isSameAs(exception);
         verify(userService)
@@ -261,15 +249,12 @@ public class AuthServiceTest {
 
     @Test
     void shouldReturnUsernameAvailability() {
-        // Given
         String username = "john";
 
-        // When
         when(userService.usernameAvailable(username))
                 .thenReturn(true);
         UsernameAvailableDto result = authService.usernameAvailable(username);
 
-        // Then
         assertThat(result)
                 .isNotNull();
         assertThat(result.exist())
@@ -280,15 +265,12 @@ public class AuthServiceTest {
 
     @Test
     void shouldReturnUsernameUnavailable() {
-        // Given
         String username = "john";
 
-        // When
         when(userService.usernameAvailable(username))
                 .thenReturn(false);
         UsernameAvailableDto result = authService.usernameAvailable(username);
 
-        // Then
         assertThat(result)
                 .isNotNull();
         assertThat(result.exist())
@@ -299,7 +281,6 @@ public class AuthServiceTest {
 
     @Test
     void shouldReturnLogoutCookies() {
-        // Given
         ResponseCookie accessCookie = ResponseCookie
                 .from("accessToken", "")
                 .maxAge(0)
@@ -310,12 +291,10 @@ public class AuthServiceTest {
                 .build();
         Map<String, ResponseCookie> cookies = Map.of("accessCookie", accessCookie, "refreshCookie", refreshCookie);
 
-        // When
         when(cookieService.generateLogoutCookies())
                 .thenReturn(cookies);
         Map<String, ResponseCookie> result = authService.logout();
 
-        // Then
         assertThat(result)
                 .isSameAs(cookies);
         assertThat(result)
@@ -347,5 +326,4 @@ public class AuthServiceTest {
 
         return jwt;
     }
-
 }
