@@ -1,11 +1,14 @@
-package com.openclassrooms.mddapi.topic;
+package com.openclassrooms.mddapi.topic.service;
 
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.factory.TopicTestFactory;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
+import com.openclassrooms.mddapi.topic.mapper.TopicMapper;
+import com.openclassrooms.mddapi.topic.repository.TopicRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

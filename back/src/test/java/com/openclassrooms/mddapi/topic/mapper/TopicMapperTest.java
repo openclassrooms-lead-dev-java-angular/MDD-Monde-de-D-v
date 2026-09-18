@@ -1,8 +1,9 @@
-package com.openclassrooms.mddapi.topic;
+package com.openclassrooms.mddapi.topic.mapper;
 
 import com.openclassrooms.mddapi.factory.TopicTestFactory;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 

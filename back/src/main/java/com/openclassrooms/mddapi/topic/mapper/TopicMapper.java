@@ -1,7 +1,8 @@
-package com.openclassrooms.mddapi.topic;
+package com.openclassrooms.mddapi.topic.mapper;
 
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 import org.springframework.stereotype.Component;
