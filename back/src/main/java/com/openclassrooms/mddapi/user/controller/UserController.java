@@ -16,19 +16,18 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/{id}")
+    @GetMapping("/me")
     public UserResponseDto findById(
             @PathVariable Long id
     ) {
-        return userService.getById(id);
+        return userService.getById();
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/me")
     public UserResponseDto patch(
-            @PathVariable Long id,
             @Valid @RequestBody UpdateUserDto userDto
     ) {
-        return userService.updateUser(id, userDto);
+        return userService.updateUser(userDto);
     }
 
 }
