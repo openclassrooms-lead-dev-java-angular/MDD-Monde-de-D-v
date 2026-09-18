@@ -1,6 +1,6 @@
 package com.openclassrooms.mddapi.subscription;
 
-import com.openclassrooms.mddapi.topic.Topic;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
