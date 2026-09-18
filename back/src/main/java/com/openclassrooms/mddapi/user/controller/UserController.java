@@ -16,13 +16,22 @@ public class UserController {
 
     private final UserService userService;
 
+    /**
+     * Retrieves the currently authenticated user's information.
+     *
+     * @return the authenticated user's information
+     */
     @GetMapping("/me")
-    public UserResponseDto findById(
-            @PathVariable Long id
-    ) {
-        return userService.getById();
+    public UserResponseDto getMe() {
+        return userService.getMe();
     }
 
+    /**
+     * Updates the currently authenticated user's information.
+     *
+     * @param userDto the data to update
+     * @return the updated user's information
+     */
     @PatchMapping("/me")
     public UserResponseDto patch(
             @Valid @RequestBody UpdateUserDto userDto

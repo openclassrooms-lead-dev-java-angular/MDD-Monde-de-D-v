@@ -34,15 +34,13 @@ class UserServiceTest {
 
     @Test
     void createUserShouldSaveAndReturnUser() {
-        // Given
         User user = UserTestFactory.createUser();
 
-        when(userRepository.save(user)).thenReturn(user);
+        when(userRepository.save(user))
+                .thenReturn(user);
 
-        // When
         User result = userService.createUser(user);
 
-        // Then
         assertThat(result).isSameAs(user);
 
         verify(userRepository).save(user);
@@ -52,7 +50,6 @@ class UserServiceTest {
 
     @Test
     void getByIdShouldReturnUserResponseDto() throws ChangeSetPersister.NotFoundException {
-        // Given
         Long id = 1L;
 
         User user = UserTestFactory.createUser();
@@ -64,10 +61,8 @@ class UserServiceTest {
         when(userMapper.toDto(user))
                 .thenReturn(expectedDto);
 
-        // When
-        UserResponseDto result = userService.getById(id);
+        UserResponseDto result = userService.getMe();
 
-        // Then
         assertThat(result).isSameAs(expectedDto);
 
         verify(userRepository).findById(id);
@@ -76,14 +71,12 @@ class UserServiceTest {
 
     @Test
     void getByIdShouldThrowNotFoundExceptionWhenUserDoesNotExist() {
-        // Given
         Long id = 999L;
 
         when(userRepository.findById(id))
                 .thenReturn(Optional.empty());
 
-        // When / Then
-        assertThatThrownBy(() -> userService.getById(id))
+        assertThatThrownBy(() -> userService.getMe())
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(userRepository).findById(id);
@@ -92,7 +85,6 @@ class UserServiceTest {
 
     @Test
     void updateUserShouldUpdateAndReturnUserResponseDto() {
-        // Given
         Long id = 1L;
 
         User user = UserTestFactory.createUser();
@@ -104,18 +96,14 @@ class UserServiceTest {
 
         when(userRepository.getReferenceById(id))
                 .thenReturn(user);
-
         when(userRepository.save(user))
                 .thenReturn(user);
-
         when(userMapper.toDto(user))
                 .thenReturn(expectedDto);
 
-        // When
         UserResponseDto result =
-                userService.updateUser(id, updateUserDto);
+                userService.updateUser(updateUserDto);
 
-        // Then
         assertThat(result).isSameAs(expectedDto);
 
         verify(userRepository).getReferenceById(id);

@@ -57,7 +57,7 @@ public class UserService {
      * @throws UserNotFoundException if no user exists with the given identifier
      */
     @Transactional(readOnly = true)
-    public UserResponseDto getById() {
+    public UserResponseDto getMe() {
         Long userId = authService.getPrincipalUserId();
 
         return userRepository
