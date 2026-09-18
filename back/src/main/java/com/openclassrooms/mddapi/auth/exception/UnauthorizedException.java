@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.auth.security.exception;
+package com.openclassrooms.mddapi.auth.exception;
 
 public class UnauthorizedException extends RuntimeException {
     public UnauthorizedException(String message) {

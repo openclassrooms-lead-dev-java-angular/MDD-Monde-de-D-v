@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.common.exception;
+package com.openclassrooms.mddapi.auth.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

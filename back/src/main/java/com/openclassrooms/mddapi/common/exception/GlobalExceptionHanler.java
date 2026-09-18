@@ -1,5 +1,7 @@
 package com.openclassrooms.mddapi.common.exception;
 
+import com.openclassrooms.mddapi.auth.exception.InvalidTokenException;
+import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.common.dto.ErrorResponseDto;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
@@ -68,6 +70,22 @@ public class GlobalExceptionHanler {
     @ExceptionHandler(value = TopicSlugAlreadyExists.class)
     @ResponseStatus(value = HttpStatus.CONFLICT)
     public ErrorResponseDto handleTopicSlugAlreadyExists(TopicSlugAlreadyExists e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    // unauthorized
+
+    @ExceptionHandler(value = UnauthorizedException.class)
+    @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
+    public ErrorResponseDto handleUnauthorizedException(UnauthorizedException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    @ExceptionHandler(value = InvalidTokenException.class)
+    @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
+    public ErrorResponseDto handleInvalidTokenException(InvalidTokenException e) {
         log.warn(e.getMessage(), e);
         return buildResponse(HttpStatus.CONFLICT, e.getMessage());
     }

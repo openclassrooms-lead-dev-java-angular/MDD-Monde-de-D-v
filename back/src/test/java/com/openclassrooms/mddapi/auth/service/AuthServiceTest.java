@@ -7,7 +7,7 @@ import com.openclassrooms.mddapi.auth.security.cookie.CookieService;
 import com.openclassrooms.mddapi.auth.security.jwt.JwtTokenService;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsImpl;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.common.exception.InvalidTokenException;
+import com.openclassrooms.mddapi.auth.exception.InvalidTokenException;
 import com.openclassrooms.mddapi.user.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
