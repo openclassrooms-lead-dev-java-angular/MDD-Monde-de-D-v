@@ -8,6 +8,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller responsible for user-related operations.
+ *
+ * <p>Provides endpoints for retrieving and updating information
+ * about the currently authenticated user.</p>
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
@@ -16,19 +22,27 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/{id}")
-    public UserResponseDto findById(
-            @PathVariable Long id
-    ) {
-        return userService.getById(id);
+    /**
+     * Retrieves the currently authenticated user's information.
+     *
+     * @return the authenticated user's information
+     */
+    @GetMapping("/me")
+    public UserResponseDto getMe() {
+        return userService.getMe();
     }
 
-    @PatchMapping("/{id}")
+    /**
+     * Updates the currently authenticated user's information.
+     *
+     * @param userDto the data to update
+     * @return the updated user's information
+     */
+    @PatchMapping("/me")
     public UserResponseDto patch(
-            @PathVariable Long id,
             @Valid @RequestBody UpdateUserDto userDto
     ) {
-        return userService.updateUser(id, userDto);
+        return userService.updateUser(userDto);
     }
 
 }

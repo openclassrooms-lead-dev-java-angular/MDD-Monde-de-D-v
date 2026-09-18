@@ -1,6 +1,8 @@
 package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
+import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
+import com.openclassrooms.mddapi.auth.service.AuthService;
 import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.entity.User;
@@ -32,6 +34,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
 
     /**
      * Persists a new user.
@@ -51,14 +54,15 @@ public class UserService {
     /**
      * Retrieves a user by its identifier and maps it to a response DTO.
      *
-     * @param id the user identifier
      * @return the user response DTO
      * @throws UserNotFoundException if no user exists with the given identifier
      */
     @Transactional(readOnly = true)
-    public UserResponseDto getById(final Long id) {
+    public UserResponseDto getMe() {
+        Long userId = userDetailsServiceImpl.getPrincipalUserId();
+
         return userRepository
-                .findById(id)
+                .findById(userId)
                 .map(userMapper::toDto)
                 .orElseThrow(UserNotFoundException::new);
     }
@@ -69,18 +73,15 @@ public class UserService {
      * <p>The current implementation is intended to restrict updates
      * to the authenticated user.</p>
      *
-     * @param id      the identifier of the user to update
      * @param userDto the user data to apply
      * @return the updated user response DTO
      * @throws UserNotFoundException if no user exists with the given identifier
      */
     @Transactional
-    public UserResponseDto updateUser(final Long id, final UpdateUserDto userDto) {
+    public UserResponseDto updateUser(final UpdateUserDto userDto) {
+        Long userId = userDetailsServiceImpl.getPrincipalUserId();
 
-
-        User user = userRepository.getReferenceById(id);
-
-        // todo check user == Authentication.getPrincipal
+        User user = userRepository.getReferenceById(userId);
 
         userMapper.updateEntity(userDto, user);
 
