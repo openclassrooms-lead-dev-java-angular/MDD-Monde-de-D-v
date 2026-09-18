@@ -1,7 +1,7 @@
 package com.openclassrooms.mddapi.seeder;
 
-import com.openclassrooms.mddapi.topic.Topic;
-import com.openclassrooms.mddapi.topic.TopicRepository;
+import com.openclassrooms.mddapi.topic.entity.Topic;
+import com.openclassrooms.mddapi.topic.repository.TopicRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
