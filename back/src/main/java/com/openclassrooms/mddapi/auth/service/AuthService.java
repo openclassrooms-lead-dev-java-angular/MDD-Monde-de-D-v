@@ -4,11 +4,13 @@ import com.openclassrooms.mddapi.auth.security.cookie.CookieService;
 import com.openclassrooms.mddapi.auth.dto.LoginRequestDto;
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.dto.UsernameAvailableDto;
+import com.openclassrooms.mddapi.auth.security.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.auth.security.jwt.JwtTokenService;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsImpl;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.common.exception.InvalidTokenException;
 import com.openclassrooms.mddapi.user.UserService;
+import com.sun.security.auth.UserPrincipal;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +18,12 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -109,5 +113,20 @@ public class AuthService {
     @Transactional(readOnly = true)
     public Map<String, ResponseCookie> logout() {
         return cookieService.generateLogoutCookies();
+    }
+
+    @Transactional(readOnly = true)
+    public Long getPrincipalUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UnauthorizedException("User is not authenticated");
+        }
+
+        if (!(authentication.getPrincipal() instanceof UserDetailsImpl userDetails)) {
+            throw new UnauthorizedException("Invalid authenticated user");
+        }
+
+        return userDetails.getId();
     }
 }
