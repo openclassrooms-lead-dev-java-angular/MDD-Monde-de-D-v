@@ -81,6 +81,7 @@ public class TopicTestFactory {
     }
 
     public static Topic createTopic() {
+
         return generateTopic(1L, "Java", "java", "Java development");
     }
 

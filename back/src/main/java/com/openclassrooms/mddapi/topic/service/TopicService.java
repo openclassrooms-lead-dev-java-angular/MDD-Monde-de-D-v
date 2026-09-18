@@ -1,6 +1,7 @@
 package com.openclassrooms.mddapi.topic.service;
 
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
+import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;
@@ -27,6 +28,7 @@ public class TopicService {
 
     private final TopicRepository topicRepository;
     private final TopicMapper topicMapper;
+    private final SubscriptionService subscriptionService;
 
     /**
      * Retrieves a topic by its slug.
@@ -108,7 +110,13 @@ public class TopicService {
      */
     @Transactional
     public void subscribe(String slug) {
-        // todo in git subscription branch
+        if (!topicRepository.existsBySlug(slug)) {
+            throw new TopicNotFoundException("Topic not found with slug '" + slug + "'");
+        }
+
+        Topic topic = topicRepository.getReferenceBySlug(slug);
+
+        subscriptionService.subscribe(topic);
     }
 
     /**
@@ -118,7 +126,13 @@ public class TopicService {
      */
     @Transactional
     public void unsubscribe(String slug) {
-        // todo in git subscription branch
+        if (!topicRepository.existsBySlug(slug)) {
+            throw new TopicNotFoundException("Topic not found with slug '" + slug + "'");
+        }
+
+        Topic topic = topicRepository.getReferenceBySlug(slug);
+
+        subscriptionService.unsubscribe(topic);
     }
 
     /**
