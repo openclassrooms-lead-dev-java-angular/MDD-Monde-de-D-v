@@ -3,6 +3,10 @@ package com.openclassrooms.mddapi.common.exception;
 import com.openclassrooms.mddapi.common.dto.ErrorResponseDto;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
+import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
+import com.openclassrooms.mddapi.user.exceptions.UserAlreadyExistsException;
+import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
+import com.openclassrooms.mddapi.user.exceptions.UsernameAlreadyExistsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,6 +28,13 @@ public class GlobalExceptionHanler {
         return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
+    @ExceptionHandler(value = UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponseDto handleUserNotFoundException(UserNotFoundException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
     @ExceptionHandler(value = TopicNotFoundException.class)
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ErrorResponseDto handleTopicNotFoundException(TopicNotFoundException e) {
@@ -32,6 +43,27 @@ public class GlobalExceptionHanler {
     }
 
     // Conflict exceptions
+
+    @ExceptionHandler(value = EmailAlreadyExistsException.class)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    public ErrorResponseDto handleEmailAlreadyExistsException(EmailAlreadyExistsException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    @ExceptionHandler(value = UserAlreadyExistsException.class)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    public ErrorResponseDto handleUserAlreadyExistsException(UserAlreadyExistsException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    @ExceptionHandler(value = UsernameAlreadyExistsException.class)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    public ErrorResponseDto handleUsernameAlreadyExistsException(UsernameAlreadyExistsException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
 
     @ExceptionHandler(value = TopicSlugAlreadyExists.class)
     @ResponseStatus(value = HttpStatus.CONFLICT)
@@ -63,7 +95,4 @@ public class GlobalExceptionHanler {
                 Instant.now().toString()
         );
     }
-
-
-
 }
