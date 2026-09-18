@@ -10,7 +10,6 @@ import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsImpl;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.common.exception.InvalidTokenException;
 import com.openclassrooms.mddapi.user.UserService;
-import com.sun.security.auth.UserPrincipal;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

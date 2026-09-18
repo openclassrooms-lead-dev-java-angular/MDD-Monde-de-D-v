@@ -1,8 +1,8 @@
 package com.openclassrooms.mddapi.seeder;
 
 import com.openclassrooms.mddapi.common.enums.Role;
-import com.openclassrooms.mddapi.user.User;
-import com.openclassrooms.mddapi.user.UserRepository;
+import com.openclassrooms.mddapi.user.entity.User;
+import com.openclassrooms.mddapi.user.repository.UserRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;

@@ -1,5 +1,6 @@
-package com.openclassrooms.mddapi.user;
+package com.openclassrooms.mddapi.user.repository;
 
+import com.openclassrooms.mddapi.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

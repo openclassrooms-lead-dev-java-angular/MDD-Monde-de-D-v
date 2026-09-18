@@ -1,7 +1,7 @@
 package com.openclassrooms.mddapi.factory;
 
 import com.openclassrooms.mddapi.common.enums.Role;
-import com.openclassrooms.mddapi.user.User;
+import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 

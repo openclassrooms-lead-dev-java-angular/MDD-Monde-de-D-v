@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.common.exception;
+package com.openclassrooms.mddapi.user.exceptions;
 
 public class UserAlreadyExistsException extends RuntimeException {
 
