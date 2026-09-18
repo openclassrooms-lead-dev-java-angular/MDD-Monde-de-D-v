@@ -2,7 +2,7 @@ package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.common.enums.Role;
-import com.openclassrooms.mddapi.common.exception.EmailAlreadyExistsException;
+import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.exceptions.UserAlreadyExistsException;
 import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
