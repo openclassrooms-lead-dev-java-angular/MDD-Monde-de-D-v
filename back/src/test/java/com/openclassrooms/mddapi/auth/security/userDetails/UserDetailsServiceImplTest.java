@@ -1,6 +1,6 @@
 package com.openclassrooms.mddapi.auth.security.userDetails;
 
-import com.openclassrooms.mddapi.common.exception.UserNotFoundException;
+import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
 import com.openclassrooms.mddapi.user.User;
 import com.openclassrooms.mddapi.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
