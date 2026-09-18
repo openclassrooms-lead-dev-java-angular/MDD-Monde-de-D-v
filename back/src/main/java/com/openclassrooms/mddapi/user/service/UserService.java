@@ -1,6 +1,7 @@
 package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
+import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.auth.service.AuthService;
 import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
@@ -33,7 +34,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final AuthService authService;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
 
     /**
      * Persists a new user.
@@ -58,7 +59,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public UserResponseDto getMe() {
-        Long userId = authService.getPrincipalUserId();
+        Long userId = userDetailsServiceImpl.getPrincipalUserId();
 
         return userRepository
                 .findById(userId)
@@ -78,7 +79,7 @@ public class UserService {
      */
     @Transactional
     public UserResponseDto updateUser(final UpdateUserDto userDto) {
-        Long userId = authService.getPrincipalUserId();
+        Long userId = userDetailsServiceImpl.getPrincipalUserId();
 
         User user = userRepository.getReferenceById(userId);
 
