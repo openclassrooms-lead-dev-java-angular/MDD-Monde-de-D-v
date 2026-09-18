@@ -4,7 +4,6 @@ import com.openclassrooms.mddapi.auth.security.cookie.CookieService;
 import com.openclassrooms.mddapi.auth.dto.LoginRequestDto;
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.dto.UsernameAvailableDto;
-import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.auth.security.jwt.JwtTokenService;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsImpl;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
@@ -17,7 +16,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +24,10 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
-
+/**
+ * Service responsible for authentication, registration, token refresh,
+ * username availability checks and logout operations.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -37,32 +38,32 @@ public class AuthService {
     private final UserService userService;
     private final CookieService cookieService;
 
+    /**
+     * Authenticates a user using their email and password and generates
+     * access and refresh token cookies.
+     *
+     * @param loginRequest the user's login credentials
+     * @return a map containing the access token and refresh token cookies
+     * @throws org.springframework.security.core.AuthenticationException if the provided credentials are invalid
+     */
     @Transactional(readOnly = true)
     public Map<String, ResponseCookie> authenticate(
             LoginRequestDto loginRequest
     ) {
-        System.out.println("authentication before");
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.email(),
                         loginRequest.password()
                 )
         );
-        System.out.println("authentication");
+
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        System.out.println("after authentication");
 
         String accessToken = jwtTokenService.generateAccessToken(userDetails);
         String refreshToken = jwtTokenService.generateRefreshToken(userDetails);
 
-        System.out.println(accessToken);
-        System.out.println(refreshToken);
-
         ResponseCookie accessTokenCookie = cookieService.generateAccessTokenCookie(accessToken);
         ResponseCookie refreshTokenCookie = cookieService.generateAccessTokenCookie(refreshToken);
-
-        System.out.println(accessTokenCookie);
-        System.out.println(refreshTokenCookie);
 
         return Map.of(
                 "accessTokenCookie", accessTokenCookie,
@@ -70,6 +71,14 @@ public class AuthService {
         );
     }
 
+    /**
+     * Generates a new access token from the refresh token stored in the * request cookies.
+     *
+     * @param request the HTTP request containing the refresh token cookie
+     * @return a cookie containing the newly generated access token
+     * @throws InvalidTokenException if the refresh token is missing,
+     * invalid or has an incorrect token type
+     */
     @Transactional(readOnly = true)
     public ResponseCookie refreshAccessToken(HttpServletRequest request) {
 
@@ -95,11 +104,22 @@ public class AuthService {
         return cookieService.generateAccessTokenCookie(token);
     }
 
+    /**
+     *  Registers a new user.
+     *
+     * @param registerRequestDto the data required to register the user
+     */
     @Transactional
     public void register(RegisterRequestDto registerRequestDto) {
         userService.register(registerRequestDto);
     }
 
+    /**
+     * Checks whether a username is available for registration.
+     *
+     * @param username the username to check
+     * @return an object indicating whether the username is available
+     */
     @Transactional(readOnly = true)
     public UsernameAvailableDto usernameAvailable(String username) {
         boolean usernameExists = userService.usernameAvailable(username);
@@ -107,24 +127,14 @@ public class AuthService {
         return new UsernameAvailableDto(usernameExists);
     }
 
-
+    /**
+     * Generates cookies that invalidate the authentication tokens,
+     * effectively logging the user out.
+     *
+     * @return a map containing the logout cookies
+     */
     @Transactional(readOnly = true)
     public Map<String, ResponseCookie> logout() {
         return cookieService.generateLogoutCookies();
-    }
-
-    @Transactional(readOnly = true)
-    public Long getPrincipalUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UnauthorizedException("User is not authenticated");
-        }
-
-        if (!(authentication.getPrincipal() instanceof UserDetailsImpl userDetails)) {
-            throw new UnauthorizedException("Invalid authenticated user");
-        }
-
-        return userDetails.getId();
     }
 }
