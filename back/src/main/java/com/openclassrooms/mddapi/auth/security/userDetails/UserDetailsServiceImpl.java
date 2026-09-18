@@ -1,7 +1,7 @@
 package com.openclassrooms.mddapi.auth.security.userDetails;
 
-import com.openclassrooms.mddapi.common.exception.UserNotFoundException;
-import com.openclassrooms.mddapi.user.UserRepository;
+import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
+import com.openclassrooms.mddapi.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;

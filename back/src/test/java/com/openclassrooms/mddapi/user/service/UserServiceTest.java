@@ -1,8 +1,8 @@
 package com.openclassrooms.mddapi.user.service;
 
-import com.openclassrooms.mddapi.common.exception.NotFoundException;
 import com.openclassrooms.mddapi.factory.UserTestFactory;
 import com.openclassrooms.mddapi.user.entity.User;
+import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
 import com.openclassrooms.mddapi.user.mapper.UserMapper;
 import com.openclassrooms.mddapi.user.repository.UserRepository;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
@@ -84,7 +84,7 @@ class UserServiceTest {
 
         // When / Then
         assertThatThrownBy(() -> userService.getById(id))
-                .isInstanceOf(NotFoundException.class);
+                .isInstanceOf(UserNotFoundException.class);
 
         verify(userRepository).findById(id);
         verifyNoInteractions(userMapper);
