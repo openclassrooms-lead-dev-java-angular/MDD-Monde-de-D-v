@@ -1,12 +1,16 @@
-package com.openclassrooms.mddapi.subscription;
+package com.openclassrooms.mddapi.subscription.service;
 
-import com.openclassrooms.mddapi.auth.service.AuthService;
+import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.factory.TopicTestFactory;
 import com.openclassrooms.mddapi.subscription.dto.SubscriptionResponseDto;
+import com.openclassrooms.mddapi.subscription.entity.Subscription;
+import com.openclassrooms.mddapi.subscription.entity.SubscriptionId;
 import com.openclassrooms.mddapi.subscription.exception.SubscriptionAlreadyExists;
 import com.openclassrooms.mddapi.subscription.exception.SubscriptionNotFoundException;
-import com.openclassrooms.mddapi.topic.Topic;
+import com.openclassrooms.mddapi.subscription.mapper.SubscriptionMapper;
+import com.openclassrooms.mddapi.subscription.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,7 +35,7 @@ class SubscriptionServiceTest {
     private SubscriptionMapper subscriptionMapper;
 
     @Mock
-    private AuthService authService;
+    private UserDetailsServiceImpl userDetailsService;
 
     @InjectMocks
     private SubscriptionService subscriptionService;
@@ -45,14 +49,14 @@ class SubscriptionServiceTest {
 
         SubscriptionId subscriptionId = new SubscriptionId(userId, topicId);
 
-        when(authService.getPrincipalUserId())
+        when(userDetailsService.getPrincipalUserId())
                 .thenReturn(userId);
         when(subscriptionRepository.existsById(subscriptionId))
                 .thenReturn(false);
 
         subscriptionService.subscribe(topic);
 
-        verify(authService).getPrincipalUserId();
+        verify(userDetailsService).getPrincipalUserId();
         verify(subscriptionRepository).existsById(subscriptionId);
 
         ArgumentCaptor<Subscription> captor = ArgumentCaptor.forClass(Subscription.class);
@@ -75,7 +79,7 @@ class SubscriptionServiceTest {
 
         SubscriptionId subscriptionId = new SubscriptionId(userId, topicId);
 
-        when(authService.getPrincipalUserId())
+        when(userDetailsService.getPrincipalUserId())
                 .thenReturn(userId);
         when(subscriptionRepository.existsById(subscriptionId))
                 .thenReturn(true);
@@ -103,7 +107,7 @@ class SubscriptionServiceTest {
         subscription.setUserId(userId);
         subscription.setTopicId(topicId);
 
-        when(authService.getPrincipalUserId())
+        when(userDetailsService.getPrincipalUserId())
                 .thenReturn(userId);
         when(subscriptionRepository.existsById(subscriptionId))
                 .thenReturn(true);
@@ -112,7 +116,7 @@ class SubscriptionServiceTest {
 
         subscriptionService.unsubscribe(topic);
 
-        verify(authService)
+        verify(userDetailsService)
                 .getPrincipalUserId();
         verify(subscriptionRepository)
                 .existsById(subscriptionId);
@@ -132,7 +136,7 @@ class SubscriptionServiceTest {
 
         SubscriptionId subscriptionId = new SubscriptionId(userId, topicId);
 
-        when(authService.getPrincipalUserId())
+        when(userDetailsService.getPrincipalUserId())
                 .thenReturn(userId);
         when(subscriptionRepository.existsById(subscriptionId))
                 .thenReturn(false);
@@ -164,7 +168,7 @@ class SubscriptionServiceTest {
 
         SubscriptionResponseDto response2 = new SubscriptionResponseDto(topics.get(1), LocalDateTime.now());
 
-        when(authService.getPrincipalUserId())
+        when(userDetailsService.getPrincipalUserId())
                 .thenReturn(userId);
         when(subscriptionRepository.findAllByUserId(userId))
                 .thenReturn(List.of(subscription1, subscription2));
@@ -177,7 +181,7 @@ class SubscriptionServiceTest {
 
         assertThat(result).isEqualTo(List.of(response1, response2));
 
-        verify(authService).getPrincipalUserId();
+        verify(userDetailsService).getPrincipalUserId();
         verify(subscriptionRepository).findAllByUserId(userId);
         verify(subscriptionMapper).toDto(subscription1);
         verify(subscriptionMapper).toDto(subscription2);

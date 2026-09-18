@@ -1,8 +1,7 @@
 package com.openclassrooms.mddapi.topic.service;
 
-import com.openclassrooms.mddapi.auth.service.AuthService;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
-import com.openclassrooms.mddapi.subscription.SubscriptionService;
+import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
 import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;

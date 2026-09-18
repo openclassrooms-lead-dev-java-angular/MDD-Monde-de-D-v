@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.subscription;
+package com.openclassrooms.mddapi.subscription.entity;
 
 import lombok.*;
 

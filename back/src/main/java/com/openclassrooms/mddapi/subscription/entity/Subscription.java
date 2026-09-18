@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.subscription;
+package com.openclassrooms.mddapi.subscription.entity;
 
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import jakarta.persistence.*;

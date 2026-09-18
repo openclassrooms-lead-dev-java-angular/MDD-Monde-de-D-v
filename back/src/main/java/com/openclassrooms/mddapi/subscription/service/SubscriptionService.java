@@ -1,7 +1,11 @@
-package com.openclassrooms.mddapi.subscription;
+package com.openclassrooms.mddapi.subscription.service;
 
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
+import com.openclassrooms.mddapi.subscription.mapper.SubscriptionMapper;
+import com.openclassrooms.mddapi.subscription.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.subscription.dto.SubscriptionResponseDto;
+import com.openclassrooms.mddapi.subscription.entity.Subscription;
+import com.openclassrooms.mddapi.subscription.entity.SubscriptionId;
 import com.openclassrooms.mddapi.subscription.exception.SubscriptionAlreadyExists;
 import com.openclassrooms.mddapi.subscription.exception.SubscriptionNotFoundException;
 import com.openclassrooms.mddapi.topic.entity.Topic;

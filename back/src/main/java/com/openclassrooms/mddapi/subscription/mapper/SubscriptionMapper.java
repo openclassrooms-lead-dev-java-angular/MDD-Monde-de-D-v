@@ -1,6 +1,7 @@
-package com.openclassrooms.mddapi.subscription;
+package com.openclassrooms.mddapi.subscription.mapper;
 
 import com.openclassrooms.mddapi.subscription.dto.SubscriptionResponseDto;
+import com.openclassrooms.mddapi.subscription.entity.Subscription;
 import org.mapstruct.Mapper;
 import org.springframework.stereotype.Component;
 

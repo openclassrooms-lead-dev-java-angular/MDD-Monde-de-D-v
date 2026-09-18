@@ -1,5 +1,7 @@
-package com.openclassrooms.mddapi.subscription;
+package com.openclassrooms.mddapi.subscription.repository;
 
+import com.openclassrooms.mddapi.subscription.entity.Subscription;
+import com.openclassrooms.mddapi.subscription.entity.SubscriptionId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

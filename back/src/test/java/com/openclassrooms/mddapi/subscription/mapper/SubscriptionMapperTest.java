@@ -1,8 +1,9 @@
-package com.openclassrooms.mddapi.subscription;
+package com.openclassrooms.mddapi.subscription.mapper;
 
 import com.openclassrooms.mddapi.factory.TopicTestFactory;
 import com.openclassrooms.mddapi.subscription.dto.SubscriptionResponseDto;
-import com.openclassrooms.mddapi.topic.Topic;
+import com.openclassrooms.mddapi.subscription.entity.Subscription;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -22,7 +23,10 @@ public class SubscriptionMapperTest {
 
         Subscription subscription = new Subscription();
         subscription.setUserId(10L);
+
+
         subscription.setTopicId(1L);
+
         subscription.setTopic(topic);
         subscription.setCreatedAt(createdAt);
         SubscriptionResponseDto result = subscriptionMapper.toDto(subscription);
