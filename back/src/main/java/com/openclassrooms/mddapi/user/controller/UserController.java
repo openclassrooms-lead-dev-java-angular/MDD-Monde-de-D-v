@@ -8,6 +8,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller responsible for user-related operations.
+ *
+ * <p>Provides endpoints for retrieving and updating information
+ * about the currently authenticated user.</p>
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
