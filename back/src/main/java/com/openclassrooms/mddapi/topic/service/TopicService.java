@@ -147,4 +147,9 @@ public class TopicService {
 
         return new AvailableSlugDto(!exists);
     }
+
+    @Transactional(readOnly = true)
+    public boolean existsBySlug (String slug) {
+        return topicRepository.existsBySlug(slug);
+    }
 }
