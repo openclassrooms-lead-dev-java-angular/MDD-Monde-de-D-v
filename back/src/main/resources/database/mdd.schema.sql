@@ -26,10 +26,9 @@ CREATE TABLE articles (
     author_id BIGINT NOT NULL,
     topic_id BIGINT NOT NULL,
     title VARCHAR(100) NOT NULL,
-    slug VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
     content TEXT,
     media VARCHAR(255),
-    status VARCHAR(15) NOT NULL ,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 
