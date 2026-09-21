@@ -11,6 +11,10 @@ app:
   jwt:
     cookie:
       secure: false
+  minio:
+    bucket-name: ${MINIO_BUCKET_NAME}
+  storage-path:
+    article: "article"
   environment: DEV
 
 logging:

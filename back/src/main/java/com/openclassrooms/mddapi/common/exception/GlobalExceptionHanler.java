@@ -3,6 +3,7 @@ package com.openclassrooms.mddapi.common.exception;
 import com.openclassrooms.mddapi.auth.exception.InvalidTokenException;
 import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.common.dto.ErrorResponseDto;
+import com.openclassrooms.mddapi.storage.exception.StorageException;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
@@ -11,6 +12,7 @@ import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
 import com.openclassrooms.mddapi.user.exceptions.UsernameAlreadyExistsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -91,6 +93,14 @@ public class GlobalExceptionHanler {
     }
 
     // Internal server error exceptions
+
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<String> handleStorageException(StorageException e) {
+        log.error("STORAGE ERROR", e);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(e.getMessage());
+    }
 
     @ExceptionHandler(value = Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
