@@ -9,9 +9,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class ArticleController {
 
-    private ArticleService articleService;
+    private final ArticleService articleService;
 
     @GetMapping("")
     public Page<ArticleResponseDto> getArticles(Pageable pageable) {
@@ -27,16 +29,18 @@ public class ArticleController {
     }
 
     @GetMapping("/{slug}")
-    public ArticleResponseDto getArticleBySlug(String slug){
+    public ArticleResponseDto getArticleBySlug(
+            @PathVariable String slug
+    ){
         return articleService.findBySlug(slug);
     }
 
-    @PostMapping("")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ArticleResponseDto createArticle(
-            @Valid @RequestBody ArticleRequestDto articleRequestDto
-
+            @Valid @RequestPart("article") ArticleRequestDto articleRequestDto,
+            @RequestPart(value = "media", required = false) MultipartFile media
     ){
-        return articleService.create(articleRequestDto);
+        return articleService.create(articleRequestDto, media);
     }
 
     @PutMapping("/{slug}")
