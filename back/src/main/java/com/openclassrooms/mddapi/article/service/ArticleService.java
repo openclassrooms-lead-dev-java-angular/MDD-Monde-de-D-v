@@ -10,6 +10,7 @@ import com.openclassrooms.mddapi.article.mapper.ArticleMapper;
 import com.openclassrooms.mddapi.article.repository.ArticleRepository;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.storage.service.StorageService;
+import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.service.TopicService;
 import com.openclassrooms.mddapi.user.entity.User;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
@@ -52,22 +54,22 @@ public class ArticleService {
     }
 
     @Transactional
-    public ArticleResponseDto create(final ArticleRequestDto articleRequestDto) {
+    public ArticleResponseDto create(final ArticleRequestDto articleRequestDto, MultipartFile media) {
         if (articleRepository.existsBySlug(articleRequestDto.slug())) {
             throw new ArticleSlugAlreadyExists("Slug already exists : " + articleRequestDto.slug());
         }
 
         checkTopicSlug(articleRequestDto.topicSlug());
-
+        Topic topic = topicService.loadBySlug(articleRequestDto.topicSlug());
         User author = userService.loadCurrentUserAuthor();
 
         Article article = articleMapper.toEntity(articleRequestDto);
         article.setAuthor(author);
+        article.setTopic(topic);
 
         // media upload
-        if (articleRequestDto.media() != null) {
-
-            String filename = storageService.upload(articleRequestDto.media(), resourceType, articleRequestDto.slug());
+        if (media != null) {
+            String filename = storageService.upload(media, resourceType, articleRequestDto.slug());
             article.setMedia(filename);
         }
 
@@ -120,7 +122,7 @@ public class ArticleService {
             storageService.delete(oldFilename);
         }
 
-        log.info("Uodated article {}", savedArticle);
+        log.info("Uodated article with slug {}", savedArticle.getSlug());
 
         return articleMapper.toDto(savedArticle);
     }
@@ -134,7 +136,7 @@ public class ArticleService {
 
     @Transactional(readOnly = true)
     private void checkTopicSlug(String topicSlug) {
-        if (topicService.existsBySlug(topicSlug)) {
+        if (!topicService.existsBySlug(topicSlug)) {
             throw new TopicNotFoundException("Topic not found with slug : " + topicSlug);
         }
     }
