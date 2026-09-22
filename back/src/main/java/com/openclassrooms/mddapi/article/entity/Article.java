@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Accessors(chain = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Article extends BaseEntity {
