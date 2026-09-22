@@ -17,8 +17,6 @@ public record ArticleRequestDto(
 
         @NotNull
         @Size(max = 255)
-        String content,
-
-        MultipartFile media
+        String content
 
 ) { }
