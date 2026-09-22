@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 @Mapper(componentModel = "spring")
 public interface ArticleMapper {
 
+    @Mapping(source = "author.username", target = "username")
     ArticleResponseDto toDto(Article article);
 
     @Mapping(target = "media", ignore = true)
