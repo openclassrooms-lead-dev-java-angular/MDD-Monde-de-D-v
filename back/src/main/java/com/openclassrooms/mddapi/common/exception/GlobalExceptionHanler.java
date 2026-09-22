@@ -82,7 +82,7 @@ public class GlobalExceptionHanler {
     @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
     public ErrorResponseDto handleUnauthorizedException(UnauthorizedException e) {
         log.warn(e.getMessage(), e);
-        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, e.getMessage());
     }
 
     @ExceptionHandler(value = InvalidTokenException.class)
