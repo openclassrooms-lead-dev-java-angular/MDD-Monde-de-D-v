@@ -1,7 +1,6 @@
 package com.openclassrooms.mddapi.article.security;
 
 import com.openclassrooms.mddapi.article.repository.ArticleRepository;
-import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.service.UserService;
 import lombok.RequiredArgsConstructor;

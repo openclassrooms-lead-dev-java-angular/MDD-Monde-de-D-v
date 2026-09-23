@@ -61,6 +61,6 @@ public class Article extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(length = 255)
+    @Column
     private String media;
 }

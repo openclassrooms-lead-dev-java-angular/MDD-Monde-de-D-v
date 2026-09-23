@@ -85,7 +85,7 @@ class ArticleServiceTest {
         Page<ArticleResponseDto> result = articleService.findAll(pageable);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getContent().get(0))
+        assertThat(result.getContent().getFirst())
                 .isEqualTo(response);
 
         verify(articleRepository).findAll(pageable);

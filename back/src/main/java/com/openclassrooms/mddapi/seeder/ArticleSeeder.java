@@ -44,8 +44,8 @@ public class ArticleSeeder extends AbstractSeeder<Article> {
 
         return List.of(
                 createArticle(
-                        users.get(0),
-                        topics.get(0),
+                        users.getFirst(),
+                        topics.getFirst(),
                         "Comprendre les fondamentaux de Java",
                         "comprendre-les-fondamentaux-de-java"
                 ),
@@ -74,8 +74,8 @@ public class ArticleSeeder extends AbstractSeeder<Article> {
                         "decouvrir-typescript-pour-les-developpeurs-javascript"
                 ),
                 createArticle(
-                        users.get(0),
-                        topics.get(0),
+                        users.getFirst(),
+                        topics.getFirst(),
                         "Comprendre les relations avec JPA",
                         "comprendre-les-relations-avec-jpa"
                 ),
@@ -114,9 +114,9 @@ public class ArticleSeeder extends AbstractSeeder<Article> {
                 .title(title)
                 .slug(slug)
                 .content(""" 
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-                                Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-                                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
+                                 do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                                  Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris 
                                 nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit 
                                 in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat 
                                 cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. 
