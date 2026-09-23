@@ -2,7 +2,7 @@ package com.openclassrooms.mddapi.article.mapper;
 
 import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
-import com.openclassrooms.mddapi.article.dto.AticleUpdateRequestDto;
+import com.openclassrooms.mddapi.article.dto.ArticleUpdateRequestDto;
 import com.openclassrooms.mddapi.article.entity.Article;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -21,7 +21,7 @@ public interface ArticleMapper {
 
     @Mapping(target = "media", ignore = true)
     void updateEntity(
-            AticleUpdateRequestDto articleDto,
+            ArticleUpdateRequestDto articleDto,
             @MappingTarget Article article
     );
 }

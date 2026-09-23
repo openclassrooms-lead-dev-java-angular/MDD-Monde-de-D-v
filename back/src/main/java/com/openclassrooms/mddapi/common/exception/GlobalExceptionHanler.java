@@ -1,5 +1,7 @@
 package com.openclassrooms.mddapi.common.exception;
 
+import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
+import com.openclassrooms.mddapi.article.exception.ArticleSlugAlreadyExists;
 import com.openclassrooms.mddapi.auth.exception.InvalidTokenException;
 import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.common.dto.ErrorResponseDto;
@@ -28,6 +30,13 @@ public class GlobalExceptionHanler {
     @ExceptionHandler(value = NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponseDto handleNotFoundException(NotFoundException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(value = ArticleNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponseDto handleArticleNotFoundException(ArticleNotFoundException e) {
         log.warn(e.getMessage(), e);
         return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
     }
@@ -76,6 +85,13 @@ public class GlobalExceptionHanler {
         return buildResponse(HttpStatus.CONFLICT, e.getMessage());
     }
 
+    @ExceptionHandler(value = ArticleSlugAlreadyExists.class)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    public ErrorResponseDto handleArticleSlugAlreadyExists(ArticleSlugAlreadyExists e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
+
     // unauthorized
 
     @ExceptionHandler(value = UnauthorizedException.class)
@@ -112,7 +128,7 @@ public class GlobalExceptionHanler {
     /**
      * Response builder
      *
-     * @param status http status
+     * @param status  http status
      * @param message string
      * @return ErrorResponseDto
      */

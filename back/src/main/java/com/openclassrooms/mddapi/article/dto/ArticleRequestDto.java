@@ -1,21 +1,20 @@
 package com.openclassrooms.mddapi.article.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import org.springframework.web.multipart.MultipartFile;
 
 public record ArticleRequestDto(
-        @NotNull
+        @NotBlank
         String slug,
 
-        @NotNull
+        @NotBlank
         String topicSlug,
 
-        @NotNull
+        @NotBlank
         @Size(max = 100)
         String title,
 
-        @NotNull
+        @NotBlank
         @Size(max = 255)
         String content
 

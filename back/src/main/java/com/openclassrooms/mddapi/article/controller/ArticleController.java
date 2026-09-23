@@ -2,7 +2,7 @@ package com.openclassrooms.mddapi.article.controller;
 
 import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
-import com.openclassrooms.mddapi.article.dto.AticleUpdateRequestDto;
+import com.openclassrooms.mddapi.article.dto.ArticleUpdateRequestDto;
 import com.openclassrooms.mddapi.article.service.ArticleService;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import jakarta.validation.Valid;
@@ -25,7 +25,8 @@ public class ArticleController {
 
     @GetMapping("")
     public Page<ArticleResponseDto> getArticles(Pageable pageable) {
-        return articleService.findAll(pageable);
+        return articleService
+                .findAll(pageable);
     }
 
     @GetMapping("/{slug}")
@@ -47,7 +48,7 @@ public class ArticleController {
     @PreAuthorize("@articleSecurity.isAuthor(#slug)")
     public ArticleResponseDto updateArticle(
             @PathVariable String slug,
-            @Valid @RequestBody AticleUpdateRequestDto articleRequestDto
+            @Valid @RequestBody ArticleUpdateRequestDto articleRequestDto
     ){
         return articleService.update(slug, articleRequestDto);
     }
