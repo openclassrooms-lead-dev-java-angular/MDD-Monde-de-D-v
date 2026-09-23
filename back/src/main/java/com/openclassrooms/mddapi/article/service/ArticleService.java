@@ -208,4 +208,9 @@ public class ArticleService {
             throw new TopicNotFoundException("Topic not found with slug : " + topicSlug);
         }
     }
+
+    @Transactional(readOnly = true)
+    public Article loadArticleBySlug(final String slug) {
+        return articleRepository.getReferenceBySlug(slug);
+    }
 }

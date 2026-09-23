@@ -4,12 +4,8 @@ import com.openclassrooms.mddapi.comment.dto.CommentRequestDto;
 import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
 import com.openclassrooms.mddapi.comment.entity.Comment;
 import com.openclassrooms.mddapi.factory.CommentTestFactory;
-import com.openclassrooms.mddapi.user.entity.User;
-import org.assertj.core.api.Assert;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
