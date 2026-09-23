@@ -1,6 +1,7 @@
 package com.openclassrooms.mddapi.cli;
 
 import com.openclassrooms.mddapi.seeder.ArticleSeeder;
+import com.openclassrooms.mddapi.seeder.CommentSeeder;
 import com.openclassrooms.mddapi.seeder.TopicSeeder;
 import com.openclassrooms.mddapi.seeder.UserSeeder;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +28,16 @@ public class SeedCommand implements Runnable {
     @Option(names = "--articles", description = "Seed articles")
     private boolean articles;
 
+    @Option(names = "--comments", description = "Seed comments")
+    private boolean comments;
+
     @Option(names = "--all", description = "Seed all")
     private boolean all;
 
     private final UserSeeder userSeeder;
     private final TopicSeeder topicSeeder;
     private final ArticleSeeder articleSeeder;
+    private final CommentSeeder commentSeeder;
 
     @Override
     public void run() {
@@ -55,12 +60,18 @@ public class SeedCommand implements Runnable {
                 articleSeeder.clear();
                 articleSeeder.seed();
             }
+
+            if (comments) {
+                commentSeeder.clear();
+                commentSeeder.seed();
+            }
         }
 
         log.info("Seed command finished");
     }
 
     private void seedAll() {
+        commentSeeder.clear();
         articleSeeder.clear();
         userSeeder.clear();
         topicSeeder.clear();
@@ -68,5 +79,6 @@ public class SeedCommand implements Runnable {
         userSeeder.seed();
         topicSeeder.seed();
         articleSeeder.seed();
+        commentSeeder.seed();
     }
 }
