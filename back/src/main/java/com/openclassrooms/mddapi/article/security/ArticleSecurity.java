@@ -14,7 +14,7 @@ public class ArticleSecurity {
     private final ArticleRepository articleRepository;
     private final UserService userService;
 
-    public boolean isAuthor(String slug) {
+    public boolean isAuthor(final String slug) {
         User currentUser = userService.loadCurrentUserAuthor();
 
         return articleRepository.existsBySlugAndAuthor(
