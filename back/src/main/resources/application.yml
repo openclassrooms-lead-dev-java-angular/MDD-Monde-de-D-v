@@ -43,6 +43,9 @@ app:
     bucket: ${MINIO_BUCKET}
     storage-base-url: ${MINIO_STORATE_PUBLIC_URL}
 
+  storage-path:
+    article: "articles"
+
 ## Logs
 logging:
   level:

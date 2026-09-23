@@ -147,4 +147,32 @@ public class TopicService {
 
         return new AvailableSlugDto(!exists);
     }
+
+    /**
+     * Checks whether a topic exists with the given slug.
+     *
+     * @param slug the slug of the topic to check
+     * @return {@code true} if a topic with the given slug exists,
+     *  {@code false} otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean existsBySlug (String slug) {
+        return topicRepository.existsBySlug(slug);
+    }
+
+    /**
+     * Loads a topic reference by its slug.
+     *
+     * <p>loaded from the database immediately and can trigger a database access when
+     * its properties are accessed.</p>
+     *
+     * @param slug the slug of the topic to load
+     * @return a reference to the topic identified by the given slug
+     * @throws jakarta.persistence.EntityNotFoundException if the topic does not
+     *  exist when the reference is accessed
+     */
+    @Transactional(readOnly = true)
+    public Topic loadBySlug(String slug) {
+        return topicRepository.getReferenceBySlug(slug);
+    }
 }

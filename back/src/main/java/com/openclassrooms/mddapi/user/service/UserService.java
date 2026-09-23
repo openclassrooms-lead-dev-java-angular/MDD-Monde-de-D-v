@@ -2,7 +2,6 @@ package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.auth.service.AuthService;
 import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.entity.User;
@@ -150,5 +149,12 @@ public class UserService {
     public boolean usernameAvailable(final String username) {
 
         return !userRepository.existsByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
+    public User loadCurrentUserAuthor() {
+        Long authorId = userDetailsServiceImpl.getPrincipalUserId();
+
+        return userRepository.getReferenceById(authorId);
     }
 }
