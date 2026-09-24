@@ -1,7 +1,6 @@
 package com.openclassrooms.mddapi.auth.security.jwt;
 
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsImpl;
-import com.openclassrooms.mddapi.common.enums.Role;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,8 +50,6 @@ public class JwtTokenServiceTest {
                 .thenReturn(123L);
         when(userDetails.getUsername())
                 .thenReturn("john.doe@example.com");
-        when(userDetails.getRole())
-                .thenReturn(Role.USER);
         when(encodedJwt.getTokenValue())
                 .thenReturn("access.jwt.token");
         when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
@@ -82,8 +79,6 @@ public class JwtTokenServiceTest {
                 .isEqualTo("123");
         assertThat(parameters.getClaims().getClaimAsString("email"))
                 .isEqualTo("john.doe@example.com");
-        assertThat(parameters.getClaims().getClaimAsStringList("roles"))
-                .isEqualTo(List.of("USER"));
         assertThat(parameters.getClaims().getClaimAsString("type"))
                 .isEqualTo("access");
         assertThat(parameters.getClaims().getIssuedAt())
@@ -125,8 +120,6 @@ public class JwtTokenServiceTest {
         assertThat(parameters.getClaims().getClaimAsString("type"))
                 .isEqualTo("refresh");
         assertThat((Object)parameters.getClaims().getClaim("email"))
-                .isNull();
-        assertThat((Object)parameters.getClaims().getClaim("roles"))
                 .isNull();
         assertThat(parameters.getClaims().getIssuedAt())
                 .isNotNull();

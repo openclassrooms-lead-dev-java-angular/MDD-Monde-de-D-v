@@ -8,6 +8,7 @@ import com.openclassrooms.mddapi.article.security.ArticleSecurity;
 import com.openclassrooms.mddapi.article.service.ArticleService;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.factory.ArticleTestFactory;
+import com.openclassrooms.mddapi.factory.MediaTestFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -184,7 +185,7 @@ class ArticleControllerTest {
 
         MockMultipartFile articlePart = ArticleTestFactory.createArticlePart();
 
-        MockMultipartFile media = ArticleTestFactory.createMedia();
+        MockMultipartFile media = MediaTestFactory.createMedia();
 
         mockMvc.perform(
                         multipart("/api/v1/articles")
@@ -247,7 +248,11 @@ class ArticleControllerTest {
     void shouldUpdateArticle() throws Exception {
         ArticleResponseDto response = ArticleTestFactory.createUpdatedArticleResponseDto(false);
 
-        when(articleService.update(eq("my-article"), any(ArticleUpdateRequestDto.class)))
+        when(articleService.update(
+                eq("my-article"),
+                any(ArticleUpdateRequestDto.class),
+                MediaTestFactory.createMedia())
+        )
                 .thenReturn(response);
 
         mockMvc.perform(
@@ -283,7 +288,8 @@ class ArticleControllerTest {
         verify(articleService)
                 .update(
                         eq("my-article"),
-                        any(ArticleUpdateRequestDto.class)
+                        any(ArticleUpdateRequestDto.class),
+                        MediaTestFactory.createMedia()
                 );
     }
 
@@ -304,7 +310,7 @@ class ArticleControllerTest {
                 .andExpect(status().isInternalServerError());
 
         verify(articleService, never())
-                .update(any(), any());
+                .update(any(), any(), any());
     }
 
     // -------------------------------------------------------------------------

@@ -10,6 +10,7 @@ import com.openclassrooms.mddapi.article.mapper.ArticleMapper;
 import com.openclassrooms.mddapi.article.repository.ArticleRepository;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.factory.ArticleTestFactory;
+import com.openclassrooms.mddapi.factory.MediaTestFactory;
 import com.openclassrooms.mddapi.factory.TopicTestFactory;
 import com.openclassrooms.mddapi.factory.UserTestFactory;
 import com.openclassrooms.mddapi.storage.service.StorageService;
@@ -27,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -182,7 +184,7 @@ class ArticleServiceTest {
 
         Topic topic = TopicTestFactory.createTopic();
         User author = UserTestFactory.createUser();
-        MultipartFile media = ArticleTestFactory.createMedia();
+        MultipartFile media = MediaTestFactory.createMedia();
 
         when(articleRepository.existsBySlug("my-article"))
                 .thenReturn(false);
@@ -268,7 +270,6 @@ class ArticleServiceTest {
                 "java",
                 "Updated article",
                 "New article content",
-                null,
                 false );
         Article article = ArticleTestFactory.createArticle(false);
         ArticleResponseDto response = ArticleTestFactory.createUpdatedArticleResponseDto(false);
@@ -286,8 +287,9 @@ class ArticleServiceTest {
         when(articleMapper.toDto(article))
                 .thenReturn(response);
 
+        MockMultipartFile file = MediaTestFactory.createMedia();
         ArticleResponseDto result = articleService
-                .update("my-article", request);
+                .update("my-article", request, file);
 
         assertThat(result).isEqualTo(response);
 
@@ -309,7 +311,7 @@ class ArticleServiceTest {
         ArticleResponseDto response = ArticleTestFactory
                 .createUpdatedArticleResponseDto(true);
 
-        MultipartFile media = request.media();
+        MultipartFile media = MediaTestFactory.createMedia();
 
         when(articleRepository.existsBySlug("updated-article"))
                 .thenReturn(false);
@@ -326,8 +328,10 @@ class ArticleServiceTest {
         when(articleMapper.toDto(article))
                 .thenReturn(response);
 
+        MockMultipartFile file = MediaTestFactory.createMedia();
+
         ArticleResponseDto result = articleService
-                .update("my-article", request);
+                .update("my-article", request, file);
 
         assertThat(result).isEqualTo(response);
         assertThat(article.getMedia())
@@ -351,7 +355,8 @@ class ArticleServiceTest {
         when(articleRepository.existsBySlug("updated-article"))
                 .thenReturn(true);
 
-        assertThatThrownBy(() -> articleService.update("my-article", request))
+        MockMultipartFile file = MediaTestFactory.createMedia();
+        assertThatThrownBy(() -> articleService.update("my-article", request, file))
                 .isInstanceOf(ArticleSlugAlreadyExists.class);
 
         verify(articleRepository, never())
@@ -369,7 +374,8 @@ class ArticleServiceTest {
         when(articleRepository.existsBySlug("unknown"))
                 .thenReturn(false);
 
-        assertThatThrownBy(() -> articleService.update("unknown", request))
+        MockMultipartFile file = MediaTestFactory.createMedia();
+        assertThatThrownBy(() -> articleService.update("unknown", request, file))
                 .isInstanceOf(ArticleNotFoundException.class).hasMessage("Article not found with slug : unknown");
 
         verify(articleRepository, never())
@@ -385,7 +391,6 @@ class ArticleServiceTest {
                 "java",
                 "Updated article",
                 "New article content",
-                null,
                 false );
 
         when(articleRepository.existsBySlug("updated-article"))
@@ -395,7 +400,8 @@ class ArticleServiceTest {
         when(topicService.existsBySlug("java"))
                 .thenReturn(false);
 
-        assertThatThrownBy(() -> articleService.update("my-article", request))
+        MockMultipartFile file = MediaTestFactory.createMedia();
+        assertThatThrownBy(() -> articleService.update("my-article", request, file))
                 .isInstanceOf(TopicNotFoundException.class)
                 .hasMessage("Topic not found with slug : java");
 

@@ -1,7 +1,6 @@
 package com.openclassrooms.mddapi.factory;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
-import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
@@ -9,22 +8,6 @@ import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import java.time.LocalDateTime;
 
 public class UserTestFactory {
-
-    public static User createAdminUser() {
-        User user = new User();
-        user.setId(1L)
-                .setEmail("john@email.com")
-                .setUsername("John_Doe")
-                .setFirstName("John")
-                .setLastName("doe")
-                .setPassword("Password/1234")
-                .setRole(Role.ADMIN)
-                .setLastLoginAt(LocalDateTime.of(2026, 3, 1, 10, 0))
-                .setCreatedAt(LocalDateTime.of(2026, 1, 1, 10, 0));
-        user.setUpdatedAt(LocalDateTime.of(2026, 6, 1, 10, 0));
-
-        return user;
-    }
 
     public static User createUser() {
         User user = new User();
@@ -34,8 +17,6 @@ public class UserTestFactory {
                 .setFirstName("Jane")
                 .setLastName("Doe")
                 .setPassword("Password/1234")
-                .setRole(Role.USER)
-                .setLastLoginAt(LocalDateTime.of(2026, 9, 1, 10, 0))
                 .setCreatedAt(LocalDateTime.of(2026, 6, 1, 10, 0));
         user.setUpdatedAt(LocalDateTime.of(2026, 7, 1, 10, 0));
 
@@ -49,19 +30,19 @@ public class UserTestFactory {
                 "Jane_Doe",
                 "Jane",
                 "Doe",
-                Role.USER,
-                LocalDateTime.of(2026, 9, 1, 10, 0),
+                "",
                 LocalDateTime.of(2026, 6, 1, 10, 0),
                 LocalDateTime.of(2026, 7, 1, 10, 0)
         );
     }
 
-    public static UpdateUserDto createUpdateUserDto() {
+    public static UpdateUserDto createUpdateUserDto(boolean isMediaUpload) {
         return new UpdateUserDto(
                 "jane@email.com",
                 "Jane Doe",
                 "Jane",
-                "Doe"
+                "Doe",
+                isMediaUpload
         );
     }
 

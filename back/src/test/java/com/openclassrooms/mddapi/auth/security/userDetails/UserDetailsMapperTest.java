@@ -1,8 +1,6 @@
 package com.openclassrooms.mddapi.auth.security.userDetails;
 
-import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.factory.UserTestFactory;
-
 import com.openclassrooms.mddapi.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -29,8 +27,6 @@ public class UserDetailsMapperTest {
                 .isEqualTo("jane@email.com");
         assertThat(result.getPassword())
                 .isEqualTo("password");
-        assertThat(result.getRole())
-                .isEqualTo(Role.USER);
     }
 
     @Test
