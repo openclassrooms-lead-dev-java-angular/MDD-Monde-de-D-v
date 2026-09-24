@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.seeder;
+package com.openclassrooms.mddapi.cli.seeder;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.jpa.repository.JpaRepository;
