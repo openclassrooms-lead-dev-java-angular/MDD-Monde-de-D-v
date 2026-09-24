@@ -17,7 +17,9 @@ public interface UserMapper {
 
     @Mapping(
             target = "avatar",
-            expression = "java(mediaUrl + entity.getAvatar())"
+            expression = "java(entity.getAvatar() != null \n" +
+            "? mediaUrl + entity.getAvatar())" +
+            ": null)"
     )
     UserResponseDto toDto(
             User entity,
