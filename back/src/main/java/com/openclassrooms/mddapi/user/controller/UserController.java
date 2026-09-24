@@ -5,8 +5,10 @@ import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import com.openclassrooms.mddapi.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * REST controller responsible for user-related operations.
@@ -38,11 +40,15 @@ public class UserController {
      * @param userDto the data to update
      * @return the updated user's information
      */
-    @PatchMapping("/me")
+    @PatchMapping(
+            value = "/me",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public UserResponseDto patch(
-            @Valid @RequestBody UpdateUserDto userDto
+            @Valid @RequestPart("user") UpdateUserDto userDto,
+            @RequestPart(value = "media", required = false) MultipartFile media
     ) {
-        return userService.updateUser(userDto);
+        return userService.updateUser(userDto, media);
     }
 
 }

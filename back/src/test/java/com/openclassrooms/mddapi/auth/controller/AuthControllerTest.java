@@ -4,6 +4,7 @@ import com.openclassrooms.mddapi.auth.dto.LoginRequestDto;
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.dto.UsernameAvailableDto;
 import com.openclassrooms.mddapi.auth.service.AuthService;
+import com.openclassrooms.mddapi.factory.MediaTestFactory;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,8 +42,9 @@ public class AuthControllerTest {
 
     @Test
     void shouldRegisterSuccessfully() throws Exception {
+        MockMultipartFile file = MediaTestFactory.createMedia();
         doNothing().when(authService)
-                .register(any(RegisterRequestDto.class));
+                .register(any(RegisterRequestDto.class), file);
 
         mockMvc.perform(
                         post("/api/v1/auth/register")
@@ -59,7 +62,7 @@ public class AuthControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(authService)
-                .register(any(RegisterRequestDto.class));
+                .register(any(RegisterRequestDto.class), file);
 
     }
 
@@ -161,6 +164,8 @@ public class AuthControllerTest {
 
     @Test
     void shouldRejectRegisterWithInvalidRequest() throws Exception {
+        MockMultipartFile file = MediaTestFactory.createMedia();
+
         String registerRequestContent = """
                     {
                         "email": "invalid-email",
@@ -179,7 +184,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(authService, never())
-                .register(any(RegisterRequestDto.class));
+                .register(any(RegisterRequestDto.class), file);
 
     }
 

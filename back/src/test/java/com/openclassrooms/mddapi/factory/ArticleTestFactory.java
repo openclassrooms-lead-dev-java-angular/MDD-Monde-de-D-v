@@ -90,21 +90,12 @@ public class ArticleTestFactory {
         );
     }
 
-    public static MockMultipartFile createMedia() {
-        return new MockMultipartFile(
-                "media",
-                "image.jpg",
-                MediaType.IMAGE_JPEG_VALUE,
-                "fake-image-content".getBytes());
-    }
-
     public static ArticleUpdateRequestDto createArticleUpdateRequestDto() {
         return new ArticleUpdateRequestDto(
                 "updated-article",
                 "Updated article",
                 "New article content",
                 "java",
-                null,
                 false);
     }
 
@@ -114,7 +105,6 @@ public class ArticleTestFactory {
                 "Updated article",
                 "New article content",
                 "java",
-                createMedia(),
                 true);
     }
 }

@@ -10,8 +10,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     firstname VARCHAR(50) NOT NULL,
     lastname VARCHAR(50) NOT NULL,
-    role VARCHAR(10) NOT NULL,
-    last_login_at TIMESTAMP DEFAULT NULL,
+    avatar VARCHAR(255),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 

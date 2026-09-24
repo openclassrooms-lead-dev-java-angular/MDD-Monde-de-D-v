@@ -32,7 +32,7 @@ public class ArticleController {
     @GetMapping("/{slug}")
     public ArticleResponseDto getArticleBySlug(
             @PathVariable String slug
-    ){
+    ) {
         return articleService.findBySlug(slug);
     }
 
@@ -40,17 +40,21 @@ public class ArticleController {
     public ArticleResponseDto createArticle(
             @Valid @RequestPart("article") ArticleRequestDto articleRequestDto,
             @RequestPart(value = "media", required = false) MultipartFile media
-    ){
+    ) {
         return articleService.create(articleRequestDto, media);
     }
 
-    @PutMapping("/{slug}")
+    @PutMapping(
+            name = "/{slug}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     @PreAuthorize("@articleSecurity.isAuthor(#slug)")
     public ArticleResponseDto updateArticle(
             @PathVariable String slug,
-            @Valid @RequestBody ArticleUpdateRequestDto articleRequestDto
-    ){
-        return articleService.update(slug, articleRequestDto);
+            @Valid @RequestPart("article") ArticleUpdateRequestDto articleRequestDto,
+            @RequestPart(value = "media", required = false) MultipartFile media
+    ) {
+        return articleService.update(slug, articleRequestDto, media);
     }
 
     @GetMapping("/available-slug/{slug}")

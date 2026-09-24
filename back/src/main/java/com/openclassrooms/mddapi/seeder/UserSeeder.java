@@ -1,6 +1,5 @@
 package com.openclassrooms.mddapi.seeder;
 
-import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.repository.UserRepository;
 import lombok.extern.log4j.Log4j2;
@@ -45,7 +44,6 @@ public class UserSeeder extends AbstractSeeder<User> {
                 user.getLastName().toLowerCase()
                 + "@email.com"
         );
-        user.setRole(isAdmin ? Role.ADMIN : Role.USER);
 
         return user;
     }

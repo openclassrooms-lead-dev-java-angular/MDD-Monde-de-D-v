@@ -41,10 +41,13 @@ app:
     access-key: ${MINIO_ACCESS_KEY}
     secret-key: ${MINIO_SECRET_KEY}
     bucket: ${MINIO_BUCKET}
-    storage-base-url: ${MINIO_STORATE_PUBLIC_URL}
+
+  media-url: ${STORAGE_PUBLIC_URL}
 
   storage-path:
     article: "articles"
+    avatar: "avatars"
+
 
 ## Logs
 logging:

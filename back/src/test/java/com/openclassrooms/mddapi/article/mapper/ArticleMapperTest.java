@@ -78,7 +78,6 @@ class ArticleMapperTest {
                 "java",
                 "Updated title",
                 "Updated content",
-                null,
                 false
                 );
 

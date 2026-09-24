@@ -28,7 +28,7 @@ public class JwtTokenService {
      * Generates a short-lived access token for the authenticated user.
      *
      * <p>The token contains the user's identifier as the subject, as well as
-     * their email, roles and token type. The token is signed using the RSA
+     * their email, token type. The token is signed using the RSA
      * private key configured in the application's {@link JwtEncoder}.</p>
      *
      * @param userDetailsImpl authenticated user information
@@ -43,7 +43,6 @@ public class JwtTokenService {
                 .issuedAt(now)
                 .expiresAt(now.plus(Duration.ofMinutes(accessTokenExpiration)))
                 .claim("email", userDetailsImpl.getUsername())
-                .claim("roles", List.of(userDetailsImpl.getRole().name()))
                 .claim("type", "access")
                 .build();
 

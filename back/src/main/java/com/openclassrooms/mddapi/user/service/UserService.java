@@ -2,7 +2,7 @@ package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.common.enums.Role;
+import com.openclassrooms.mddapi.storage.service.StorageService;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.exceptions.UserAlreadyExistsException;
@@ -14,10 +14,12 @@ import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Service responsible for user management operations.
@@ -34,6 +36,13 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
+    private final StorageService storageService;
+
+    @Value("${app.storage-path.avatar}")
+    private String resourceType;
+
+    @Value("${app.media-url}")
+    private String mediaUrl;
 
     /**
      * Persists a new user.
@@ -62,7 +71,7 @@ public class UserService {
 
         return userRepository
                 .findById(userId)
-                .map(userMapper::toDto)
+                .map(user -> userMapper.toDto(user, mediaUrl))
                 .orElseThrow(UserNotFoundException::new);
     }
 
@@ -77,17 +86,38 @@ public class UserService {
      * @throws UserNotFoundException if no user exists with the given identifier
      */
     @Transactional
-    public UserResponseDto updateUser(final UpdateUserDto userDto) {
+    public UserResponseDto updateUser(
+            final UpdateUserDto userDto,
+            MultipartFile media
+    ) {
         Long userId = userDetailsServiceImpl.getPrincipalUserId();
 
         User user = userRepository.getReferenceById(userId);
+        String oldFilename = user.getAvatar();
 
         userMapper.updateEntity(userDto, user);
 
+        boolean isMediaUploaded = media != null
+                && userDto.updatedMedia();
+
+        if (isMediaUploaded) {
+            String filename = storageService.upload(
+                    media,
+                    resourceType,
+                    userDto.username());
+
+            user.setAvatar(filename);
+        }
+
         User updatedUser = userRepository.save(user);
+
+        if (isMediaUploaded) {
+            storageService.delete(oldFilename);
+        }
+
         log.info("User updated with id {}: ", user.getId());
 
-        return userMapper.toDto(updatedUser);
+        return userMapper.toDto(updatedUser, mediaUrl);
     }
 
     /**
@@ -107,9 +137,8 @@ public class UserService {
     /**
      * Registers a new user.
      *
-     * <p>Checks email and username uniqueness, assigns the default
-     * { @link Role#USER } role and encodes the user's password before
-     * persisting the user.</p>
+     * <p>Checks email and username uniqueness, encodes the user's
+     * password before persisting the user.</p>
      *
      * @param dto the registration data
      * @throws EmailAlreadyExistsException if the email is already registered
@@ -118,7 +147,10 @@ public class UserService {
      * occurs during registration
      */
     @Transactional
-    public void register(final RegisterRequestDto dto) {
+    public void register(
+            final RegisterRequestDto dto,
+            final MultipartFile media
+    ) {
         User user = userMapper.fromRegisterDto(dto);
 
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -129,8 +161,13 @@ public class UserService {
             throw new UsernameAlreadyExistsException();
         }
 
-        user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        if (media != null) {
+            String filename = storageService.upload(media, resourceType, dto.username());
+
+            user.setAvatar(filename);
+        }
 
         try {
             userRepository.save(user);
