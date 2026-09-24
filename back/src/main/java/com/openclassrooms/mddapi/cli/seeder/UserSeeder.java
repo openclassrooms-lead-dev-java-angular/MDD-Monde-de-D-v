@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.seeder;
+package com.openclassrooms.mddapi.cli.seeder;
 
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.repository.UserRepository;

@@ -1,9 +1,9 @@
 package com.openclassrooms.mddapi.cli;
 
-import com.openclassrooms.mddapi.seeder.ArticleSeeder;
-import com.openclassrooms.mddapi.seeder.CommentSeeder;
-import com.openclassrooms.mddapi.seeder.TopicSeeder;
-import com.openclassrooms.mddapi.seeder.UserSeeder;
+import com.openclassrooms.mddapi.cli.seeder.ArticleSeeder;
+import com.openclassrooms.mddapi.cli.seeder.CommentSeeder;
+import com.openclassrooms.mddapi.cli.seeder.TopicSeeder;
+import com.openclassrooms.mddapi.cli.seeder.UserSeeder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package com.openclassrooms.mddapi.seeder;
+package com.openclassrooms.mddapi.cli.seeder;
 
 public interface Seeder {
 
