@@ -8,7 +8,6 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,9 +16,7 @@ public interface UserMapper {
 
     @Mapping(
             target = "avatar",
-            expression = "java(entity.getAvatar() != null \n" +
-            "? mediaUrl + entity.getAvatar())" +
-            ": null)"
+            expression = "java(buildMediaUrl(mediaUrl, entity.getAvatar()))"
     )
     UserResponseDto toDto(
             User entity,
@@ -32,4 +29,11 @@ public interface UserMapper {
     );
 
     User fromRegisterDto(RegisterRequestDto registerDto);
+
+    default String buildMediaUrl(String media, String mediaUrl) {
+        if (media == null) {
+            return null;
+        }
+        return mediaUrl + media;
+    }
 }
