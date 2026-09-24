@@ -100,7 +100,7 @@ public class UserService {
         boolean isMediaUploaded = media != null
                 && userDto.updatedMedia();
 
-        if (media != null) {
+        if (isMediaUploaded) {
             String filename = storageService.upload(
                     media,
                     resourceType,
