@@ -44,6 +44,9 @@ public class ArticleService {
     @Value("${app.storage-path.article}")
     private String resourceType;
 
+    @Value("${app.media-url}")
+    private String mediaUrl;
+
     /**
      * Retrieves a paginated list of articles.
      *
@@ -57,7 +60,7 @@ public class ArticleService {
     public Page<ArticleResponseDto> findAll(Pageable pageable) {
         return articleRepository
                 .findAll(pageable)
-                .map(articleMapper::toDto);
+                .map(article -> articleMapper.toDto(article, mediaUrl));
     }
 
     /**
@@ -71,7 +74,7 @@ public class ArticleService {
     public ArticleResponseDto findBySlug(final String slug) {
         return articleRepository
                 .findBySlug(slug)
-                .map(articleMapper::toDto)
+                .map(article -> articleMapper.toDto(article, mediaUrl))
                 .orElseThrow(() -> new ArticleNotFoundException("Article not found with slug : " + slug));
     }
 
@@ -115,7 +118,7 @@ public class ArticleService {
 
         log.info("Saved article {}", savedArticle.getSlug());
 
-        return articleMapper.toDto(savedArticle);
+        return articleMapper.toDto(savedArticle, mediaUrl);
     }
 
     /**
@@ -180,7 +183,7 @@ public class ArticleService {
 
         log.info("Uodated article with slug {}", savedArticle.getSlug());
 
-        return articleMapper.toDto(savedArticle);
+        return articleMapper.toDto(savedArticle, mediaUrl);
     }
 
     /**

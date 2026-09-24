@@ -45,7 +45,7 @@ public class ArticleController {
     }
 
     @PutMapping(
-            name = "/{slug}",
+            value = "/{slug}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     @PreAuthorize("@articleSecurity.isAuthor(#slug)")
