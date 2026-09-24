@@ -41,7 +41,7 @@ public class UserController {
      * @return the updated user's information
      */
     @PatchMapping(
-            name = "/me",
+            value = "/me",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public UserResponseDto patch(
