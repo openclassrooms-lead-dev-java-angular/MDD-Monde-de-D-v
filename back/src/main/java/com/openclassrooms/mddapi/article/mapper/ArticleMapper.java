@@ -15,9 +15,7 @@ import org.springframework.stereotype.Component;
 public interface ArticleMapper {
 
     @Mapping(source = "author.username", target = "username")
-    @Mapping(target = "media", expression = "java(entity.getMedia() != null\n" +
-            "                        ? mediaUrl + entity.getMedia()\n" +
-            "                        : null)")
+    @Mapping(target = "media", expression = "java(buildMediaUrl(article.getMedia(), mediaUrl))")
     ArticleResponseDto toDto(
             Article article,
             @Context String mediaUrl
@@ -31,4 +29,11 @@ public interface ArticleMapper {
             ArticleUpdateRequestDto articleDto,
             @MappingTarget Article article
     );
+
+    default String buildMediaUrl(String media, String mediaUrl) {
+        if (media == null) {
+            return null;
+        }
+        return mediaUrl + media;
+    }
 }

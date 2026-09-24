@@ -145,7 +145,8 @@ public class ArticleService {
             final ArticleUpdateRequestDto articleRequestDto,
             MultipartFile media
     ) {
-        if (articleRepository.existsBySlug(articleRequestDto.slug())) {
+        if (!slug.equals(articleRequestDto.slug())
+                && articleRepository.existsBySlug(articleRequestDto.slug())) {
             throw new ArticleSlugAlreadyExists("Slug already exists : " + slug);
         }
 
