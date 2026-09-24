@@ -139,22 +139,22 @@ public class ArticleService {
     @Transactional
     public ArticleResponseDto update(
             final String slug,
-            final ArticleUpdateRequestDto articleRequestDto
+            final ArticleUpdateRequestDto articleRequestDto,
+            MultipartFile media
     ) {
         if (articleRepository.existsBySlug(articleRequestDto.slug())) {
             throw new ArticleSlugAlreadyExists("Slug already exists : " + slug);
         }
 
-        if (
-                !slug.equals(articleRequestDto.slug())
-                        && !articleRepository.existsBySlug(slug)
+        if (!slug.equals(articleRequestDto.slug())
+                && !articleRepository.existsBySlug(slug)
         ) {
             throw new ArticleNotFoundException("Article not found with slug : " + slug);
         }
 
         checkTopicSlug(articleRequestDto.topicSlug());
 
-        boolean isMediaUploaded = articleRequestDto.media() != null
+        boolean isMediaUploaded = media != null
                 && articleRequestDto.updatedMedia();
 
         Article article = articleRepository.getReferenceBySlug(slug);
@@ -164,7 +164,7 @@ public class ArticleService {
         // media upload
         if (isMediaUploaded) {
             String filename = storageService.upload(
-                    articleRequestDto.media(),
+                    media,
                     resourceType,
                     articleRequestDto.slug()
             );

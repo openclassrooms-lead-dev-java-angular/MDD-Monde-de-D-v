@@ -1,6 +1,5 @@
 package com.openclassrooms.mddapi.user.dto;
 
-import com.openclassrooms.mddapi.common.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,10 +29,7 @@ public record UserResponseDto(
         @Size(max = 50)
         String lastName,
 
-        @NotNull
-        Role role,
-
-        LocalDateTime lastLoginAt,
+        String avatar,
 
         LocalDateTime createdAt,
 

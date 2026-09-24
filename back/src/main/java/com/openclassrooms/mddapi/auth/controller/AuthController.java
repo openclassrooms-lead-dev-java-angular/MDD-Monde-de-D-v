@@ -10,9 +10,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -43,12 +45,16 @@ public class AuthController {
         );
     }
 
-    @PostMapping("/register")
+    @PostMapping(
+            name = "/register",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void register(
-            @Valid @RequestBody RegisterRequestDto dto
+            @Valid @RequestPart("register") RegisterRequestDto dto,
+            @RequestPart(value = "media", required = false) MultipartFile media
     ) {
-        authService.register(dto);
+        authService.register(dto, media);
     }
 
     @PostMapping("/refresh")

@@ -16,8 +16,6 @@ public record ArticleUpdateRequestDto(
         @Size(max = 255)
         String content,
 
-        MultipartFile media,
-
         @NotNull
         Boolean updatedMedia
 ) { }
