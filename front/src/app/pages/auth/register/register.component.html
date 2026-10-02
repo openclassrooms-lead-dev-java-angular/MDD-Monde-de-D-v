@@ -1,0 +1,61 @@
+<section class="register">
+  <div>
+    <button class="register__back-button" (click)="goBack()">
+      <mat-icon
+        aria-hidden="false"
+        aria-label="Example home icon"
+        fontIcon="arrow_back"
+      />
+    </button>
+  </div>
+
+  <div class="register__content">
+    <div class="register__content__header">
+      <div class="register__content__header__logo-container">
+              <img class="register__content__logo" src="/assets/logo_p6.png" alt="logo" />
+      </div>
+
+      <h1 class="register__content__title">Inscription</h1>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="submit()">
+      
+      <app-input
+        label="Adresse e-mail"
+        type="email"
+        formControlName="email"
+        [errors]="emailErrors"
+      />
+
+      <app-input
+        label="Nom d'utilisateur"
+        type="text"
+        formControlName="username"
+        [errors]="usernameErrors"
+      />
+
+      <app-input
+        label="Mot de passe"
+        type="password"
+        formControlName="password"
+        [errors]="passwordErrors"
+      />
+
+      @if (errorMessage) {
+        <p class="error">
+          {{ errorMessage }}
+        </p>
+      }
+      <div>
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="isLoading"
+        >
+          {{ isLoading ? "Création..." : "S'inscrire" }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
