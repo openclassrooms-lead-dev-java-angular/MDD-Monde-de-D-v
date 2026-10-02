@@ -1,4 +1,28 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+/* FONTS */
+/* Inter */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+html,
+body {
+  height: 100%;
+
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      typography: (
+        brand-family: 'Inter',
+        plain-family: 'Inter',
+      ),
+      density: 0,
+    )
+  );
+}
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
