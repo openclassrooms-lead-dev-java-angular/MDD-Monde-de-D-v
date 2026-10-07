@@ -1,0 +1,34 @@
+@if (type() === "link") {
+  <a
+    mat-stroked-button
+    [routerLink]="routerLink()"
+    [attr.aria-label]="alt()"
+    [class]="variantClass()"
+    [style.font-weight]="fontWeight()"
+    [title]="alt()"
+  >
+    {{ label() }}
+  </a>
+} @else {
+  @if (outlined()) {
+    <button
+      mat-stroked-button
+      [type]="type()"
+      [class]="variantClass()"
+      [style.font-weight]="fontWeight()"
+      (click)="action()?.()"
+    >
+      {{ label() }}
+    </button>
+  } @else {
+    <button
+      mat-flat-button
+      [type]="type()"
+      [style.font-weight]="fontWeight()"
+      [class]="variantClass()"
+      (click)="action()?.()"
+    >
+      {{ label() }}
+    </button>
+  }
+}

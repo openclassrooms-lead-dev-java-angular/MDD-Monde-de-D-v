@@ -53,7 +53,7 @@ public class AuthService {
     ) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.email(),
+                        loginRequest.usernameOrEmail(),
                         loginRequest.password()
                 )
         );
@@ -64,7 +64,7 @@ public class AuthService {
         String refreshToken = jwtTokenService.generateRefreshToken(userDetails);
 
         ResponseCookie accessTokenCookie = cookieService.generateAccessTokenCookie(accessToken);
-        ResponseCookie refreshTokenCookie = cookieService.generateAccessTokenCookie(refreshToken);
+        ResponseCookie refreshTokenCookie = cookieService.generateRefreshTokenCookie(refreshToken);
 
         return Map.of(
                 "accessTokenCookie", accessTokenCookie,
@@ -111,11 +111,8 @@ public class AuthService {
      * @param registerRequestDto the data required to register the user
      */
     @Transactional
-    public void register(
-            RegisterRequestDto registerRequestDto,
-            final MultipartFile media
-    ) {
-        userService.register(registerRequestDto, media);
+    public void register(RegisterRequestDto registerRequestDto) {
+        userService.register(registerRequestDto);
     }
 
     /**

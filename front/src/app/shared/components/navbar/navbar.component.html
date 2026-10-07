@@ -1,0 +1,67 @@
+@if (!isLogged() && !isMobile() && !isHomePage()) {
+  <nav class="navbar">
+    <mat-toolbar class="navbar__toolbar">
+      <!-- Logo -->
+      <a class="navbar__logo" routerLink="/">
+        <img src="/assets/logo_p6.png" alt="Logo" class="navbar__logo-image" />
+      </a>
+    </mat-toolbar>
+  </nav>
+}
+
+@if (isLogged()) {
+  <nav class="navbar">
+    <mat-toolbar class="navbar__toolbar">
+      <!-- Logo -->
+      <a class="navbar__logo" routerLink="/">
+        <img src="/assets/logo_p6.png" alt="Logo" class="navbar__logo-image" />
+      </a>
+
+      <!-- Navigation desktop -->
+      <div class="navbar__links">
+        <a mat-button routerLink="/" routerLinkActive="active"> Topics </a>
+
+        <a mat-button routerLink="/about" routerLinkActive="active">
+          À propos
+        </a>
+
+        <a mat-button routerLink="/contact" routerLinkActive="active">
+          Contact
+        </a>
+      </div>
+
+      <!-- Actions -->
+      <div class="navbar__actions">
+        <!-- Hamburger mobile -->
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="mobileMenu"
+          aria-label="Ouvrir le menu"
+          class="navbar__menu-button"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+
+    <!-- Mobile menu -->
+    <mat-menu #mobileMenu="matMenu">
+      <a mat-menu-item routerLink="/">
+        <mat-icon>home</mat-icon>
+        <span>Accueil</span>
+      </a>
+
+      <a mat-menu-item routerLink="/about">
+        <mat-icon>info</mat-icon>
+        <span>À propos</span>
+      </a>
+
+      <a mat-menu-item routerLink="/contact">
+        <mat-icon>mail</mat-icon>
+        <span>Contact</span>
+      </a>
+
+      <mat-divider></mat-divider>
+    </mat-menu>
+  </nav>
+}

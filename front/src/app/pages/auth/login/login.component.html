@@ -1,0 +1,45 @@
+<section class="login">
+  <button class="login__back-button" (click)="goBack()">
+    <mat-icon
+      aria-hidden="false"
+      aria-label="Example home icon"
+      fontIcon="arrow_back"
+    />
+  </button>
+
+  <div class="login__content">
+    <div class="login__content__header">
+      <div class="login__content__header__logo-container">
+        <img class="logo" src="/assets/logo_p6.png" alt="logo" />
+      </div>
+      <h1 class="login__content__header__title">Connexion</h1>
+    </div>
+
+    <form class="login__form" [formGroup]="loginForm" (ngSubmit)="submit()">
+      <app-input
+        label="E-mail ou nom d'utilisateur"
+        type="text"
+        formControlName="usernameOrEmail"
+        [errors]="usernameOrEmailErrors"
+      />
+
+      <app-input
+        label="Mot de passe"
+        type="password"
+        formControlName="password"
+        [errors]="passwordErrors"
+      />
+
+      <div class="login__form__actions">
+        <app-button
+          [disabled]="isLoading"
+          type="submit"
+          color="primary"
+          label="{{ isLoading ? 'Connexion...' : 'Se connecter' }}"
+          color="primary"
+          class="login__content__submit-button"
+        />
+      </div>
+    </form>
+  </div>
+</section>

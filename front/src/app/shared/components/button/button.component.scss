@@ -1,0 +1,72 @@
+@use "../../../../styles/variables.scss" as *;
+
+:host {
+  display: inline-block;
+  line-height: 0;
+}
+
+button,
+a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  min-width: 120px;
+  height: 36px;
+
+  padding: 0 1rem;
+
+  font-family: "Inter", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  line-height: 1;
+
+  border-radius: 4px;
+
+  white-space: nowrap;
+}
+
+.button-primary {
+  background-color: $color-primary;
+}
+
+/*
+ * TABLET
+ */
+
+@media (min-width: $breakpoint-md) and (max-width: $breakpoint-lg) {
+  button,
+  a {
+    min-width: 125px;
+    height: 38px;
+
+    padding: 0 1.1rem;
+
+    font-size: 0.8rem;
+  }
+}
+
+/*
+ * MOBILE
+ */
+
+@media (max-width: $breakpoint-md) {
+  :host {
+    width: 100%;
+  }
+
+  button,
+  a {
+    width: 140px;
+    min-width: 140px;
+
+    height: 38px;
+
+    padding: 0 1rem;
+
+    font-size: 0.8rem;
+  }
+}
