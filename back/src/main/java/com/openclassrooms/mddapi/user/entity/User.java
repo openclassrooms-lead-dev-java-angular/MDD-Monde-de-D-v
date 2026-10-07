@@ -51,24 +51,6 @@ public class User extends BaseEntity {
     @Size(max = 255)
     private String password;
 
-    @Column(
-            name = "firstname",
-            nullable = false,
-            length = 50
-    )
-    @NotBlank
-    @Size(max = 50)
-    private String firstName;
-
-    @Column(
-            name = "lastname",
-            nullable = false,
-            length = 50
-    )
-    @NotBlank
-    @Size(max = 50)
-    private String lastName;
-
     @Column()
     private String avatar;
 }

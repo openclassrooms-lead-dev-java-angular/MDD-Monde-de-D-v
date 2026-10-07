@@ -25,23 +25,19 @@ public class UserSeeder extends AbstractSeeder<User> {
         log.info("Seeding Users ");
 
         return List.of(
-                generateUser("John", "Doe", true),
-                generateUser("Jane", "Doe", true),
-                generateUser("John", "Smith", true)
+                generateUser("John", "Doe"),
+                generateUser("Jane", "Doe"),
+                generateUser("John", "Smith")
         );
     }
 
-    private User generateUser(String firstName, String lastName, Boolean isAdmin) {
+    private User generateUser(String firstName, String lastName) {
 
         User user = new User();
         user.setUsername(firstName + "_" + lastName);
         user.setPassword(passwordEncoder.encode("Password/1234"));
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
         user.setEmail(
-                user.getFirstName().toLowerCase()
-                + "-" +
-                user.getLastName().toLowerCase()
+                user.getUsername().toLowerCase()
                 + "@email.com"
         );
 
