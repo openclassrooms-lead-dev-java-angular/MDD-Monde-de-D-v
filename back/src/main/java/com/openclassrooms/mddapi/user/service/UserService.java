@@ -147,10 +147,7 @@ public class UserService {
      * occurs during registration
      */
     @Transactional
-    public void register(
-            final RegisterRequestDto dto,
-            final MultipartFile media
-    ) {
+    public void register(final RegisterRequestDto dto) {
         User user = userMapper.fromRegisterDto(dto);
 
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -162,12 +159,6 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        if (media != null) {
-            String filename = storageService.upload(media, resourceType, dto.username());
-
-            user.setAvatar(filename);
-        }
 
         try {
             userRepository.save(user);
