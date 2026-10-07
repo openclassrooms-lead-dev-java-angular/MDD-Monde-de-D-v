@@ -1,9 +1,10 @@
 @if (type() === "link") {
   <a
     mat-stroked-button
-    [href]="routerLink()"
+    [routerLink]="routerLink()"
     [attr.aria-label]="alt()"
-    [style.background-color]="backgroundColor()"
+    [class]="variantClass()"
+    [style.font-weight]="fontWeight()"
     [title]="alt()"
   >
     {{ label() }}
@@ -13,8 +14,8 @@
     <button
       mat-stroked-button
       [type]="type()"
-      [style.background-color]="backgroundColor()"
-      [style.font-style]="fontStyle()"
+      [class]="variantClass()"
+      [style.font-weight]="fontWeight()"
       (click)="action()?.()"
     >
       {{ label() }}
@@ -23,8 +24,8 @@
     <button
       mat-flat-button
       [type]="type()"
-      [style.font-style]="fontStyle()"
-      [style.background-color]="backgroundColor()"
+      [style.font-weight]="fontWeight()"
+      [class]="variantClass()"
       (click)="action()?.()"
     >
       {{ label() }}

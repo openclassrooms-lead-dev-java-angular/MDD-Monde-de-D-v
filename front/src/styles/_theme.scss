@@ -1,0 +1,18 @@
+@use "@angular/material" as mat;
+
+$theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$violet-palette,
+    ),
+    typography: (
+      brand-family: "Inter",
+      plain-family: "Inter",
+      bold-weight: 600,
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);

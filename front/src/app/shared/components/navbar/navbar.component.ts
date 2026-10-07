@@ -5,10 +5,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+} from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { UserStateService } from '@service/user-state.service';
-import { map } from 'rxjs';
+import { filter, map, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
@@ -39,5 +44,12 @@ export class NavbarComponent {
     { initialValue: false },
   );
 
-  readonly isHomePage = this.router.url === '/';
+  readonly isHomePage = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects === '/'),
+      startWith(this.router.url === '/'),
+    ),
+    { initialValue: this.router.url === '/' },
+  );
 }

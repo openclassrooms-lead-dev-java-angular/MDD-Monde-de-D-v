@@ -1,28 +1,23 @@
-@use '@angular/material' as mat;
+@use "@angular/material" as mat;
+@use "./theme" as app-theme;
+@use "./variables" as *;
+
+@include mat.core();
 
 /* FONTS */
 /* Inter */
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
-html,
-body {
-  height: 100%;
-
-  @include mat.theme(
-    (
-      color: mat.$violet-palette,
-      typography: (
-        brand-family: 'Inter',
-        plain-family: 'Inter',
-      ),
-      density: 0,
-    )
-  );
+html {
+  @include mat.all-component-themes(app-theme.$theme);
 }
+
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  background: $color-background;
+  color: $color-text;
+  font-family: "Inter", sans-serif;
 }

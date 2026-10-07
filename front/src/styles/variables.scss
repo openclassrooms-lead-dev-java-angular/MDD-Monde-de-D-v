@@ -1,8 +1,23 @@
-$color-text: #000000;
+// Brand
+$color-primary: #7d5bdd;
+$color-primary-dark: #6845c7;
+$color-primary-light: #a98fe8;
+$color-primary-soft: #f1edfc;
 
-$color-primary: #7763c5;
-$color-danger: #a40f0f;
-$color-background: #f5f5f5;
+// Neutral
+$color-white: #ffffff;
+$color-background: #ffffff;
+$color-surface: #fafafa;
 
+$color-text: #2c2c2c;
+$color-text-secondary: #666666;
+$color-border: #d9d9df;
+
+// States
+$color-error: #ef4924;
+$color-success: #2e9b62;
+$color-info: #0e8ae8;
+
+// Layout
 $breakpoint-md: 768px;
-$breakpoint-lg: 991px;
+$breakpoint-lg: 1024px;

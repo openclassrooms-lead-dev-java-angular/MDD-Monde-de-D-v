@@ -15,7 +15,7 @@
       <h1 class="login__content__header__title">Connexion</h1>
     </div>
 
-    <form [formGroup]="loginForm" (ngSubmit)="submit()">
+    <form class="login__form" [formGroup]="loginForm" (ngSubmit)="submit()">
       <app-input
         label="E-mail ou nom d'utilisateur"
         type="text"
@@ -30,13 +30,16 @@
         [errors]="passwordErrors"
       />
 
-      <app-button
-        [disabled]="isLoading"
-        type="submit"
-        label="{{ isLoading ? 'Connexion...' : 'Se connecter' }}"
-        color="primary"
-        class="login__content__submit-button"
-      />
+      <div class="login__form__actions">
+        <app-button
+          [disabled]="isLoading"
+          type="submit"
+          color="primary"
+          label="{{ isLoading ? 'Connexion...' : 'Se connecter' }}"
+          color="primary"
+          class="login__content__submit-button"
+        />
+      </div>
     </form>
   </div>
 </section>
