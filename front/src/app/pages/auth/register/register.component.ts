@@ -25,12 +25,14 @@ import {
 } from 'rxjs';
 import { InputComponent } from 'src/app/shared/components/input/input.component';
 import { RegisterForm } from 'src/app/core/types/RegisterForm.type';
+import { ButtonComponent } from 'src/app/shared/components/button/button.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
   imports: [
     InputComponent,
+    ButtonComponent,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,

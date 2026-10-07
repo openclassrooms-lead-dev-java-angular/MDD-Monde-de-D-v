@@ -8,5 +8,4 @@ if (environment.production) {
   enableProdMode();
 }
 
-bootstrapApplication(AppComponent, appConfig)
-  .catch(error => console.error(error));
+bootstrapApplication(AppComponent, appConfig).catch((error) => console.error(error));

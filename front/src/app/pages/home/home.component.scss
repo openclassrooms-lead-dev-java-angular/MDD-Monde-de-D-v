@@ -1,7 +1,80 @@
-.center {
-  height: 100vh;
+@use "../../../styles/variables.scss" as *;
+
+.home {
+  width: 100%;
+  min-height: 100dvh;
+
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  padding: 2rem;
+
+  background: #fff;
+
+  /* 
+   * LOGO
+   */
+
+  &__logo {
+    display: block;
+
+    width: 180px;
+    height: auto;
+
+    @media (min-width: $breakpoint-lg) {
+      width: 400px;
+    }
+  }
+
+  /* 
+   * BUTTONS
+   */
+  &__buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 1.25rem;
+
+    margin-top: 1.75rem;
+  }
+
+  /*
+   * TABLET
+   */
+  @media (min-width: $breakpoint-md) and (max-width: $breakpoint-lg) {
+    &__logo {
+      width: 160px;
+    }
+
+    &__buttons {
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+  }
+
+  /*
+   * MOBILE
+   */
+
+  @media (max-width: $breakpoint-md) {
+    padding: 1.5rem;
+
+    &__logo {
+      width: 140px;
+    }
+
+    &__buttons {
+      flex-direction: column;
+
+      gap: 0.75rem;
+
+      margin-top: 1.5rem;
+    }
+  }
 }
