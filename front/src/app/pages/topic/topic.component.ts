@@ -41,10 +41,6 @@ export class TopicComponent implements OnInit {
 
     this.topicService.getTopics(pageNumber, this.pageSize).subscribe({
       next: (page) => {
-        console.log('PAGE:', page);
-        console.log('CONTENT:', page.content);
-        console.log('CONTENT IS ARRAY:', Array.isArray(page.content));
-        this.topicList.update((topics) => [...topics, ...page.content]);
         this.currentPage = page.number + 1;
         this.hasMore.set(!page.last);
 
