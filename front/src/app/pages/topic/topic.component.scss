@@ -1,0 +1,53 @@
+@use '../../../styles/variables.scss' as *;
+
+:host {
+  display: block;
+}
+
+.topic-list {
+  margin: 0 50px;
+
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  padding: 14px;
+  box-sizing: border-box;
+
+  &__empty {
+    grid-column: 1 / -1;
+
+    margin: 20px 0;
+
+    text-align: center;
+
+    color: #666;
+    font-size: 13px;
+  }
+
+  &__loader {
+    grid-column: 1 / -1;
+
+    padding: 20px;
+
+    text-align: center;
+
+    color: #666;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 600px) {
+  .topic-list {
+    grid-template-columns: 1fr;
+    gap: 8px;
+
+    padding: 8px;
+  }
+}
+
+@media (min-width: $breakpoint-lg) {
+  .topic-list {
+    margin: 0 10%;
+  }
+}

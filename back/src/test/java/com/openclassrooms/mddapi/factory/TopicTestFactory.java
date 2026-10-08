@@ -14,10 +14,10 @@ public class TopicTestFactory {
 
     public static TopicResponseDto createTopicResponseDto() {
         return new TopicResponseDto(
-                1L,
                 "Java",
                 "java",
                 "Java development.",
+                false,
                 generateCreatedAt(),
                 generateUpdatedAt()
         );
@@ -25,19 +25,19 @@ public class TopicTestFactory {
 
     public static List<TopicResponseDto> createTopicResponseDtoList() {
         TopicResponseDto topic1 = new TopicResponseDto(
-                1L,
                 "Java",
                 "java",
                 "Java development.",
+                false,
                 generateCreatedAt(),
                 generateUpdatedAt()
         );
 
         TopicResponseDto topic2 = new TopicResponseDto(
-                2L,
                 "Python",
                 "python",
                 "Python development.",
+                false,
                 generateCreatedAt(),
                 generateUpdatedAt()
         );
@@ -48,19 +48,19 @@ public class TopicTestFactory {
     public static Page<TopicResponseDto> createPageableTopicsResponseDto() {
 
         TopicResponseDto topic1 = new TopicResponseDto(
-                1L,
                 "Java",
                 "java",
                 "Java development.",
+                false,
                 generateCreatedAt(),
                 generateUpdatedAt()
         );
 
         TopicResponseDto topic2 = new TopicResponseDto(
-                2L,
                 "Python",
                 "python",
                 "Python development.",
+                false,
                 generateCreatedAt(),
                 generateUpdatedAt()
         );

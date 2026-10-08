@@ -1,0 +1,26 @@
+<section
+  class="topic-list"
+  infiniteScroll
+  [infiniteScrollDistance]="2"
+  [infiniteScrollThrottle]="150"
+  (scrolled)="loadMore()"
+>
+  @for (topic of topicList(); track topic.slug) {
+    <app-topic-card 
+      [topic]="topic" 
+      (subscribe)="subscribeToTopic($event)" 
+    />
+  } @empty {
+    @if (!loading()) {
+      <p class="topic-list__empty">
+        Aucun thème disponible.
+      </p>
+    }
+  }
+
+  @if (loading()) {
+    <div class="topic-list__loader">
+      Chargement...
+    </div>
+  }
+</section>

@@ -1,0 +1,18 @@
+<article class="topic-card">
+  <h2 class="topic-card__title">
+    {{ topic().name }}
+  </h2>
+
+  <p class="topic-card__description">
+    {{ topic().description }}
+  </p>
+
+  <button
+    type="button"
+    class="topic-card__button"
+    [class.topic-card__button--subscribed]="topic().subscribed"
+    (click)="subscribe.emit(topic())"
+  >
+    {{ topic().subscribed ? 'Déjà abonné' : 'S’abonner' }}
+  </button>
+</article>

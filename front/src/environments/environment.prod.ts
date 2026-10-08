@@ -4,5 +4,6 @@ export const environment = {
   apiRoute: {
     auth: `v1/auth`,
     user: `v1/users`,
+    topic: `v1/topics`,
   },
 };
