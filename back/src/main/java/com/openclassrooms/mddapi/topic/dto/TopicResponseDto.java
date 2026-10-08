@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record TopicResponseDto(
-        @NotNull
-        Long id,
 
         @NotBlank
         String name,
@@ -16,6 +14,8 @@ public record TopicResponseDto(
         String slug,
 
         String description,
+
+        Boolean subscribed,
 
         LocalDateTime createdAt,
 
