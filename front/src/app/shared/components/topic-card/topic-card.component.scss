@@ -1,0 +1,74 @@
+:host {
+  display: block;
+}
+
+.topic-card {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 108px;
+  padding: 12px;
+
+  background-color: #f5f5f5;
+  border-radius: 6px;
+
+  &__title {
+    margin: 0 0 8px;
+
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  &__description {
+    margin: 0;
+
+    font-size: 11px;
+    line-height: 1.25;
+
+    // Permet de garder des cartes de hauteur similaire
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+
+  &__button {
+    align-self: center;
+
+    min-width: 112px;
+    margin-top: auto;
+    padding: 7px 16px;
+
+    border: 0;
+    border-radius: 5px;
+
+    background-color: #7657d8;
+    color: white;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+      background-color 150ms ease,
+      transform 150ms ease;
+
+    &:hover {
+      background-color: #6546c8;
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+
+    &--subscribed {
+      background-color: #999;
+
+      &:hover {
+        background-color: #888;
+      }
+    }
+  }
+}
