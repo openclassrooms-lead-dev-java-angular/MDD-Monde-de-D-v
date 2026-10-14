@@ -7,6 +7,7 @@ import { ButtonComponent } from 'src/app/shared/components/button/button.compone
 
 @Component({
   selector: 'app-feed',
+  standalone: true,
   imports: [ButtonComponent, ArticleCardComponent],
   templateUrl: './feed.component.html',
   styleUrl: './feed.component.scss',
