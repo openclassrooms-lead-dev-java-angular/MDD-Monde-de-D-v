@@ -5,5 +5,6 @@ export const environment = {
     auth: `v1/auth`,
     user: `v1/users`,
     topic: `v1/topics`,
+    article: `v1/articles`,
   },
 };

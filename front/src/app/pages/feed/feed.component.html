@@ -1,0 +1,38 @@
+<section class="article-list">
+  <div class="article-list__toolbar">
+    <app-button
+      [disabled]="isLoading()"
+      type="button"
+      color="primary"
+      label="Ajouter un article"
+      color="primary"
+      class="btn-create"
+    />
+    <button
+      type="button"
+      class="btn-sort"
+      (click)="toggleSort()"
+      [disabled]="isLoading()"
+      [attr.aria-label]="
+        sortDirection() === 'desc'
+          ? 'Trier par date croissante'
+          : 'Trier par date décroissante'
+      "
+    >
+      <span>Trier par date</span>
+      <span class="sort-icon" aria-hidden="true">
+        {{ sortDirection() === 'asc' ? '↑' : '↓' }}
+      </span>
+    </button>
+  </div>
+
+  <div class="article-list__grid">
+    @for (article of articleList(); track article.slug) {
+      <app-article-card [article]="article" />
+    }
+
+    @if (articleList().length === 0) {
+      <p class="empty-state">Aucun article disponible.</p>
+    }
+  </div>
+</section>
