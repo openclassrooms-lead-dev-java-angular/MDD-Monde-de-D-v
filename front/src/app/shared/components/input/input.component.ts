@@ -1,19 +1,14 @@
-import { Component, forwardRef, input } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, inject, input } from '@angular/core';
+import { ControlValueAccessor, NgControl } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-input',
+  standalone: true,
   imports: [MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => InputComponent),
-      multi: true,
-    },
-  ],
   templateUrl: './input.component.html',
   styleUrl: './input.component.scss',
 })
@@ -24,8 +19,23 @@ export class InputComponent implements ControlValueAccessor {
   readonly errors = input<string[]>([]);
   readonly loading = input(false);
 
+  readonly ngControl = inject(NgControl, {
+    self: true,
+    optional: true,
+  });
+
+  readonly errorStateMatcher: ErrorStateMatcher = {
+    isErrorState: () => this.errors().length > 0,
+  };
+
   value = '';
   disabled = false;
+
+  constructor() {
+    if (this.ngControl) {
+      this.ngControl.valueAccessor = this;
+    }
+  }
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
