@@ -1,63 +1,76 @@
-@if (!isLogged() && !isMobile() && !isHomePage()) {
-  <nav class="navbar">
-    <mat-toolbar class="navbar__toolbar">
-      <!-- Logo -->
-      <a class="navbar__logo" routerLink="/">
-        <img src="/assets/logo_p6.png" alt="Logo" class="navbar__logo-image" />
-      </a>
-    </mat-toolbar>
-  </nav>
-}
-
 @if (isLogged()) {
   <nav class="navbar">
     <mat-toolbar class="navbar__toolbar">
-      <!-- Logo -->
-      <a class="navbar__logo" routerLink="/">
+      <a
+        class="navbar__logo"
+        [routerLink]="getHomeRoute()"
+        aria-label="Accueil"
+      >
         <img src="/assets/logo_p6.png" alt="Logo" class="navbar__logo-image" />
       </a>
 
-      <!-- Navigation desktop -->
-      <div class="navbar__links">
-        <a mat-button routerLink="/topics" routerLinkActive="active"> Topics </a>
+      @if (!isMobile()) {
+        <div class="navbar__links">
+          <button type="button" mat-button (click)="logout()">
+            Se déconnecter
+          </button>
+          <a mat-button routerLink="/feed">Articles</a>
+          <a mat-button routerLink="/topics">Thèmes</a>
+          <a mat-icon-button routerLink="/profile" aria-label="Mon profil">
+            <mat-icon>account_circle</mat-icon>
+          </a>
+        </div>
+      }
 
-        <a mat-button routerLink="/about" routerLinkActive="active"> À propos </a>
-
-        <a mat-button routerLink="/contact" routerLinkActive="active"> Contact </a>
-      </div>
-
-      <!-- Actions -->
-      <div class="navbar__actions">
-        <!-- Hamburger mobile -->
+      @if (isMobile()) {
         <button
           mat-icon-button
-          [matMenuTriggerFor]="mobileMenu"
-          aria-label="Ouvrir le menu"
           class="navbar__menu-button"
+          (click)="toggleMobileMenu()"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          aria-label="Ouvrir le menu"
         >
           <mat-icon>menu</mat-icon>
         </button>
-      </div>
+      }
     </mat-toolbar>
 
-    <!-- Mobile menu -->
-    <mat-menu #mobileMenu="matMenu">
-      <a mat-menu-item routerLink="/">
-        <mat-icon>home</mat-icon>
-        <span>Accueil</span>
-      </a>
+    @if (mobileMenuOpen() && isMobile()) {
+      <!-- Fond semi-transparent -->
+      <div class="navbar__backdrop" (click)="closeMobileMenu()"></div>
 
-      <a mat-menu-item routerLink="/about">
-        <mat-icon>info</mat-icon>
-        <span>À propos</span>
-      </a>
+      <!-- Panneau latéral -->
+      <aside class="navbar__mobile-panel" aria-label="Navigation mobile">
+        <button
+          mat-icon-button
+          class="navbar__close-button"
+          (click)="closeMobileMenu()"
+          aria-label="Fermer le menu"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
 
-      <a mat-menu-item routerLink="/contact">
-        <mat-icon>mail</mat-icon>
-        <span>Contact</span>
-      </a>
+        <nav class="navbar__mobile-links">
+          <button type="button" class="navbar__logout" (click)="logout()">
+            Se déconnecter
+          </button>
 
-      <mat-divider></mat-divider>
-    </mat-menu>
+          <a routerLink="/feed" (click)="closeMobileMenu()"> Articles </a>
+
+          <a routerLink="/topics" (click)="closeMobileMenu()"> Thèmes </a>
+
+          <a routerLink="/about" (click)="closeMobileMenu()"> À propos </a>
+        </nav>
+
+        <a
+          class="navbar__profile"
+          routerLink="/profile"
+          (click)="closeMobileMenu()"
+          aria-label="Mon profil"
+        >
+          <mat-icon>person_outline</mat-icon>
+        </a>
+      </aside>
+    }
   </nav>
 }

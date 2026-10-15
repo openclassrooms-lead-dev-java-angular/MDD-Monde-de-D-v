@@ -1,4 +1,4 @@
-@use "../../../../styles/variables.scss" as *;
+@use '../../../../styles/variables.scss' as *;
 
 .navbar {
   width: 100%;
@@ -6,6 +6,7 @@
 
   &__toolbar {
     display: flex;
+    justify-content: space-between;
     align-items: center;
 
     width: 100%;
@@ -47,7 +48,7 @@
 
       padding: 0 0.75rem;
 
-      font-family: "Inter", sans-serif;
+      font-family: 'Inter', sans-serif;
       font-size: 0.8rem;
       font-weight: 400;
 

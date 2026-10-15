@@ -8,7 +8,10 @@ import { SortDirection } from '@type/sort-direction.type';
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [ButtonComponent, ArticleCardComponent],
+  imports: [
+    ButtonComponent, 
+    ArticleCardComponent
+  ],
   templateUrl: './feed.component.html',
   styleUrl: './feed.component.scss',
 })
