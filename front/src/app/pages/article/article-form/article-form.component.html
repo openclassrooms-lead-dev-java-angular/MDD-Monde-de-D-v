@@ -1,0 +1,92 @@
+<section class="article-form">
+  <a
+    class="article-form__back"
+    routerLink="/articles"
+    aria-label="Retour aux articles"
+  >
+    <mat-icon>arrow_back</mat-icon>
+  </a>
+
+  <h1 class="article-form__title">Créer un nouvel article</h1>
+
+  <form
+    class="article-form__form"
+    [formGroup]="articleForm"
+    (ngSubmit)="submitForm()"
+  >
+    <!-- Topic -->
+    <div class="form-select">
+      <mat-label>Sélectionner un thème</mat-label>
+
+      <mat-form-field appearance="outline" class="article-form__field">
+        <mat-select formControlName="topicSlug">
+          @for (topic of topics(); track topic.slug) {
+            <mat-option [value]="topic.slug">
+              {{ topic.name }}
+            </mat-option>
+          }
+        </mat-select>
+
+        @if (
+          articleForm.controls.topicSlug.touched &&
+          articleForm.controls.topicSlug.hasError('required')
+        ) {
+          <mat-error>Veuillez sélectionner un thème.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Title -->
+    <app-input
+      class="article-form__input"
+      label="Titre"
+      placeholder="Titre de l’article"
+      formControlName="title"
+      (focusout)="autocompleteSlug()"
+      [errors]="titleErrors"
+    />
+
+    <!-- Slug -->
+    <app-input
+      class="article-form__input"
+      label="Adresse (slug)"
+      placeholder="mon-article"
+      formControlName="slug"
+      [errors]="slugErrors"
+    />
+
+    @if (articleForm.controls.slug.pending) {
+      <p class="form-hint" role="status">Vérification de la disponibilité...</p>
+    }
+
+    <!-- Content -->
+    <div>
+      <mat-label>Contenu de l’article</mat-label>
+
+      <mat-form-field
+        appearance="outline"
+        class="article-form__field article-form__content-field"
+      >
+        <textarea
+          matInput
+          formControlName="content"
+          placeholder="Contenu de l’article"
+          rows="7"
+        ></textarea>
+
+        @for (error of contentErrors; track error) {
+          <mat-error>{{ error }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="article-form__actions">
+      <app-button
+        type="submit"
+        label="Créer"
+        color="primary"
+        [disabled]="submitting()"
+      />
+    </div>
+  </form>
+</section>
