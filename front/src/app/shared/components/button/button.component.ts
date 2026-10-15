@@ -24,6 +24,6 @@ export class ButtonComponent {
   readonly fontWeight = input<number>(600);
 
   variantClass(): string {
-    return this.variant ? `button-${this.variant}` : '';
+    return this.variant() ? `button-${this.variant()}` : '';
   }
 }
