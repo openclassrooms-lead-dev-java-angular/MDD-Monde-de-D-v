@@ -2,7 +2,6 @@ package com.openclassrooms.mddapi.article.controller;
 
 import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
-import com.openclassrooms.mddapi.article.dto.ArticleUpdateRequestDto;
 import com.openclassrooms.mddapi.article.service.ArticleService;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import jakarta.validation.Valid;
@@ -10,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;

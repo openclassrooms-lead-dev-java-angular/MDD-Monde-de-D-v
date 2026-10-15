@@ -2,7 +2,6 @@ package com.openclassrooms.mddapi.article.service;
 
 import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
-import com.openclassrooms.mddapi.article.dto.ArticleUpdateRequestDto;
 import com.openclassrooms.mddapi.article.entity.Article;
 import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
 import com.openclassrooms.mddapi.article.exception.ArticleSlugAlreadyExists;
@@ -29,7 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * Service responsible for managing articles.
  *
- * <p>This service handles article creation, update, retrieval,
+ * <p>This service handles article creation, retrieval,
  * slug availability checks, topic validation, and media storage.</p>
  */
 @Service
