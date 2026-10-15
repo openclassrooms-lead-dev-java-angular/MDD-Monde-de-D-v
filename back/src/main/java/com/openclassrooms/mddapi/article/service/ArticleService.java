@@ -8,8 +8,10 @@ import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
 import com.openclassrooms.mddapi.article.exception.ArticleSlugAlreadyExists;
 import com.openclassrooms.mddapi.article.mapper.ArticleMapper;
 import com.openclassrooms.mddapi.article.repository.ArticleRepository;
+import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.storage.service.StorageService;
+import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.service.TopicService;
@@ -40,6 +42,9 @@ public class ArticleService {
     private final StorageService storageService;
     private final TopicService topicService;
     private final UserService userService;
+    private final UserDetailsServiceImpl  userDetailsService;
+    private final SubscriptionService subscriptionService;
+
 
     @Value("${app.storage-path.article}")
     private String resourceType;
@@ -47,19 +52,12 @@ public class ArticleService {
     @Value("${app.media-url}")
     private String mediaUrl;
 
-    /**
-     * Retrieves a paginated list of articles.
-     *
-     * <p>The retrieved articles are mapped to
-     * {@link ArticleResponseDto} objects.</p>
-     *
-     * @param pageable pagination and sorting parameters
-     * @return a page containing the articles
-     */
     @Transactional(readOnly = true)
-    public Page<ArticleResponseDto> findAll(Pageable pageable) {
+    public Page<ArticleResponseDto> findFeedArticles(Pageable pageable) {
+        Long userId = userDetailsService.getPrincipalUserId();
+
         return articleRepository
-                .findAll(pageable)
+                .findArticlesByUserSubscriptions(userId, pageable)
                 .map(article -> articleMapper.toDto(article, mediaUrl));
     }
 
@@ -117,72 +115,6 @@ public class ArticleService {
         Article savedArticle = articleRepository.save(article);
 
         log.info("Saved article {}", savedArticle.getSlug());
-
-        return articleMapper.toDto(savedArticle, mediaUrl);
-    }
-
-    /**
-     * Updates an existing article.
-     *
-     * <p>The current slug is used to identify the article to update.
-     * If the slug is changed, the new slug must not already be used by
-     * another article. The specified topic must also exist.</p>
-     *
-     * <p>If a new media file is provided and {@code updatedMedia} is
-     * {@code true}, the new file is uploaded and the previous media
-     * file is deleted after the article has been saved.</p>
-     *
-     * @param slug              the current slug of the article
-     * @param articleRequestDto the updated article data
-     * @return the updated article
-     * @throws ArticleSlugAlreadyExists if the new slug is already used
-     * @throws ArticleNotFoundException if the article does not exist
-     * @throws TopicNotFoundException   if the specified topic does not exist
-     */
-    @Transactional
-    public ArticleResponseDto update(
-            final String slug,
-            final ArticleUpdateRequestDto articleRequestDto,
-            MultipartFile media
-    ) {
-        if (!slug.equals(articleRequestDto.slug())
-                && articleRepository.existsBySlug(articleRequestDto.slug())) {
-            throw new ArticleSlugAlreadyExists("Slug already exists : " + slug);
-        }
-
-        if (!slug.equals(articleRequestDto.slug())
-                && !articleRepository.existsBySlug(slug)
-        ) {
-            throw new ArticleNotFoundException("Article not found with slug : " + slug);
-        }
-
-        checkTopicSlug(articleRequestDto.topicSlug());
-
-        boolean isMediaUploaded = media != null
-                && articleRequestDto.updatedMedia();
-
-        Article article = articleRepository.getReferenceBySlug(slug);
-        String oldFilename = article.getMedia();
-        articleMapper.updateEntity(articleRequestDto, article);
-
-        // media upload
-        if (isMediaUploaded) {
-            String filename = storageService.upload(
-                    media,
-                    resourceType,
-                    articleRequestDto.slug()
-            );
-
-            article.setMedia(filename);
-        }
-
-        Article savedArticle = articleRepository.save(article);
-
-        if (isMediaUploaded) {
-            storageService.delete(oldFilename);
-        }
-
-        log.info("Uodated article with slug {}", savedArticle.getSlug());
 
         return articleMapper.toDto(savedArticle, mediaUrl);
     }

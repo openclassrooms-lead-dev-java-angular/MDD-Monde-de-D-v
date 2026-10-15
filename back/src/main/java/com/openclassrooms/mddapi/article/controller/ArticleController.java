@@ -23,10 +23,9 @@ public class ArticleController {
 
     private final ArticleService articleService;
 
-    @GetMapping("")
-    public Page<ArticleResponseDto> getArticles(Pageable pageable) {
-        return articleService
-                .findAll(pageable);
+    @GetMapping("/feed")
+    public Page<ArticleResponseDto> getFeedArticles(Pageable pageable) {
+        return articleService.findFeedArticles(pageable);
     }
 
     @GetMapping("/{slug}")
@@ -44,24 +43,10 @@ public class ArticleController {
         return articleService.create(articleRequestDto, media);
     }
 
-    @PutMapping(
-            value = "/{slug}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
-    @PreAuthorize("@articleSecurity.isAuthor(#slug)")
-    public ArticleResponseDto updateArticle(
-            @PathVariable String slug,
-            @Valid @RequestPart("article") ArticleUpdateRequestDto articleRequestDto,
-            @RequestPart(value = "media", required = false) MultipartFile media
-    ) {
-        return articleService.update(slug, articleRequestDto, media);
-    }
-
     @GetMapping("/available-slug/{slug}")
     public AvailableSlugDto getAvailableSlug(
             @PathVariable String slug
     ) {
         return articleService.findAvailableSlug(slug);
     }
-
 }
