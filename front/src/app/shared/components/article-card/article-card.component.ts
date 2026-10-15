@@ -6,9 +6,10 @@ import { TruncatePipe } from 'src/app/core/pipe/truncate.pipe';
 
 @Component({
   selector: 'app-article-card',
+  standalone: true,
   imports: [
-    RouterLink,
-    TruncatePipe,
+    RouterLink, 
+    TruncatePipe, 
     DatePipe
   ],
   templateUrl: './article-card.component.html',

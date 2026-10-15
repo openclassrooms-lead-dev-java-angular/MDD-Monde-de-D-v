@@ -24,6 +24,8 @@
       "@pages/*": ["src/app/pages/*"],
       "@service/*": ["src/app/core/service/*"],
       "@model/*": ["src/app/core/model/*"],
+      "@type/*": ["src/app/core/type/*"],
+      "@shared/*": ["src/app/shared/*"],
       "@initializer/*": ["src/app/core/initializer/*"],
       "@interceptor/*": ["src/app/core/interceptor/*"]
     }

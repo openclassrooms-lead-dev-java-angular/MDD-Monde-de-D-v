@@ -84,14 +84,12 @@ public class ArticleService {
      * uploads the associated media, and persists the article.</p>
      *
      * @param articleRequestDto the data of the article to create
-     * @param media             the optional media file associated with the article
      * @return the created article
      * @throws ArticleSlugAlreadyExists if the article slug already exists * @throws TopicNotFoundException if the specified topic does not exist
      */
     @Transactional
     public ArticleResponseDto create(
-            final ArticleRequestDto articleRequestDto,
-            final MultipartFile media
+            final ArticleRequestDto articleRequestDto
     ) {
         if (articleRepository.existsBySlug(articleRequestDto.slug())) {
             throw new ArticleSlugAlreadyExists("Slug already exists : " + articleRequestDto.slug());
@@ -104,12 +102,6 @@ public class ArticleService {
         Article article = articleMapper.toEntity(articleRequestDto);
         article.setAuthor(author);
         article.setTopic(topic);
-
-        // media upload
-        if (media != null) {
-            String filename = storageService.upload(media, resourceType, articleRequestDto.slug());
-            article.setMedia(filename);
-        }
 
         Article savedArticle = articleRepository.save(article);
 

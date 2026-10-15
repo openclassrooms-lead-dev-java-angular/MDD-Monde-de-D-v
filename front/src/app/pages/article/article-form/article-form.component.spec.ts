@@ -85,7 +85,7 @@ describe('ArticleFormComponent', () => {
         '.article-form__title',
       );
 
-      expect(title.textContent).toContain('Create a new article');
+      expect(title.textContent).toContain('Créer un nouvel article');
     });
   });
 
@@ -129,7 +129,7 @@ describe('ArticleFormComponent', () => {
       control.markAsTouched();
 
       expect((component as any).contentErrors).toContain(
-        'Content is required.',
+        'Le contenu est obligatoire.',
       );
     });
 
@@ -142,7 +142,7 @@ describe('ArticleFormComponent', () => {
 
       expect(control.hasError('maxlength')).toBeTrue();
       expect((component as any).contentErrors).toContain(
-        'The content must not exceed 10,000 characters.',
+        'Le contenu ne doit pas dépasser 10 000 caractères.',
       );
     });
 
@@ -155,7 +155,7 @@ describe('ArticleFormComponent', () => {
 
       expect(control.hasError('pattern')).toBeTrue();
       expect((component as any).slugErrors).toContain(
-        'Use only letters, numbers, hyphens, and underscores.',
+        'Utilisez uniquement des lettres, chiffres, tirets et underscores.',
       );
     });
 
@@ -171,7 +171,7 @@ describe('ArticleFormComponent', () => {
 
       expect(control.hasError('slugTaken')).toBeTrue();
       expect((component as any).slugErrors).toContain(
-        'This URL is already in use.',
+        'Cette adresse est déjà utilisée.',
       );
     }));
 
@@ -191,7 +191,7 @@ describe('ArticleFormComponent', () => {
 
       expect(control.hasError('slugCheckFailed')).toBeTrue();
       expect((component as any).slugErrors).toContain(
-        'Unable to check slug availability.',
+        'Impossible de vérifier la disponibilité.',
       );
     }));
   });
@@ -308,5 +308,56 @@ describe('ArticleFormComponent', () => {
 
       expect(form.controls.slug.value).toBe('Ete-a-Noel');
     });
+  });
+
+  describe('template', () => {
+    it('should render the title, slug and content inputs', () => {
+      const element: HTMLElement = fixture.nativeElement;
+
+      expect(element.querySelector('#article-title')).not.toBeNull();
+      expect(element.querySelector('#article-slug')).not.toBeNull();
+      expect(element.querySelector('#article-content')).not.toBeNull();
+    });
+
+    it('should render the topic selector', () => {
+      const selector = fixture.nativeElement.querySelector('mat-select');
+
+      expect(selector).not.toBeNull();
+    });
+
+    it('should render the back link', () => {
+      const backLink: HTMLAnchorElement = fixture.nativeElement.querySelector(
+        '.article-form__back',
+      );
+
+      expect(backLink).not.toBeNull();
+      expect(backLink.getAttribute('aria-label')).toBe('Retour aux articles');
+    });
+
+    it('should render the create button', () => {
+      const button = fixture.nativeElement.querySelector('app-button');
+
+      expect(button).not.toBeNull();
+    });
+
+    it('should display the server error message', fakeAsync(() => {
+      spyOn(console, 'error');
+
+      articleService.postArticle.and.returnValue(
+        throwError(() => ({
+          error: { message: 'Erreur serveur' },
+        })),
+      );
+
+      fillValidForm();
+      tick(300);
+      (component as any).submitForm();
+      fixture.detectChanges();
+
+      const error = fixture.nativeElement.querySelector('[role="alert"]');
+
+      expect(error).not.toBeNull();
+      expect(error.textContent).toContain('Erreur serveur');
+    }));
   });
 });
