@@ -33,12 +33,11 @@ public class ArticleController {
         return articleService.findBySlug(slug);
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping()
     public ArticleResponseDto createArticle(
-            @Valid @RequestPart("article") ArticleRequestDto articleRequestDto,
-            @RequestPart(value = "media", required = false) MultipartFile media
+            @Valid @RequestBody() ArticleRequestDto articleRequestDto
     ) {
-        return articleService.create(articleRequestDto, media);
+        return articleService.create(articleRequestDto);
     }
 
     @GetMapping("/available-slug/{slug}")
