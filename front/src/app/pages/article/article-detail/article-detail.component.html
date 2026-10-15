@@ -1,0 +1,43 @@
+<section class="article-detail">
+  @if (loading()) {
+    <div class="article-detail__loading">
+      <div class="loader"></div>
+      <p>Chargement de l'article...</p>
+    </div>
+  }
+
+  @if (!loading() && article(); as currentArticle) {
+    <article class="article">
+      <a routerLink="/articles" class="article__back"> ← Retour aux articles </a>
+
+      <header class="article__header">
+        <h1 class="article__title">
+          {{ currentArticle.title }}
+        </h1>
+
+        <div class="article__meta">
+          <span>
+            {{ currentArticle.createdAt }}
+          </span>
+
+          <span class="article__separator">•</span>
+
+          <span>
+            {{ currentArticle.username }}
+          </span>
+        </div>
+      </header>
+
+      <div class="article__content" [innerHTML]="currentArticle.content"></div>
+    </article>
+  }
+
+  @if (!loading() && !article()) {
+    <div class="article-detail__empty">
+      <h1>Article introuvable</h1>
+      <p>L'article que vous recherchez n'existe pas ou n'est plus disponible.</p>
+
+      <a routerLink="/articles" class="button"> Retour aux articles </a>
+    </div>
+  }
+</section>

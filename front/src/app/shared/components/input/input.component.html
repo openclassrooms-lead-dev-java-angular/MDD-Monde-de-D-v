@@ -1,15 +1,20 @@
 <div class="input">
-  <mat-label>
-    {{ label() }}
-  </mat-label>
+  <mat-label>{{ label() }}</mat-label>
 
-  <mat-form-field outline appearance="outline" class="full-width">
+  <mat-form-field
+    appearance="outline"
+    class="full-width"
+    [class.input--invalid]="
+      ngControl?.invalid && (ngControl?.touched || ngControl?.dirty)
+    "
+  >
     <input
       matInput
       [type]="type()"
       [placeholder]="placeholder()"
       [value]="value"
       [disabled]="disabled"
+      [errorStateMatcher]="errorStateMatcher"
       (input)="onInput($event)"
       (blur)="onBlur()"
     />
@@ -19,7 +24,7 @@
     }
 
     @for (error of errors(); track error) {
-      <mat-error> {{ error }} </mat-error>
+      <mat-error>{{ error }}</mat-error>
     }
   </mat-form-field>
 </div>

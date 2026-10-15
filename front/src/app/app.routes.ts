@@ -8,6 +8,8 @@ import { ProfileComponent } from '@pages/profile/profile.component';
 import { AuthGuard } from './core/guard/auth.guard';
 import { FeedComponent } from '@pages/feed/feed.component';
 import { DefaultLayoutComponent } from './layouts/default-layout/default-layout.component';
+import { ArticleDetailComponent } from '@pages/article/article-detail/article-detail.component';
+import { ArticleFormComponent } from '@pages/article/article-form/article-form.component';
 
 export const routes: Routes = [
   {
@@ -34,6 +36,16 @@ export const routes: Routes = [
       {
         path: 'feed',
         component: FeedComponent,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'articles/:slug',
+        component: ArticleDetailComponent,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'create-article',
+        component: ArticleFormComponent,
         canActivate: [AuthGuard],
       },
       {

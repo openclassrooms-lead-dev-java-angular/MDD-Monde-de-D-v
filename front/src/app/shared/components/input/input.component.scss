@@ -1,3 +1,9 @@
+:host ::ng-deep .input--invalid .mdc-notched-outline__leading,
+:host ::ng-deep .input--invalid .mdc-notched-outline__notch,
+:host ::ng-deep .input--invalid .mdc-notched-outline__trailing {
+  border-color: var(--mat-form-field-error-text-color, #f44336) !important;
+}
+
 .input {
   display: flex;
   flex-direction: column;
