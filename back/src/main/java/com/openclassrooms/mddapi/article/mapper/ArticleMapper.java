@@ -6,7 +6,6 @@ import com.openclassrooms.mddapi.article.entity.Article;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 import org.springframework.stereotype.Component;
 
 @Component
