@@ -1,9 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Article } from '@model/article.model';
 import { ArticleService } from '@service/article.service';
-import { SortDirection } from 'src/app/core/types/sort-direction.type';
-import { ArticleCardComponent } from 'src/app/shared/components/article-card/article-card.component';
-import { ButtonComponent } from 'src/app/shared/components/button/button.component';
+import { ArticleCardComponent } from '@shared/components/article-card/article-card.component';
+import { ButtonComponent } from '@shared/components/button/button.component';
+import { SortDirection } from '@type/sort-direction.type';
 
 @Component({
   selector: 'app-feed',

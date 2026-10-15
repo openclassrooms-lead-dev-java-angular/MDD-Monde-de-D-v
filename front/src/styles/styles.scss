@@ -1,15 +1,15 @@
-@use "@angular/material" as mat;
-@use "./theme" as app-theme;
-@use "./variables" as *;
+@use '@angular/material' as mat;
+@use './theme' as app-theme;
+@use './variables' as *;
 
 @include mat.core();
 
 /* FONTS */
 /* Inter */
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/inter/700.css";
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 
 html {
   @include mat.all-component-themes(app-theme.$theme);
@@ -19,5 +19,18 @@ body {
   margin: 0;
   background: $color-background;
   color: $color-text;
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
+}
+
+// form input
+:host ::ng-deep .input--invalid .mdc-notched-outline__leading,
+:host ::ng-deep .input--invalid .mdc-notched-outline__notch,
+:host ::ng-deep .input--invalid .mdc-notched-outline__trailing {
+  border-color: var(--mat-form-field-error-text-color, #f44336) !important;
+}
+
+.form-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }

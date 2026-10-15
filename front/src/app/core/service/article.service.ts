@@ -3,9 +3,9 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '@env/environment.prod';
 import { Article, ArticleNew } from '@model/article.model';
 import { Page } from '@model/page.model';
-import { SortDirection } from '../types/sort-direction.type';
 import { Observable } from 'rxjs';
 import { AvailableResponse } from '@model/available-response.model';
+import { SortDirection } from '@type/sort-direction.type';
 
 @Injectable({
   providedIn: 'root',

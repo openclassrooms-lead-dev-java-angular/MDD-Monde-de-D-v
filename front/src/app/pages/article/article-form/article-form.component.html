@@ -1,7 +1,7 @@
 <section class="article-form">
   <a
     class="article-form__back"
-    routerLink="/articles"
+    routerLink="/feed"
     aria-label="Retour aux articles"
   >
     <mat-icon>arrow_back</mat-icon>
@@ -27,47 +27,70 @@
           }
         </mat-select>
 
-        @if (
-          articleForm.controls.topicSlug.touched &&
-          articleForm.controls.topicSlug.hasError('required')
-        ) {
-          <mat-error>Veuillez sélectionner un thème.</mat-error>
+        @if (topicErrors.length > 0) {
+          <mat-error>{{ topicErrors[0] }}</mat-error>
         }
       </mat-form-field>
     </div>
 
     <!-- Title -->
-    <app-input
-      class="article-form__input"
-      label="Titre"
-      placeholder="Titre de l’article"
-      formControlName="title"
-      (focusout)="autocompleteSlug()"
-      [errors]="titleErrors"
-    />
+    <div class="form-input">
+      <mat-label for="article-title">Titre</mat-label>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <input
+          id="article-title"
+          matInput
+          class="form-input__input"
+          type="text"
+          formControlName="title"
+          (focusout)="autocompleteSlug()"
+        />
+
+        @for (error of titleErrors; track error) {
+          <mat-error>{{ error }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
     <!-- Slug -->
-    <app-input
-      class="article-form__input"
-      label="Adresse (slug)"
-      placeholder="mon-article"
-      formControlName="slug"
-      [errors]="slugErrors"
-    />
+    <div class="form-input">
+      <mat-label for="article-slug">Adresse (slug)</mat-label>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <input
+          id="article-slug"
+          matInput
+          class="form-input__input"
+          type="text"
+          formControlName="slug"
+          (focusout)="autocompleteSlug()"
+        />
+
+        @for (error of slugErrors; track error) {
+          <mat-error>{{ error }}</mat-error>
+        }
+
+        @if (isLoading()) {
+          <mat-spinner matSuffix diameter="20" />
+        }
+      </mat-form-field>
+    </div>
 
     @if (articleForm.controls.slug.pending) {
       <p class="form-hint" role="status">Vérification de la disponibilité...</p>
     }
 
     <!-- Content -->
-    <div>
-      <mat-label>Contenu de l’article</mat-label>
+    <div class="form-input">
+      <mat-label for="article-content">Contenu de l’article</mat-label>
 
       <mat-form-field
         appearance="outline"
         class="article-form__field article-form__content-field"
       >
         <textarea
+          id="article-content"
           matInput
           formControlName="content"
           placeholder="Contenu de l’article"
@@ -80,12 +103,18 @@
       </mat-form-field>
     </div>
 
+    @if (errorMessage()) {
+      <p class="article-form__error" role="alert">
+        {{ errorMessage() }}
+      </p>
+    }
+
     <div class="article-form__actions">
       <app-button
         type="submit"
         label="Créer"
         color="primary"
-        [disabled]="submitting()"
+        [disabled]="submitting() || isLoading()"
       />
     </div>
   </form>

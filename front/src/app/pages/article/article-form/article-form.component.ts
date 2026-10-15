@@ -27,12 +27,7 @@ import {
   timer,
 } from 'rxjs';
 import { ButtonComponent } from 'src/app/shared/components/button/button.component';
-import { InputComponent } from 'src/app/shared/components/input/input.component';
-
-export interface ArticleTheme {
-  id: number;
-  name: string;
-}
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-article-form',
@@ -45,7 +40,7 @@ export interface ArticleTheme {
     MatInputModule,
     MatIconModule,
     ButtonComponent,
-    InputComponent,
+    MatProgressSpinnerModule,
   ],
   templateUrl: './article-form.component.html',
   styleUrl: './article-form.component.scss',
@@ -95,7 +90,6 @@ export class ArticleFormComponent implements OnInit {
       });
   }
 
-  // Erreurs des champs : affichées après interaction.
   protected get titleErrors(): string[] {
     const control = this.articleForm.controls.title;
 
