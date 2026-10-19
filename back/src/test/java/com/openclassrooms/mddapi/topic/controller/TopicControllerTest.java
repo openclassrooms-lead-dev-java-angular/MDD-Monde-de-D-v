@@ -1,29 +1,24 @@
 package com.openclassrooms.mddapi.topic.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.factory.TopicTestFactory;
-import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
-import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
 import com.openclassrooms.mddapi.topic.service.TopicService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
+import org.springframework.data.domain.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -32,66 +27,42 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = TopicController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
-public class TopicControllerTest {
+class TopicControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockitoBean
     private TopicService topicService;
 
+    // -------------------------------------------------------------------------
     // GET /api/v1/topics
+    // -------------------------------------------------------------------------
 
     @Test
     void shouldReturnPaginatedTopics() throws Exception {
-        Page<TopicResponseDto> page = TopicTestFactory.createPageableTopicsResponseDto();
-        Pageable pageable = PageRequest.of(0, 10);
-
-        when(topicService.findAll(any(Pageable.class)))
-                .thenReturn(page);
-
-
-        mockMvc.perform(
-                        get("/api/v1/topics")
-                                .param("page", String.valueOf(pageable.getPageNumber()))
-                                .param("size", String.valueOf(pageable.getPageSize())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(2)))
-                .andExpect(jsonPath("$.content[0].id").value(1))
-                .andExpect(jsonPath("$.content[0].name").value("Java"))
-                .andExpect(jsonPath("$.content[0].slug").value("java"))
-                .andExpect(jsonPath("$.content[0].description").value("Java development."))
-                .andExpect(jsonPath("$.content[0].createdAt").value("2026-09-16T10:00:00"))
-                .andExpect(jsonPath("$.content[0].updatedAt").value("2026-09-16T11:00:00"))
-                .andExpect(jsonPath("$.content[1].name").value("Python"))
-                .andExpect(jsonPath("$.totalElements").value(2))
-                .andExpect(jsonPath("$.size").value(10))
-                .andExpect(jsonPath("$.number").value(0));
-
-        verify(topicService).findAll(pageable);
-    }
-
-    @Test
-    void shouldReturnEmptyPageWhenNoTopicExists() throws Exception {
-        Page<TopicResponseDto> page = new PageImpl<>(
-                List.of(),
-                PageRequest.of(0, 10),
-                0
-        );
+        Page<TopicResponseDto> page =
+                TopicTestFactory.createPageableTopicsResponseDto();
 
         when(topicService.findAll(any(Pageable.class)))
                 .thenReturn(page);
 
         mockMvc.perform(get("/api/v1/topics")
-                        .param("page", String.valueOf(0))
-                        .param("size", String.valueOf(10))
-                )
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(0)))
-                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].name").value("Java"))
+                .andExpect(jsonPath("$.content[0].slug").value("java"))
+                .andExpect(jsonPath("$.content[0].description")
+                        .value("Java development."))
+                .andExpect(jsonPath("$.content[0].createdAt")
+                        .value("2026-09-16T10:00:00"))
+                .andExpect(jsonPath("$.content[0].updatedAt")
+                        .value("2026-09-16T11:00:00"))
+                .andExpect(jsonPath("$.content[1].name").value("Python"))
+                .andExpect(jsonPath("$.totalElements").value(2))
                 .andExpect(jsonPath("$.size").value(10))
                 .andExpect(jsonPath("$.number").value(0));
 
@@ -99,188 +70,108 @@ public class TopicControllerTest {
     }
 
     @Test
-    void shouldAcceptAllowedTopicSortField() throws Exception {
+    void shouldReturnEmptyPageWhenNoTopicExists() throws Exception {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(topicService.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        mockMvc.perform(get("/api/v1/topics")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(0)))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.number").value(0));
+
+        verify(topicService).findAll(pageable);
+    }
+
+    @Test
+    void shouldPassSortParameterToService() throws Exception {
         when(topicService.findAll(any(Pageable.class)))
                 .thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/v1/topics")
-                        .param("sort", "name,asc")
-                )
+                        .param("sort", "name,asc"))
                 .andExpect(status().isOk());
+
+        ArgumentCaptor<Pageable> pageableCaptor =
+                ArgumentCaptor.forClass(Pageable.class);
+
+        verify(topicService).findAll(pageableCaptor.capture());
+
+        assertEquals(
+                Sort.Direction.ASC,
+                Objects.requireNonNull(pageableCaptor.getValue()
+                                .getSort()
+                                .getOrderFor("name"))
+                        .getDirection()
+        );
     }
 
-    // GET /api/v1/topics/{slug}
+// -------------------------------------------------------------------------
+// GET /api/v1/topics/options
+// -------------------------------------------------------------------------
 
     @Test
-    void shouldReturnTopicBySlug() throws Exception {
-        TopicResponseDto topicResponseDto = TopicTestFactory.createTopicResponseDto();
+    void shouldReturnTopicOptions() throws Exception {
+        when(topicService.getOptions()).thenReturn(List.of());
 
-        when(topicService.findBySlug("java"))
-                .thenReturn(topicResponseDto);
-
-        mockMvc.perform(get("/api/v1/topics/java"))
+        mockMvc.perform(get("/api/v1/topics/options"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.slug").value("java"));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$", hasSize(0)));
 
-        verify(topicService).findBySlug(topicResponseDto.slug());
+        verify(topicService).getOptions();
+    }
+
+// -------------------------------------------------------------------------
+// POST /api/v1/topics/{slug}/subscribe
+// -------------------------------------------------------------------------
+
+    @Test
+    void shouldSubscribeCurrentUserToTopic() throws Exception {
+        mockMvc.perform(post("/api/v1/topics/java/subscribe"))
+                .andExpect(status().isCreated());
+
+        verify(topicService).subscribe("java");
     }
 
     @Test
-    void shouldReturnNotFoundWhenTopicDoesNotExist() throws Exception {
-        when(topicService.findBySlug("unknown-slug"))
-                .thenThrow(new TopicNotFoundException("Topic not found"));
+    void shouldReturnNotFoundWhenSubscribingToUnknownTopic()
+            throws Exception {
+        doThrow(new TopicNotFoundException("Topic not found"))
+                .when(topicService).subscribe("unknown-topic");
 
-        mockMvc.perform(get("/api/v1/topics/unknown-slug"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value("NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value("Topic not found"))
-                .andExpect(jsonPath("$.timestamp").exists());
+        mockMvc.perform(post("/api/v1/topics/unknown-topic/subscribe"))
+                .andExpect(status().isNotFound());
 
-        verify(topicService).findBySlug("unknown-slug");
-
+        verify(topicService).subscribe("unknown-topic");
     }
 
-    // POST /api/v1/topics
+// -------------------------------------------------------------------------
+// DELETE /api/v1/topics/{slug}/subscribe
+// -------------------------------------------------------------------------
 
     @Test
-    void shouldCreateTopic() throws Exception {
-        TopicRequestDto topicRequestDto = TopicTestFactory.createTopicRequestDto();
-        TopicResponseDto topicResponseDto = TopicTestFactory.createTopicResponseDto();
+    void shouldUnsubscribeCurrentUserFromTopic() throws Exception {
+        mockMvc.perform(delete("/api/v1/topics/java/subscribe"))
+                .andExpect(status().isNoContent());
 
-        when(topicService.create(topicRequestDto))
-                .thenReturn(topicResponseDto);
-
-        mockMvc.perform(post("/api/v1/topics")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(topicRequestDto))
-                )
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.name").value(topicResponseDto.name()))
-                .andExpect(jsonPath("$.slug").value(topicResponseDto.slug()))
-                .andExpect(jsonPath("$.description").value(topicResponseDto.description()));
-
-        verify(topicService).create(topicRequestDto);
+        verify(topicService).unsubscribe("java");
     }
 
     @Test
-    void shouldReturnConflictWhenTopicSlugAlreadyExists() throws Exception {
-        TopicRequestDto topicRequestDto = new TopicRequestDto("Java", "java", "Java programming");
+    void shouldReturnNotFoundWhenUnsubscribingFromUnknownTopic()
+            throws Exception {
+        doThrow(new TopicNotFoundException("Topic not found"))
+                .when(topicService).unsubscribe("unknown-topic");
 
-        when(topicService.create(topicRequestDto))
-                .thenThrow(new TopicSlugAlreadyExists("Slug already exists"));
+        mockMvc.perform(delete("/api/v1/topics/unknown-topic/subscribe"))
+                .andExpect(status().isNotFound());
 
-        mockMvc.perform(post("/api/v1/topics")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(topicRequestDto))
-                )
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value("CONFLICT"))
-                .andExpect(jsonPath("$.message").value("Slug already exists"))
-                .andExpect(jsonPath("$.timestamp").exists());
-
-        verify(topicService).create(topicRequestDto);
-    }
-
-    // PUT /api/v1/topics/{slug}
-    @Test
-    void shouldUpdateTopic() throws Exception {
-        TopicRequestDto topicRequestDto = TopicTestFactory.createTopicRequestDto();
-
-        when(topicService.create(topicRequestDto))
-                .thenThrow(new TopicSlugAlreadyExists("Slug already exists"));
-
-        mockMvc.perform(post("/api/v1/topics")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(topicRequestDto))
-                )
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value("CONFLICT"))
-                .andExpect(jsonPath("$.message").value("Slug already exists"))
-                .andExpect(jsonPath("$.timestamp").exists());
-
-        verify(topicService).create(topicRequestDto);
-    }
-
-    @Test
-    void shouldReturnNotFoundWhenUpdatingNonExistingTopic() throws Exception {
-        String slug = "java";
-
-        TopicRequestDto topicRequestDto = TopicTestFactory.createTopicRequestDto();
-        TopicResponseDto topicResponseDto = TopicTestFactory.createTopicResponseDto();
-
-        when(topicService.update(slug, topicRequestDto))
-                .thenReturn(topicResponseDto);
-
-        mockMvc.perform(put("/api/v1/topics/{slug}", slug)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(topicRequestDto))
-                )
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.name").value(topicResponseDto.name()))
-                .andExpect(jsonPath("$.slug").value(topicResponseDto.slug()))
-                .andExpect(jsonPath("$.description").value(topicResponseDto.description()));
-
-        verify(topicService).update(slug, topicRequestDto);
-
-    }
-
-    // POST /api/v1/topics/{slug}/subscribe
-    @Test
-    void shouldSubscribeCurrentUserToTopic() {
-        // todo test in subscribe branch
-    }
-
-    @Test
-    void shouldReturnNotFoundWhenSubscribingToNonExistingTopic() {
-        // todo test in subscribe branch
-    }
-
-    @Test
-    void shouldUnsubscribeCurrentUserToTopic() {
-        // todo test in subscribe branch
-    }
-
-    @Test
-    void shouldReturnNotFoundWhenUnsubscribingToNonExistingTopic() {
-        // todo test in subscribe branch
-    }
-
-    // GET /api/v1/topics/available-slug/{slug}
-    @Test
-    void shouldReturnSlugAvailableWhenSlugDoesNotExist() throws Exception {
-        String slug = "java";
-
-        AvailableSlugDto response = new AvailableSlugDto(true);
-
-        when(topicService.availableSlug(slug))
-                .thenReturn(response);
-
-        mockMvc.perform(get("/api/v1/topics/available-slug/{slug}", slug))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.available").value(true));
-
-        verify(topicService).availableSlug(slug);
-
-    }
-
-    @Test
-    void shouldReturnSlugUnavailableWhenSlugAlreadyExists() throws Exception {
-        String slug = "java";
-
-        AvailableSlugDto response = new AvailableSlugDto(false);
-
-        when(topicService.availableSlug(slug))
-                .thenReturn(response);
-
-        mockMvc.perform(get("/api/v1/topics/available-slug/{slug}", slug))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.available").value(false));
-
-        verify(topicService).availableSlug(slug);
-
+        verify(topicService).unsubscribe("unknown-topic");
     }
 }

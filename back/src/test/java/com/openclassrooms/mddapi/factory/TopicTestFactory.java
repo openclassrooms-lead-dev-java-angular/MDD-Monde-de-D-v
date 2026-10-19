@@ -1,7 +1,6 @@
 package com.openclassrooms.mddapi.factory;
 
 import com.openclassrooms.mddapi.topic.entity.Topic;
-import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -69,14 +68,6 @@ public class TopicTestFactory {
                 List.of(topic1, topic2),
                 PageRequest.of(0, 10),
                 2
-        );
-    }
-
-    public static TopicRequestDto createTopicRequestDto() {
-        return new TopicRequestDto(
-                "Java",
-                "java",
-                "Welcome to java language topic"
         );
     }
 
