@@ -3,7 +3,6 @@ package com.openclassrooms.mddapi.topic.controller;
 import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
 import com.openclassrooms.mddapi.topic.service.TopicService;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
