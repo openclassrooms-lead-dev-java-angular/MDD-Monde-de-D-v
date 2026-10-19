@@ -2,9 +2,6 @@ package com.openclassrooms.mddapi.factory;
 
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,33 +41,6 @@ public class TopicTestFactory {
         return List.of(topic1, topic2);
     }
 
-    public static Page<TopicResponseDto> createPageableTopicsResponseDto() {
-
-        TopicResponseDto topic1 = new TopicResponseDto(
-                "Java",
-                "java",
-                "Java development.",
-                false,
-                generateCreatedAt(),
-                generateUpdatedAt()
-        );
-
-        TopicResponseDto topic2 = new TopicResponseDto(
-                "Python",
-                "python",
-                "Python development.",
-                false,
-                generateCreatedAt(),
-                generateUpdatedAt()
-        );
-
-        return new PageImpl<>(
-                List.of(topic1, topic2),
-                PageRequest.of(0, 10),
-                2
-        );
-    }
-
     public static Topic createTopic() {
 
         return generateTopic(
@@ -80,14 +50,6 @@ public class TopicTestFactory {
                 "Java development"
         );
     }
-
-    public static List<Topic> createTopicList() {
-        return List.of(
-                generateTopic(1L, "Java", "java", "Java development"),
-                generateTopic(2L, "Python", "python", "Python development")
-        );
-    }
-
 
     private static Topic generateTopic(Long id, String name, String slug, String description) {
         Topic topic = new Topic();

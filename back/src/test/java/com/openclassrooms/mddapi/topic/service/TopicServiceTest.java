@@ -1,7 +1,6 @@
 package com.openclassrooms.mddapi.topic.service;
 
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.factory.TopicTestFactory;
 import com.openclassrooms.mddapi.subscription.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
 import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
@@ -23,11 +22,12 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Set;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import org.junit.jupiter.api.BeforeEach;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class TopicServiceTest {
@@ -50,23 +50,46 @@ class TopicServiceTest {
     @InjectMocks
     private TopicService topicService;
 
+    private Topic topic1;
+    private Topic topic2;
+
+    private TopicResponseDto response1;
+    private TopicResponseDto response2;
+
+    @BeforeEach
+    void setUp() {
+        topic1 = mock(Topic.class);
+        topic2 = mock(Topic.class);
+
+        when(topic1.getId()).thenReturn(1L);
+        when(topic2.getId()).thenReturn(2L);
+
+        response1 = mock(TopicResponseDto.class);
+        response2 = mock(TopicResponseDto.class);
+    }
+
+    // --------------------------------------------------
+    // findAll
+    // --------------------------------------------------
+
     @Test
     void shouldReturnEmptyPageWhenNoTopicsExist() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Topic> emptyPage = Page.empty(pageable);
 
-        when(topicRepository.findAll(pageable)).thenReturn(emptyPage);
+        when(topicRepository.findAll(pageable))
+                .thenReturn(Page.empty(pageable));
 
         Page<TopicResponseDto> result = topicService.findAll(pageable);
 
+        assertNotNull(result);
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotalElements());
 
         verify(topicRepository).findAll(pageable);
         verifyNoInteractions(
-                userDetailsServiceImpl,
+                topicMapper,
                 subscriptionRepository,
-                topicMapper
+                userDetailsServiceImpl
         );
     }
 
@@ -74,63 +97,117 @@ class TopicServiceTest {
     void shouldReturnTopicsWithSubscriptionStatus() {
         Pageable pageable = PageRequest.of(0, 10);
 
-        Topic topic1 = TopicTestFactory.createTopic();
-        topic1.setId(1L);
+        Page<Topic> topics = new PageImpl<>(
+                List.of(topic1, topic2),
+                pageable,
+                2
+        );
 
-        Topic topic2 = TopicTestFactory.createTopic();
-        topic2.setId(2L);
+        when(topicRepository.findAll(pageable)).thenReturn(topics);
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(42L);
 
-        List<Topic> topics = List.of(topic1, topic2);
-        Page<Topic> topicPage = new PageImpl<>(topics, pageable, topics.size());
+        when(subscriptionRepository.findSubscribedTopicIds(
+                42L,
+                List.of(1L, 2L)
+        )).thenReturn(Set.of(1L));
 
-        TopicResponseDto response1 = TopicTestFactory.createTopicResponseDto();
-        TopicResponseDto response2 = TopicTestFactory.createTopicResponseDto();
-
-        when(topicRepository.findAll(pageable)).thenReturn(topicPage);
-        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(10L);
-        when(subscriptionRepository.findSubscribedTopicIds(10L, List.of(1L, 2L)))
-                .thenReturn(Set.of(1L));
         when(topicMapper.toDto(topic1, true)).thenReturn(response1);
         when(topicMapper.toDto(topic2, false)).thenReturn(response2);
 
         Page<TopicResponseDto> result = topicService.findAll(pageable);
 
-        assertEquals(2, result.getContent().size());
-        assertEquals(response1, result.getContent().get(0));
-        assertEquals(response2, result.getContent().get(1));
         assertEquals(2, result.getTotalElements());
+        assertEquals(List.of(response1, response2), result.getContent());
 
-        verify(topicRepository).findAll(pageable);
         verify(userDetailsServiceImpl).getPrincipalUserId();
-        verify(subscriptionRepository).findSubscribedTopicIds(10L, List.of(1L, 2L));
+        verify(subscriptionRepository)
+                .findSubscribedTopicIds(42L, List.of(1L, 2L));
+
         verify(topicMapper).toDto(topic1, true);
         verify(topicMapper).toDto(topic2, false);
     }
 
     @Test
-    void shouldSubscribeCurrentUserToTopic() {
-        String slug = "java";
-        Topic topic = TopicTestFactory.createTopic();
+    void shouldReturnEmptyPageWithoutLoadingCurrentUser() {
+        Pageable pageable = PageRequest.of(0, 10);
 
-        when(topicRepository.existsBySlug(slug)).thenReturn(true);
-        when(topicRepository.getReferenceBySlug(slug)).thenReturn(topic);
+        when(topicRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
-        topicService.subscribe(slug);
+        Page<TopicResponseDto> result = topicService.findAll(pageable);
 
-        verify(topicRepository).existsBySlug(slug);
-        verify(topicRepository).getReferenceBySlug(slug);
-        verify(subscriptionService).subscribe(topic);
+        assertTrue(result.isEmpty());
+
+        verify(topicRepository).findAll(pageable);
+        verifyNoInteractions(
+                topicMapper,
+                subscriptionRepository,
+                userDetailsServiceImpl
+        );
     }
 
     @Test
-    void shouldThrowTopicNotFoundExceptionWhenSubscribingToUnknownTopic() {
+    void shouldPreservePaginationInformation() {
+        Pageable pageable = PageRequest.of(1, 10);
+
+        Page<Topic> topics = new PageImpl<>(
+                List.of(topic1),
+                pageable,
+                21
+        );
+
+        when(topicRepository.findAll(pageable)).thenReturn(topics);
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(42L);
+        when(subscriptionRepository.findSubscribedTopicIds(
+                42L,
+                List.of(1L)
+        )).thenReturn(Set.of());
+
+        when(topicMapper.toDto(topic1, false)).thenReturn(response1);
+
+        Page<TopicResponseDto> result = topicService.findAll(pageable);
+
+        assertEquals(1, result.getNumber());
+        assertEquals(10, result.getSize());
+        assertEquals(21, result.getTotalElements());
+        assertEquals(3, result.getTotalPages());
+        assertFalse(result.isFirst());
+        assertFalse(result.isLast());
+    }
+
+    // --------------------------------------------------
+    // subscribe
+    // --------------------------------------------------
+
+    @Test
+    void shouldSubscribeToExistingTopic() {
+        String slug = "java";
+
+        when(topicRepository.existsBySlug(slug)).thenReturn(true);
+        when(topicRepository.getReferenceBySlug(slug)).thenReturn(topic1);
+
+        assertDoesNotThrow(() -> topicService.subscribe(slug));
+
+        verify(topicRepository).existsBySlug(slug);
+        verify(topicRepository).getReferenceBySlug(slug);
+        verify(subscriptionService).subscribe(topic1);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenSubscribingToUnknownTopic() {
         String slug = "unknown-topic";
 
         when(topicRepository.existsBySlug(slug)).thenReturn(false);
 
-        assertThatThrownBy(() -> topicService.subscribe(slug))
-                .isInstanceOf(TopicNotFoundException.class)
-                .hasMessage("Topic not found with slug '" + slug + "'");
+        TopicNotFoundException exception = assertThrows(
+                TopicNotFoundException.class,
+                () -> topicService.subscribe(slug)
+        );
+
+        assertEquals(
+                "Topic not found with slug '" + slug + "'",
+                exception.getMessage()
+        );
 
         verify(topicRepository).existsBySlug(slug);
         verify(topicRepository, never()).getReferenceBySlug(anyString());
@@ -138,29 +215,52 @@ class TopicServiceTest {
     }
 
     @Test
-    void shouldUnsubscribeCurrentUserFromTopic() {
-        String slug = "java";
-        Topic topic = TopicTestFactory.createTopic();
-
-        when(topicRepository.existsBySlug(slug)).thenReturn(true);
-        when(topicRepository.getReferenceBySlug(slug)).thenReturn(topic);
-
-        topicService.unsubscribe(slug);
-
-        verify(topicRepository).existsBySlug(slug);
-        verify(topicRepository).getReferenceBySlug(slug);
-        verify(subscriptionService).unsubscribe(topic);
-    }
-
-    @Test
-    void shouldThrowTopicNotFoundExceptionWhenUnsubscribingFromUnknownTopic() {
+    void shouldNotSubscribeWhenTopicDoesNotExist() {
         String slug = "unknown-topic";
 
         when(topicRepository.existsBySlug(slug)).thenReturn(false);
 
-        assertThatThrownBy(() -> topicService.unsubscribe(slug))
-                .isInstanceOf(TopicNotFoundException.class)
-                .hasMessage("Topic not found with slug '" + slug + "'");
+        assertThrows(
+                TopicNotFoundException.class,
+                () -> topicService.subscribe(slug)
+        );
+
+        verify(subscriptionService, never()).subscribe(any(Topic.class));
+    }
+
+    // --------------------------------------------------
+    // unsubscribe
+    // --------------------------------------------------
+
+    @Test
+    void shouldUnsubscribeFromExistingTopic() {
+        String slug = "java";
+
+        when(topicRepository.existsBySlug(slug)).thenReturn(true);
+        when(topicRepository.getReferenceBySlug(slug)).thenReturn(topic1);
+
+        assertDoesNotThrow(() -> topicService.unsubscribe(slug));
+
+        verify(topicRepository).existsBySlug(slug);
+        verify(topicRepository).getReferenceBySlug(slug);
+        verify(subscriptionService).unsubscribe(topic1);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUnsubscribingFromUnknownTopic() {
+        String slug = "unknown-topic";
+
+        when(topicRepository.existsBySlug(slug)).thenReturn(false);
+
+        TopicNotFoundException exception = assertThrows(
+                TopicNotFoundException.class,
+                () -> topicService.unsubscribe(slug)
+        );
+
+        assertEquals(
+                "Topic not found with slug '" + slug + "'",
+                exception.getMessage()
+        );
 
         verify(topicRepository).existsBySlug(slug);
         verify(topicRepository, never()).getReferenceBySlug(anyString());
@@ -168,53 +268,91 @@ class TopicServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenTopicSlugExists() {
-        String slug = "java";
-        when(topicRepository.existsBySlug(slug)).thenReturn(true);
+    void shouldNotUnsubscribeWhenTopicDoesNotExist() {
+        String slug = "unknown-topic";
 
-        boolean result = topicService.existsBySlug(slug);
+        when(topicRepository.existsBySlug(slug)).thenReturn(false);
 
-        assertThat(result).isTrue();
-        verify(topicRepository).existsBySlug(slug);
+        assertThrows(
+                TopicNotFoundException.class,
+                () -> topicService.unsubscribe(slug)
+        );
+
+        verify(subscriptionService, never()).unsubscribe(any(Topic.class));
+    }
+
+    // --------------------------------------------------
+    // existsBySlug
+    // --------------------------------------------------
+
+    @Test
+    void shouldReturnTrueWhenTopicExists() {
+        when(topicRepository.existsBySlug("java")).thenReturn(true);
+
+        assertTrue(topicService.existsBySlug("java"));
+
+        verify(topicRepository).existsBySlug("java");
     }
 
     @Test
-    void shouldReturnFalseWhenTopicSlugDoesNotExist() {
-        String slug = "unknown-topic";
-        when(topicRepository.existsBySlug(slug)).thenReturn(false);
+    void shouldReturnFalseWhenTopicDoesNotExist() {
+        when(topicRepository.existsBySlug("unknown-topic")).thenReturn(false);
 
-        boolean result = topicService.existsBySlug(slug);
+        assertFalse(topicService.existsBySlug("unknown-topic"));
 
-        assertThat(result).isFalse();
-        verify(topicRepository).existsBySlug(slug);
+        verify(topicRepository).existsBySlug("unknown-topic");
     }
+
+    // --------------------------------------------------
+    // loadBySlug
+    // --------------------------------------------------
 
     @Test
     void shouldLoadTopicBySlug() {
         String slug = "java";
-        Topic topic = TopicTestFactory.createTopic();
 
-        when(topicRepository.getReferenceBySlug(slug)).thenReturn(topic);
+        when(topicRepository.getReferenceBySlug(slug)).thenReturn(topic1);
 
         Topic result = topicService.loadBySlug(slug);
 
-        assertThat(result).isSameAs(topic);
+        assertSame(topic1, result);
         verify(topicRepository).getReferenceBySlug(slug);
     }
 
     @Test
-    void shouldReturnTopicOptions() {
-        List<TopicOptionDto> options = List.of(
-                new TopicOptionDto("Java", "java"),
-                new TopicOptionDto("Spring", "spring")
+    void shouldPropagateExceptionWhenLoadingTopicFails() {
+        String slug = "unknown-topic";
+        RuntimeException exception = new RuntimeException("Topic not found");
+
+        when(topicRepository.getReferenceBySlug(slug))
+                .thenThrow(exception);
+
+        RuntimeException thrown = assertThrows(
+                RuntimeException.class,
+                () -> topicService.loadBySlug(slug)
         );
 
-        when(topicRepository.findAllTopicOptions()).thenReturn(options);
+        assertSame(exception, thrown);
+        verify(topicRepository).getReferenceBySlug(slug);
+    }
+
+    // --------------------------------------------------
+    // getOptions
+    // --------------------------------------------------
+
+    @Test
+    void shouldReturnTopicOptions() {
+        List<TopicOptionDto> expected = List.of(
+                mock(TopicOptionDto.class),
+                mock(TopicOptionDto.class)
+        );
+
+        when(topicRepository.findAllTopicOptions()).thenReturn(expected);
 
         List<TopicOptionDto> result = topicService.getOptions();
 
+        assertEquals(expected, result);
         assertEquals(2, result.size());
-        assertEquals(options, result);
 
         verify(topicRepository).findAllTopicOptions();
     }
@@ -225,7 +363,9 @@ class TopicServiceTest {
 
         List<TopicOptionDto> result = topicService.getOptions();
 
+        assertNotNull(result);
         assertTrue(result.isEmpty());
+
         verify(topicRepository).findAllTopicOptions();
     }
 }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 class TopicMapperTest {
 
     private final TopicMapper topicMapper =

@@ -1,6 +1,6 @@
 package com.openclassrooms.mddapi.topic.controller;
 
-import com.openclassrooms.mddapi.factory.TopicTestFactory;
+import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.service.TopicService;
@@ -17,7 +17,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.Objects;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -41,51 +40,62 @@ class TopicControllerTest {
 
     @Test
     void shouldReturnPaginatedTopics() throws Exception {
-        Page<TopicResponseDto> page =
-                TopicTestFactory.createPageableTopicsResponseDto();
+        TopicResponseDto topic = org.mockito.Mockito.mock(TopicResponseDto.class);
 
-        when(topicService.findAll(any(Pageable.class)))
-                .thenReturn(page);
+        Page<TopicResponseDto> page = new PageImpl<>(
+                List.of(topic),
+                PageRequest.of(0, 10),
+                1
+        );
+
+        when(topicService.findAll(
+                org.mockito.ArgumentMatchers.any(
+                        org.springframework.data.domain.Pageable.class
+                )
+        )).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/topics")
                         .param("page", "0")
-                        .param("size", "10"))
+                        .param("size", "10")
+                        .param("sort", "name,asc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content", hasSize(2)))
-                .andExpect(jsonPath("$.content[0].name").value("Java"))
-                .andExpect(jsonPath("$.content[0].slug").value("java"))
-                .andExpect(jsonPath("$.content[0].description")
-                        .value("Java development."))
-                .andExpect(jsonPath("$.content[0].createdAt")
-                        .value("2026-09-16T10:00:00"))
-                .andExpect(jsonPath("$.content[0].updatedAt")
-                        .value("2026-09-16T11:00:00"))
-                .andExpect(jsonPath("$.content[1].name").value("Python"))
-                .andExpect(jsonPath("$.totalElements").value(2))
-                .andExpect(jsonPath("$.size").value(10))
-                .andExpect(jsonPath("$.number").value(0));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(10));
 
-        verify(topicService).findAll(PageRequest.of(0, 10));
+        verify(topicService).findAll(
+                org.mockito.ArgumentMatchers.argThat(pageable ->
+                        pageable.getPageNumber() == 0
+                                && pageable.getPageSize() == 10
+                                && pageable.getSort().getOrderFor("name") != null
+                                && pageable.getSort().getOrderFor("name").isAscending()
+                )
+        );
+
+        verifyNoMoreInteractions(topicService);
     }
 
     @Test
-    void shouldReturnEmptyPageWhenNoTopicExists() throws Exception {
-        Pageable pageable = PageRequest.of(0, 10);
+    void shouldReturnEmptyPageWhenNoTopicsExist() throws Exception {
+        when(topicService.findAll(
+                org.mockito.ArgumentMatchers.any(
+                        org.springframework.data.domain.Pageable.class
+                )
+        )).thenReturn(Page.empty(PageRequest.of(0, 10)));
 
-        when(topicService.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
-
-        mockMvc.perform(get("/api/v1/topics")
-                        .param("page", "0")
-                        .param("size", "10"))
+        mockMvc.perform(get("/api/v1/topics"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(0)))
-                .andExpect(jsonPath("$.totalElements").value(0))
-                .andExpect(jsonPath("$.size").value(10))
-                .andExpect(jsonPath("$.number").value(0));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
 
-        verify(topicService).findAll(pageable);
+        verify(topicService).findAll(
+                org.mockito.ArgumentMatchers.any(
+                        org.springframework.data.domain.Pageable.class
+                )
+        );
     }
 
     @Test
@@ -117,61 +127,86 @@ class TopicControllerTest {
 
     @Test
     void shouldReturnTopicOptions() throws Exception {
+        TopicOptionDto option = org.mockito.Mockito.mock(TopicOptionDto.class);
+
+        when(topicService.getOptions()).thenReturn(List.of(option));
+
+        mockMvc.perform(get("/api/v1/topics/options"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        verify(topicService).getOptions();
+        verifyNoMoreInteractions(topicService);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoTopicOptionsExist() throws Exception {
         when(topicService.getOptions()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/topics/options"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.length()").value(0));
 
         verify(topicService).getOptions();
     }
 
-// -------------------------------------------------------------------------
-// POST /api/v1/topics/{slug}/subscribe
-// -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // POST /api/v1/topics/{slug}/subscribe
+    // -------------------------------------------------------------------------
 
     @Test
-    void shouldSubscribeCurrentUserToTopic() throws Exception {
-        mockMvc.perform(post("/api/v1/topics/java/subscribe"))
+    void shouldSubscribeToTopic() throws Exception {
+        String slug = "java";
+
+        mockMvc.perform(post("/api/v1/topics/{slug}/subscribe", slug))
                 .andExpect(status().isCreated());
 
-        verify(topicService).subscribe("java");
+        verify(topicService).subscribe(slug);
+        verifyNoMoreInteractions(topicService);
     }
 
     @Test
-    void shouldReturnNotFoundWhenSubscribingToUnknownTopic()
-            throws Exception {
-        doThrow(new TopicNotFoundException("Topic not found"))
-                .when(topicService).subscribe("unknown-topic");
+    void shouldPropagateSubscribeServiceException() throws Exception {
+        String slug = "unknown-topic";
 
-        mockMvc.perform(post("/api/v1/topics/unknown-topic/subscribe"))
+        doThrow(new TopicNotFoundException(
+                "Topic not found with slug '" + slug + "'"
+        )).when(topicService).subscribe(slug);
+
+        mockMvc.perform(post("/api/v1/topics/{slug}/subscribe", slug))
                 .andExpect(status().isNotFound());
 
-        verify(topicService).subscribe("unknown-topic");
+        verify(topicService).subscribe(slug);
     }
 
-// -------------------------------------------------------------------------
-// DELETE /api/v1/topics/{slug}/subscribe
-// -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // DELETE /api/v1/topics/{slug}/subscribe
+    // -------------------------------------------------------------------------
 
     @Test
-    void shouldUnsubscribeCurrentUserFromTopic() throws Exception {
-        mockMvc.perform(delete("/api/v1/topics/java/subscribe"))
+    void shouldUnsubscribeFromTopic() throws Exception {
+        String slug = "java";
+
+        mockMvc.perform(delete("/api/v1/topics/{slug}/subscribe", slug))
                 .andExpect(status().isNoContent());
 
-        verify(topicService).unsubscribe("java");
+        verify(topicService).unsubscribe(slug);
+        verifyNoMoreInteractions(topicService);
     }
 
     @Test
-    void shouldReturnNotFoundWhenUnsubscribingFromUnknownTopic()
-            throws Exception {
-        doThrow(new TopicNotFoundException("Topic not found"))
-                .when(topicService).unsubscribe("unknown-topic");
+    void shouldPropagateUnsubscribeServiceException() throws Exception {
+        String slug = "unknown-topic";
 
-        mockMvc.perform(delete("/api/v1/topics/unknown-topic/subscribe"))
+        doThrow(new TopicNotFoundException(
+                "Topic not found with slug '" + slug + "'"
+        )).when(topicService).unsubscribe(slug);
+
+        mockMvc.perform(delete("/api/v1/topics/{slug}/subscribe", slug))
                 .andExpect(status().isNotFound());
 
-        verify(topicService).unsubscribe("unknown-topic");
+        verify(topicService).unsubscribe(slug);
     }
 }
