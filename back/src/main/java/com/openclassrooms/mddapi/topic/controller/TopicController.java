@@ -52,10 +52,10 @@ public class TopicController {
      *
      * @param slug the slug of the topic
      */
-    @PostMapping("/{id}/subscribe")
+    @PostMapping("/{slug}/subscribe")
     @ResponseStatus(HttpStatus.CREATED)
     public void subscribe(
-            @PathVariable String slug
+            @PathVariable("slug") String slug
     ) {
         topicService.subscribe(slug);
     }
@@ -65,10 +65,10 @@ public class TopicController {
      *
      * @param slug the slug of the topic
      */
-    @DeleteMapping("/{id}/subscribe")
+    @DeleteMapping("/{slug}/subscribe")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unsubscribe(
-            @PathVariable String slug
+            @PathVariable("slug") String slug
     ) {
         topicService.unsubscribe(slug);
     }

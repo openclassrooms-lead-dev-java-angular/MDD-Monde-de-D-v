@@ -121,6 +121,11 @@ public class TopicService {
         return topicRepository.getReferenceBySlug(slug);
     }
 
+    /**
+     * Retrieves the list of available topic options.
+     *
+     * @return a list of topic options
+     */
     @Transactional(readOnly = true)
     public List<TopicOptionDto> getOptions() {
         return topicRepository.findAllTopicOptions();
