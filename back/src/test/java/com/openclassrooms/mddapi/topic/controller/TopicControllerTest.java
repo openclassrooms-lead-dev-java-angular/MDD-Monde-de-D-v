@@ -70,7 +70,7 @@ class TopicControllerTest {
                         pageable.getPageNumber() == 0
                                 && pageable.getPageSize() == 10
                                 && pageable.getSort().getOrderFor("name") != null
-                                && pageable.getSort().getOrderFor("name").isAscending()
+                                && Objects.requireNonNull(pageable.getSort().getOrderFor("name")).isAscending()
                 )
         );
 

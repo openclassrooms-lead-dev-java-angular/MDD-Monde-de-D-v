@@ -42,21 +42,11 @@ public class TopicTestFactory {
     }
 
     public static Topic createTopic() {
-
-        return generateTopic(
-                1L,
-                "Java",
-                "java",
-                "Java development"
-        );
-    }
-
-    private static Topic generateTopic(Long id, String name, String slug, String description) {
         Topic topic = new Topic();
-        topic.setId(id);
-        topic.setSlug(slug);
-        topic.setName(name);
-        topic.setDescription(description);
+        topic.setId(1L);
+        topic.setSlug("java");
+        topic.setName("Java");
+        topic.setDescription("Java development");
         topic.setCreatedAt(generateCreatedAt());
         topic.setUpdatedAt(generateUpdatedAt());
 
