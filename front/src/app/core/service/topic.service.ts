@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@env/environment.prod';
-import { Page } from '@model/page.model';
-import { Topic } from '@model/topic.model';
+import { Page } from '@type/page.type';
+import { Topic, TopicOption } from '@model/topic.model';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -14,12 +14,28 @@ export class TopicService {
   private httpClient = inject(HttpClient);
 
   public getTopics(page: number, size: number): Observable<Page<Topic>> {
-    return this.httpClient.get<Page<Topic>>(
-      `${this.pathService}`, {
+    return this.httpClient.get<Page<Topic>>(`${this.pathService}`, {
       params: {
         page,
         size,
       },
     });
+  }
+
+  public getTopicList(): Observable<TopicOption[]> {
+    return this.httpClient.get<TopicOption[]>(`${this.pathService}/options`);
+  }
+
+  public subscribe(slug: string): Observable<void> {
+    return this.httpClient.post<void>(
+      `${this.pathService}/${slug}/subscribe`,
+      {},
+    );
+  }
+
+  public unsubscribe(slug: string): Observable<void> {
+    return this.httpClient.delete<void>(
+      `${this.pathService}/${slug}/subscribe`,
+    );
   }
 }
