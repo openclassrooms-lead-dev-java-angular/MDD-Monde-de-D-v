@@ -50,11 +50,13 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void refreshToken(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        ResponseCookie accessTokenCookie = authService.refreshAccessToken(request);
+        ResponseCookie accessTokenCookie =
+                authService.refreshAccessToken(request);
 
         response.addHeader(
                 HttpHeaders.SET_COOKIE,
