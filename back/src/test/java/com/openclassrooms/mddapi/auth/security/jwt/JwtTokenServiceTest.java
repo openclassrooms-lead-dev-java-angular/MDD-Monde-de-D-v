@@ -105,6 +105,7 @@ public class JwtTokenServiceTest {
 
         JwtEncoderParameters parameters = captor.getValue();
 
+        Assertions.assertNotNull(parameters.getJwsHeader());
         assertThat(parameters.getJwsHeader().getAlgorithm().getName())
                 .isEqualTo("RS256");
         assertThat((Object)parameters.getClaims().getClaim("iss"))
