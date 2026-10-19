@@ -9,13 +9,11 @@ import com.openclassrooms.mddapi.article.mapper.ArticleMapper;
 import com.openclassrooms.mddapi.article.repository.ArticleRepository;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
-import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.service.TopicService;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.service.UserService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,11 +37,6 @@ public class ArticleService {
     private final TopicService topicService;
     private final UserService userService;
     private final UserDetailsServiceImpl  userDetailsService;
-    private final SubscriptionService subscriptionService;
-
-
-    @Value("${app.storage-path.article}")
-    private String resourceType;
 
     @Transactional(readOnly = true)
     public Page<ArticleResponseDto> findFeedArticles(Pageable pageable) {
@@ -51,7 +44,7 @@ public class ArticleService {
 
         return articleRepository
                 .findArticlesByUserSubscriptions(userId, pageable)
-                .map(article -> articleMapper.toDto(article));
+                .map(articleMapper::toDto);
     }
 
     /**
@@ -65,7 +58,7 @@ public class ArticleService {
     public ArticleResponseDto findBySlug(final String slug) {
         return articleRepository
                 .findBySlug(slug)
-                .map(article -> articleMapper.toDto(article))
+                .map(articleMapper::toDto)
                 .orElseThrow(() -> new ArticleNotFoundException("Article not found with slug : " + slug));
     }
 
