@@ -2,7 +2,6 @@ package com.openclassrooms.mddapi.factory;
 
 import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
-import com.openclassrooms.mddapi.article.dto.ArticleUpdateRequestDto;
 import com.openclassrooms.mddapi.article.entity.Article;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;
@@ -23,10 +22,6 @@ public class ArticleTestFactory {
                 .setSlug("my-article")
                 .setTitle("article title")
                 .setContent("my article content");
-
-        if (withMedia) {
-            article.setMedia("/articles/1/image.jpg");
-        }
 
         return article;
     }
@@ -51,7 +46,6 @@ public class ArticleTestFactory {
                 "my-article",
                 "article title",
                 "my article content",
-                withMedia ? "articles/1/image.jpg" : null,
                 LocalDateTimeTestFactory.generateCreatedAt(),
                 LocalDateTimeTestFactory.generateUpdatedAt()
         );
@@ -68,7 +62,6 @@ public class ArticleTestFactory {
                 "updated-article",
                 "Updated article",
                 "New article content",
-                withMedia ? "articles/1/image.jpg" : null,
                 LocalDateTimeTestFactory.generateCreatedAt(),
                 LocalDateTimeTestFactory.generateUpdatedAt()
         );
@@ -88,23 +81,5 @@ public class ArticleTestFactory {
                                 } 
                         """.getBytes()
         );
-    }
-
-    public static ArticleUpdateRequestDto createArticleUpdateRequestDto() {
-        return new ArticleUpdateRequestDto(
-                "updated-article",
-                "Updated article",
-                "New article content",
-                "java",
-                false);
-    }
-
-    public static ArticleUpdateRequestDto createArticleUpdateRequestDtoWithMedia() {
-        return new ArticleUpdateRequestDto(
-                "updated-article",
-                "Updated article",
-                "New article content",
-                "java",
-                true);
     }
 }

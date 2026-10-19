@@ -9,14 +9,11 @@ import com.openclassrooms.mddapi.article.mapper.ArticleMapper;
 import com.openclassrooms.mddapi.article.repository.ArticleRepository;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
-import com.openclassrooms.mddapi.storage.service.StorageService;
-import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.service.TopicService;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.service.UserService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +25,7 @@ import org.springframework.stereotype.Service;
  * Service responsible for managing articles.
  *
  * <p>This service handles article creation, retrieval,
- * slug availability checks, topic validation, and media storage.</p>
+ * slug availability checks, topic validation.</p>
  */
 @Service
 @Slf4j
@@ -37,18 +34,9 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
     private final ArticleMapper articleMapper;
-    private final StorageService storageService;
     private final TopicService topicService;
     private final UserService userService;
     private final UserDetailsServiceImpl  userDetailsService;
-    private final SubscriptionService subscriptionService;
-
-
-    @Value("${app.storage-path.article}")
-    private String resourceType;
-
-    @Value("${app.media-url}")
-    private String mediaUrl;
 
     @Transactional(readOnly = true)
     public Page<ArticleResponseDto> findFeedArticles(Pageable pageable) {
@@ -56,7 +44,7 @@ public class ArticleService {
 
         return articleRepository
                 .findArticlesByUserSubscriptions(userId, pageable)
-                .map(article -> articleMapper.toDto(article, mediaUrl));
+                .map(articleMapper::toDto);
     }
 
     /**
@@ -70,7 +58,7 @@ public class ArticleService {
     public ArticleResponseDto findBySlug(final String slug) {
         return articleRepository
                 .findBySlug(slug)
-                .map(article -> articleMapper.toDto(article, mediaUrl))
+                .map(articleMapper::toDto)
                 .orElseThrow(() -> new ArticleNotFoundException("Article not found with slug : " + slug));
     }
 
@@ -79,8 +67,7 @@ public class ArticleService {
      *
      * <p>The method verifies that the slug is available and that the
      * specified topic exists. It then retrieves the currently authenticated
-     * user as the author, maps the request DTO to an entity, optionally
-     * uploads the associated media, and persists the article.</p>
+     * user as the author, maps the request DTO to an entity, and persists the article.</p>
      *
      * @param articleRequestDto the data of the article to create
      * @return the created article
@@ -106,7 +93,7 @@ public class ArticleService {
 
         log.info("Saved article {}", savedArticle.getSlug());
 
-        return articleMapper.toDto(savedArticle, mediaUrl);
+        return articleMapper.toDto(savedArticle);
     }
 
     /**
