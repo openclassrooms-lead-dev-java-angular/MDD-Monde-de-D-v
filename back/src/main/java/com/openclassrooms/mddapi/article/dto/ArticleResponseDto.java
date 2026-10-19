@@ -10,7 +10,6 @@ public record ArticleResponseDto(
         String slug,
         String title,
         String content,
-        String media,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) { }
