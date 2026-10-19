@@ -9,19 +9,19 @@ import { Router } from '@angular/router';
 import { AuthService } from '@service/auth.service';
 import { UserStateService } from '@service/user-state.service';
 import { UserService } from '@service/user.service';
-import { switchMap } from 'rxjs';
-import { LoginForm } from 'src/app/core/types/LoginForm.type';
+import { finalize, switchMap } from 'rxjs';
+import { LoginForm } from '@type/login-form.type';
 import { ButtonComponent } from 'src/app/shared/components/button/button.component';
-import { InputComponent } from 'src/app/shared/components/input/input.component';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
     ButtonComponent,
-    InputComponent,
     ReactiveFormsModule,
     MatIconModule,
+    MatInputModule,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -41,11 +41,34 @@ export class LoginComponent {
   isLoading = false;
   errorMessage = '';
 
+  get usernameOrEmailErrors(): string[] {
+    const control = this.loginForm.controls.usernameOrEmail;
+
+    if (!control.touched && !control.dirty) {
+      return [];
+    }
+
+    return control.hasError('required')
+      ? ["L'email ou le nom d'utilisateur est obligatoire."]
+      : [];
+  }
+
+  get passwordErrors(): string[] {
+    const control = this.loginForm.controls.password;
+
+    if (!control.touched && !control.dirty) {
+      return [];
+    }
+
+    return control.hasError('required')
+      ? ['Le mot de passe est obligatoire.']
+      : [];
+  }
+
   submit(): void {
-    console.log(this.loginForm.value);
     this.errorMessage = '';
 
-    if (this.loginForm.invalid || this.loginForm.pending) {
+    if (this.loginForm.invalid || this.loginForm.pending || this.isLoading) {
       this.loginForm.markAllAsTouched();
       return;
     }
@@ -55,64 +78,28 @@ export class LoginComponent {
     const formValue = this.loginForm.getRawValue();
 
     this.authService
-      .login({
-        usernameOrEmail: formValue.usernameOrEmail,
-        password: formValue.password,
-      })
+      .login(formValue)
       .pipe(
-        switchMap(() => this.userService.getMe())
+        switchMap(() => this.userService.getMe()),
+        finalize(() => {
+          this.isLoading = false;
+        }),
       )
       .subscribe({
         next: (user) => {
           this.userStateService.setUser(user);
-          this.isLoading = false;
-
-          this.router.navigate(['/feed']);
+          void this.router.navigate(['/feed']);
         },
-
-        error: (error) => {
+        error: (error: unknown) => {
           console.error('Login error:', error);
 
-          this.isLoading = false;
           this.errorMessage =
-            'Erreur lors de la connexion. Veuillez réessayer.';
+            'Erreur lors de la connexion. Vérifiez vos identifiants et réessayez.';
         },
       });
   }
 
   goBack(): void {
-    this.router.navigate(['/']);
-  }
-
-  get usernameOrEmailErrors(): string[] {
-    const control = this.loginForm.controls.usernameOrEmail;
-
-    if (!control.touched) {
-      return [];
-    }
-
-    const errors: string[] = [];
-
-    if (control.hasError('required')) {
-      errors.push("L'email est obligatoire.");
-    }
-
-    return errors;
-  }
-
-  get passwordErrors(): string[] {
-    const control = this.loginForm.controls.password;
-
-    if (!control.touched) {
-      return [];
-    }
-
-    const errors: string[] = [];
-
-    if (control.hasError('required')) {
-      errors.push('Le mot de passe est obligatoire.');
-    }
-
-    return errors;
+    void this.router.navigate(['/']);
   }
 }

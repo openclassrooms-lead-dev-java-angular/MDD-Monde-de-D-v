@@ -65,6 +65,12 @@ export class NavbarComponent {
 
   logout(): void {
     this.closeMobileMenu();
-    this.authService.logout();
+    this.authService.logout().subscribe({
+      next: () => {
+        this.userState.clearUser();
+        this.router.navigate(['/']);
+      },
+      error: (error) => console.error('Logout error:', error),
+    });
   }
 }

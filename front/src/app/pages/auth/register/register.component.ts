@@ -7,41 +7,39 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
-import { AuthService } from '@service/auth.service';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+import { AuthService } from '@service/auth.service';
 import {
   catchError,
-  debounceTime,
+  finalize,
   map,
   Observable,
   of,
   switchMap,
   take,
+  timer,
 } from 'rxjs';
-import { InputComponent } from 'src/app/shared/components/input/input.component';
-import { RegisterForm } from 'src/app/core/types/RegisterForm.type';
+
+import { RegisterForm } from '@type/register-form.type';
+import { AvailableResponse } from '@type/available-response.type';
 import { ButtonComponent } from 'src/app/shared/components/button/button.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
   imports: [
-    InputComponent,
     ButtonComponent,
     ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './register.component.html',
-  styleUrls: ['./register.component.scss'],
+  styleUrl: './register.component.scss',
 })
 export class RegisterComponent {
   private readonly fb = inject(NonNullableFormBuilder);
@@ -56,7 +54,7 @@ export class RegisterComponent {
     ]),
     username: this.fb.control(
       '',
-      [Validators.required, Validators.maxLength(20)],
+      [Validators.required, Validators.minLength(3), Validators.maxLength(20)],
       [this.usernameAvailabilityValidator()],
     ),
     password: this.fb.control('', [
@@ -72,19 +70,117 @@ export class RegisterComponent {
   isLoading = false;
   errorMessage = '';
 
-  private usernameAvailabilityValidator(): AsyncValidatorFn {
+  get emailErrors(): string[] {
+    const control = this.registerForm.controls.email;
+
+    if (!control.touched && !control.dirty) {
+      return [];
+    }
+
+    if (control.hasError('required')) {
+      return ["L'adresse e-mail est obligatoire."];
+    }
+
+    if (control.hasError('email')) {
+      return ["L'adresse e-mail n'est pas valide."];
+    }
+
+    if (control.hasError('maxlength')) {
+      return ['Maximum 50 caractères.'];
+    }
+
+    return [];
+  }
+
+  get usernameErrors(): string[] {
+    const control = this.registerForm.controls.username;
+
+    if (!control.touched && !control.dirty) {
+      return [];
+    }
+
+    if (control.hasError('required')) {
+      return ["Le nom d'utilisateur est obligatoire."];
+    }
+
+    if (control.hasError('minlength')) {
+      return ['Le nom d’utilisateur doit contenir au moins 3 caractères.'];
+    }
+
+    if (control.hasError('maxlength')) {
+      return ['Maximum 20 caractères.'];
+    }
+
+    if (control.hasError('usernameTaken')) {
+      return ['Ce nom d’utilisateur est déjà utilisé.'];
+    }
+
+    return [];
+  }
+
+  get passwordErrors(): string[] {
+    const control = this.registerForm.controls.password;
+
+    if (!control.touched && !control.dirty) {
+      return [];
+    }
+
+    const password = control.value;
+    const errors: string[] = [];
+
+    if (control.hasError('required')) {
+      return ['Le mot de passe est obligatoire.'];
+    }
+
+    if (control.hasError('minlength')) {
+      errors.push('Minimum 8 caractères.');
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Au moins une lettre majuscule.');
+    }
+
+    if (!/[a-z]/.test(password)) {
+      errors.push('Au moins une lettre minuscule.');
+    }
+
+    if (!/\d/.test(password)) {
+      errors.push('Au moins un chiffre.');
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(password)) {
+      errors.push('Au moins un caractère spécial.');
+    }
+
+    if (control.hasError('usernameCheckFailed')) {
+      return ['Impossible de vérifier le nom d’utilisateur. Réessayez.'];
+    }
+
+    return errors;
+  }
+
+  get isUsernameLoading(): boolean {
+    return this.registerForm.controls.username.pending;
+  }
+
+  protected usernameAvailabilityValidator(): AsyncValidatorFn {
     return (control: AbstractControl): Observable<ValidationErrors | null> => {
-      const username = control.value?.trim();
-      console.log('username : ' + username);
-      if (!username || username.length < 3) {
+      const username = (control.value as string).trim();
+
+      if (username.length < 3) {
         return of(null);
       }
 
-      return of(username).pipe(
-        debounceTime(400),
-        switchMap((res) => this.authService.checkUsernameAvailability(res)),
-        map((res) => (res.available ? null : { usernameTaken: true })),
-        catchError(() => of(null)),
+      return timer(400).pipe(
+        switchMap(() => this.authService.checkUsernameAvailability(username)),
+        map((response: AvailableResponse) =>
+          response.available ? null : { usernameTaken: true },
+        ),
+        catchError((error: unknown) => {
+          console.error('Erreur de vérification du nom utilisateur :', error);
+
+          return of({ usernameCheckFailed: true });
+        }),
         take(1),
       );
     };
@@ -93,102 +189,41 @@ export class RegisterComponent {
   submit(): void {
     this.errorMessage = '';
 
-    if (this.registerForm.invalid || this.registerForm.pending) {
+    if (
+      this.registerForm.invalid ||
+      this.registerForm.pending ||
+      this.isLoading
+    ) {
       this.registerForm.markAllAsTouched();
       return;
     }
 
     this.isLoading = true;
 
-    const formValue = this.registerForm.getRawValue();
+    const { email, username, password } = this.registerForm.getRawValue();
 
     this.authService
-      .register({
-        email: formValue.email,
-        username: formValue.username,
-        password: formValue.password,
-      })
+      .register({ email, username, password })
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+        }),
+      )
       .subscribe({
         next: () => {
-          this.router.navigate(['/login']);
+          void this.router.navigate(['/login']);
         },
-        error: (error) => {
+        error: (error: { error?: { message?: string } }) => {
+          console.error('Erreur lors de l’inscription :', error);
+
           this.errorMessage =
-            error.error?.message ||
+            error.error?.message ??
             "Une erreur est survenue lors de l'inscription.";
-          this.isLoading = false;
         },
       });
   }
 
   goBack(): void {
-    this.router.navigate(['/']);
-  }
-
-  get emailErrors(): string[] {
-    const control = this.registerForm.controls.email;
-
-    if (!control.touched) {
-      return [];
-    }
-
-    const errors: string[] = [];
-
-    if (control.hasError('required')) {
-      errors.push("L'email est obligatoire.");
-    }
-
-    if (control.hasError('email')) {
-      errors.push("L'email n'est pas valide.");
-    }
-
-    if (control.hasError('maxlength')) {
-      errors.push('Maximum 50 caractères.');
-    }
-
-    return errors;
-  }
-  get usernameErrors(): string[] {
-    const control = this.registerForm.controls.username;
-
-    if (!control.touched) {
-      return [];
-    }
-
-    const errors: string[] = [];
-
-    if (control.hasError('required')) {
-      errors.push("Le nom d'utilisateur est obligatoire.");
-    }
-
-    if (control.hasError('maxlength')) {
-      errors.push('Maximum 20 caractères.');
-    }
-
-    if (control.hasError('usernameTaken')) {
-      errors.push('Ce nom d’utilisateur est déjà utilisé.');
-    }
-
-    return errors;
-  }
-
-  get passwordErrors(): string[] {
-    const control = this.registerForm.controls.password;
-
-    if (!control.touched) {
-      return [];
-    }
-
-    const errors: string[] = [];
-
-    if (control.hasError('required')) {
-      errors.push('Le mot de passe est obligatoire.');
-    }
-
-    if (control.hasError('minlength')) {
-      errors.push('Minimum 8 caractères.');
-    }
-
-    return errors;
+    void this.router.navigate(['/']);
   }
 }

@@ -44,10 +44,8 @@ public class JwtKeyConfigTest {
 
     @Test
     void shouldLoadRsaPublicKey() throws Exception {
-        // When
         RSAPublicKey publicKey = jwtKeyConfig.rsaPublicKey();
 
-        // Then
         assertThat(publicKey)
                 .isNotNull();
         assertThat(publicKey.getAlgorithm())
@@ -60,10 +58,8 @@ public class JwtKeyConfigTest {
 
     @Test
     void shouldLoadRsaPrivateKey() throws Exception {
-        // When
         RSAPrivateKey privateKey = jwtKeyConfig.rsaPrivateKey();
 
-        // Then
         assertThat(privateKey)
                 .isNotNull();
         assertThat(privateKey.getAlgorithm())
@@ -74,14 +70,12 @@ public class JwtKeyConfigTest {
 
     @Test
     void shouldCreateJwtEncoder() throws Exception {
-        // Given
+        
         RSAPublicKey publicKey = jwtKeyConfig.rsaPublicKey();
         RSAPrivateKey privateKey = jwtKeyConfig.rsaPrivateKey();
 
-        // When
         JwtEncoder encoder = jwtKeyConfig.jwtEncoder(publicKey, privateKey);
 
-        // Then
         assertThat(encoder)
                 .isNotNull();
         assertThat(encoder)
@@ -90,13 +84,11 @@ public class JwtKeyConfigTest {
 
     @Test
     void shouldCreateJwtDecoder() throws Exception {
-        // Given
+        
         RSAPublicKey publicKey = jwtKeyConfig.rsaPublicKey();
 
-        // When
         JwtDecoder decoder = jwtKeyConfig.jwtDecoder(publicKey);
 
-        // Then
         assertThat(decoder).isNotNull();
     }
 

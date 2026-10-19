@@ -24,18 +24,16 @@ public class CookieServiceTest {
 
     @Test
     void shouldGenerateAccessTokenCookie() {
-        // Given
+        
         String token = "access-token-value";
 
-        // When
         ResponseCookie cookie = cookieService.generateAccessTokenCookie(token);
 
-        // Then
         assertThat(cookie).isNotNull();
         assertThat(cookie.getName()).isEqualTo("access_token");
         assertThat(cookie.getValue()).isEqualTo(token);
         assertThat(cookie.isSecure()).isTrue();
-        assertThat(cookie.isHttpOnly()).isFalse();
+        assertThat(cookie.isHttpOnly()).isTrue();
         assertThat(cookie.getSameSite()).isEqualTo("Lax");
         assertThat(cookie.getPath()).isEqualTo("/");
         assertThat(cookie.getMaxAge()) .isEqualTo(Duration.ofMinutes(15));
@@ -43,13 +41,11 @@ public class CookieServiceTest {
 
     @Test
     void shouldGenerateRefreshTokenCookie() {
-        // Given
+        
         String token = "refresh-token-value";
 
-        // When
         ResponseCookie cookie = cookieService.generateRefreshTokenCookie(token);
 
-        // Then
         assertThat(cookie).isNotNull();
         assertThat(cookie.getName()).isEqualTo("refresh_token");
         assertThat(cookie.getValue()).isEqualTo(token);
@@ -62,10 +58,8 @@ public class CookieServiceTest {
 
     @Test
     void shouldGenerateLogoutCookies() {
-        // When
         Map<String, ResponseCookie> cookies = cookieService.generateLogoutCookies();
 
-        // Then
         assertThat(cookies)
                 .isNotNull()
                 .hasSize(2);
@@ -94,15 +88,13 @@ public class CookieServiceTest {
 
     @Test
     void shouldGenerateInsecureCookiesWhenSecureCookieIsDisabled() {
-        // Given
+        
         ReflectionTestUtils.setField(cookieService, "secureCookie", false);
 
-        // When
         ResponseCookie accessCookie = cookieService.generateAccessTokenCookie("access-token");
         ResponseCookie refreshCookie = cookieService.generateRefreshTokenCookie("refresh-token");
         Map<String, ResponseCookie> logoutCookies = cookieService.generateLogoutCookies();
 
-        // Then
         assertThat(accessCookie.isSecure()).isFalse();
         assertThat(refreshCookie.isSecure()).isFalse();
         assertThat(logoutCookies.get("accessCookie").isSecure()).isFalse();

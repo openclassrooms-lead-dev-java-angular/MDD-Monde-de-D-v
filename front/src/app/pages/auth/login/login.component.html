@@ -1,43 +1,73 @@
 <section class="login">
-  <button class="login__back-button" (click)="goBack()">
-    <mat-icon
-      aria-hidden="false"
-      aria-label="Example home icon"
-      fontIcon="arrow_back"
-    />
+  <button
+    type="button"
+    class="login__back-button"
+    aria-label="Retour à l'accueil"
+    (click)="goBack()"
+  >
+    <mat-icon aria-hidden="true">arrow_back</mat-icon>
   </button>
 
   <div class="login__content">
     <div class="login__content__header">
       <div class="login__content__header__logo-container">
-        <img class="logo" src="/assets/logo_p6.png" alt="logo" />
+        <img class="logo" src="/assets/logo_p6.png" alt="Logo" />
       </div>
+
       <h1 class="login__content__header__title">Connexion</h1>
     </div>
 
     <form class="login__form" [formGroup]="loginForm" (ngSubmit)="submit()">
-      <app-input
-        label="E-mail ou nom d'utilisateur"
-        type="text"
-        formControlName="usernameOrEmail"
-        [errors]="usernameOrEmailErrors"
-      />
+      <div class="form-input">
+        <label for="usernameOrEmail"> E-mail ou nom d'utilisateur </label>
 
-      <app-input
-        label="Mot de passe"
-        type="password"
-        formControlName="password"
-        [errors]="passwordErrors"
-      />
+        <mat-form-field appearance="outline" class="full-width">
+          <input
+            id="usernameOrEmail"
+            matInput
+            class="form-input__input"
+            type="text"
+            autocomplete="username"
+            formControlName="usernameOrEmail"
+          />
+
+          @for (error of usernameOrEmailErrors; track error) {
+            <mat-error>{{ error }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-input">
+        <label for="password">Mot de passe</label>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <input
+            id="password"
+            matInput
+            type="password"
+            autocomplete="current-password"
+            formControlName="password"
+          />
+
+          @for (error of passwordErrors; track error) {
+            <mat-error>{{ error }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (errorMessage) {
+        <p class="error" role="alert">
+          {{ errorMessage }}
+        </p>
+      }
 
       <div class="login__form__actions">
         <app-button
-          [disabled]="isLoading"
+          class="login__content__submit-button"
           type="submit"
           color="primary"
-          label="{{ isLoading ? 'Connexion...' : 'Se connecter' }}"
-          color="primary"
-          class="login__content__submit-button"
+          [disabled]="isLoading || loginForm.invalid || loginForm.pending"
+          [label]="isLoading ? 'Connexion...' : 'Se connecter'"
         />
       </div>
     </form>
