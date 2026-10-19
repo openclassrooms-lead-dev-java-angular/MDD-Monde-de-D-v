@@ -12,8 +12,6 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -107,6 +105,7 @@ public class JwtTokenServiceTest {
 
         JwtEncoderParameters parameters = captor.getValue();
 
+        Assertions.assertNotNull(parameters.getJwsHeader());
         assertThat(parameters.getJwsHeader().getAlgorithm().getName())
                 .isEqualTo("RS256");
         assertThat((Object)parameters.getClaims().getClaim("iss"))
