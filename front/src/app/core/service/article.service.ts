@@ -2,9 +2,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@env/environment.prod';
 import { Article, ArticleNew } from '@model/article.model';
-import { Page } from '@model/page.model';
+import { Page } from '@type/page.type';
 import { Observable } from 'rxjs';
-import { AvailableResponse } from '@model/available-response.model';
+import { AvailableResponse } from '@type/available-response.type';
 import { SortDirection } from '@type/sort-direction.type';
 
 @Injectable({

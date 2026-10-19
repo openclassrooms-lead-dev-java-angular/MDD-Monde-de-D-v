@@ -13,7 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import { ArticleNew } from '@model/article.model';
-import { AvailableResponse } from '@model/available-response.model';
+import { AvailableResponse } from '@type/available-response.type';
 import { TopicOption } from '@model/topic.model';
 import { ArticleService } from '@service/article.service';
 import { TopicService } from '@service/topic.service';
