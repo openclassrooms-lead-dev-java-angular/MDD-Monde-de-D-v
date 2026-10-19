@@ -5,7 +5,6 @@ import com.openclassrooms.mddapi.article.exception.ArticleSlugAlreadyExists;
 import com.openclassrooms.mddapi.auth.exception.InvalidTokenException;
 import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.common.dto.ErrorResponseDto;
-import com.openclassrooms.mddapi.storage.exception.StorageException;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
@@ -109,16 +108,6 @@ public class GlobalExceptionHanler {
         return buildResponse(HttpStatus.CONFLICT, e.getMessage());
     }
 
-    // Internal server error exceptions
-
-    @ExceptionHandler(StorageException.class)
-    public ResponseEntity<String> handleStorageException(StorageException e) {
-        log.error("STORAGE ERROR", e);
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(e.getMessage());
-    }
-
     // Method argument not valid exceptions
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -128,7 +117,7 @@ public class GlobalExceptionHanler {
         return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
-    // Global exceptions
+    // Internal server error exceptions
 
     @ExceptionHandler(value = Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
