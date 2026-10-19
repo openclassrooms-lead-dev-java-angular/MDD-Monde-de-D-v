@@ -4,8 +4,6 @@ import com.openclassrooms.mddapi.auth.dto.LoginRequestDto;
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.dto.UsernameAvailableDto;
 import com.openclassrooms.mddapi.auth.service.AuthService;
-import com.openclassrooms.mddapi.factory.MediaTestFactory;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,17 +12,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.contains;
 import static org.mockito.ArgumentMatchers.any;
-
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
