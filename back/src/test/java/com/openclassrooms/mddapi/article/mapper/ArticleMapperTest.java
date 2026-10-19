@@ -2,7 +2,6 @@ package com.openclassrooms.mddapi.article.mapper;
 
 import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
-import com.openclassrooms.mddapi.article.dto.ArticleUpdateRequestDto;
 import com.openclassrooms.mddapi.article.entity.Article;
 import com.openclassrooms.mddapi.factory.ArticleTestFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,9 +11,6 @@ import org.mapstruct.factory.Mappers;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class ArticleMapperTest {
-
-    private static final String MEDIA_URL =
-            "http://localhost:8080/uploads/";
 
     private ArticleMapper articleMapper;
 
@@ -28,7 +24,7 @@ class ArticleMapperTest {
         Article article = ArticleTestFactory.createArticle(false);
 
         ArticleResponseDto result =
-                articleMapper.toDto(article, MEDIA_URL);
+                articleMapper.toDto(article);
 
         assertThat(result).isNotNull();
 
@@ -49,9 +45,6 @@ class ArticleMapperTest {
 
         assertThat(result.topic().slug())
                 .isEqualTo("java");
-
-        assertThat(result.media())
-                .isNull();
     }
 
     @Test
@@ -59,12 +52,9 @@ class ArticleMapperTest {
         Article article = ArticleTestFactory.createArticle(true);
 
         ArticleResponseDto result =
-                articleMapper.toDto(article, MEDIA_URL);
+                articleMapper.toDto(article);
 
         assertThat(result).isNotNull();
-
-        assertThat(result.media())
-                .isEqualTo(MEDIA_URL + article.getMedia());
     }
 
     @Test
@@ -85,45 +75,10 @@ class ArticleMapperTest {
         assertThat(result.getContent())
                 .isEqualTo("My article content");
 
-        assertThat(result.getMedia())
-                .isNull();
-
         assertThat(result.getAuthor())
                 .isNull();
 
         assertThat(result.getTopic())
                 .isNull();
-    }
-
-    @Test
-    void shouldUpdateArticleWithoutUpdatingMedia() {
-        Article article = Article.builder()
-                .slug("old-article")
-                .title("Old title")
-                .content("Old content")
-                .media("articles/1/old-image.jpg")
-                .build();
-
-        ArticleUpdateRequestDto dto = new ArticleUpdateRequestDto(
-                "updated-article",
-                "java",
-                "Updated title",
-                "Updated content",
-                false
-        );
-
-        articleMapper.updateEntity(dto, article);
-
-        assertThat(article.getSlug())
-                .isEqualTo("updated-article");
-
-        assertThat(article.getTitle())
-                .isEqualTo("Updated title");
-
-        assertThat(article.getContent())
-                .isEqualTo("Updated content");
-
-        assertThat(article.getMedia())
-                .isEqualTo("articles/1/old-image.jpg");
     }
 }
