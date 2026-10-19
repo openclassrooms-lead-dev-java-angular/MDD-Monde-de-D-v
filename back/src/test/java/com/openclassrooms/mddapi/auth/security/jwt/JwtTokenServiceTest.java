@@ -45,7 +45,7 @@ public class JwtTokenServiceTest {
 
     @Test
     void shouldGenerateAccessToken() {
-        // Given
+        
         when(userDetails.getId())
                 .thenReturn(123L);
         when(userDetails.getUsername())
@@ -55,10 +55,8 @@ public class JwtTokenServiceTest {
         when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
                 .thenReturn(encodedJwt);
 
-        // When
         String token = jwtTokenService.generateAccessToken(userDetails);
 
-        // Then
         assertThat(token)
                 .isEqualTo("access.jwt.token");
 
@@ -91,7 +89,7 @@ public class JwtTokenServiceTest {
 
     @Test
     void shouldGenerateRefreshToken() {
-        // Given
+        
         when(userDetails.getId())
                 .thenReturn(123L);
         when(encodedJwt.getTokenValue())
@@ -99,10 +97,8 @@ public class JwtTokenServiceTest {
         when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
                 .thenReturn(encodedJwt);
 
-        // When
         String token = jwtTokenService.generateRefreshToken(userDetails);
 
-        // Then
         assertThat(token).isEqualTo("refresh.jwt.token");
 
         ArgumentCaptor<JwtEncoderParameters> captor = ArgumentCaptor.forClass(JwtEncoderParameters.class);
@@ -131,15 +127,13 @@ public class JwtTokenServiceTest {
 
     @Test
     void shouldDecodeAndValidateToken() {
-        // Given
+        
         String token = "jwt.token";
         Jwt decodedJwt = mock(Jwt.class);
         when(jwtDecoder.decode(token)).thenReturn(decodedJwt);
 
-        // When
         Jwt result = jwtTokenService.decodeAndValidate(token);
 
-        // Then
         assertThat(result)
                 .isSameAs(decodedJwt);
         verify(jwtDecoder).decode(token);
@@ -147,12 +141,12 @@ public class JwtTokenServiceTest {
 
     @Test
     void shouldPropagateJwtDecoderException() {
-        // Given
+        
         String token = "invalid.jwt.token";
         JwtException exception = new JwtException("Invalid JWT");
         when(jwtDecoder.decode(token)).thenThrow(exception);
+ 
 
-        // When / Then
         assertThatThrownBy(() -> jwtTokenService.decodeAndValidate(token))
                 .isSameAs(exception);
         verify(jwtDecoder).decode(token);
