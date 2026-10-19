@@ -1,8 +1,7 @@
 package com.openclassrooms.mddapi.topic.controller;
 
-import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
+import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
 import com.openclassrooms.mddapi.topic.service.TopicService;
-import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 /**
  * REST controller for managing topics.
@@ -41,45 +42,9 @@ public class TopicController {
         return topicService.findAll(pageable);
     }
 
-    /**
-     * Retrieves a topic by its slug.
-     *
-     * @param slug the topic slug
-     * @return the requested topic
-     */
-    @GetMapping("/{slug}")
-    public TopicResponseDto findOne(
-            @PathVariable String slug
-    ) {
-        return topicService.findBySlug(slug);
-    }
-
-    /**
-     * Creates a new topic.
-     *
-     * @param topicDto the topic data
-     * @return the created topic
-     */
-    @PostMapping("")
-    public TopicResponseDto save(
-            @Valid @RequestBody TopicRequestDto topicDto
-    ) {
-        return topicService.create(topicDto);
-    }
-
-    /**
-     * Updates an existing topic identified by its slug.
-     *
-     * @param slug the slug of the topic to update
-     * @param topicDto the updated topic data
-     * @return the updated topic
-     */
-    @PutMapping("/{slug}")
-    public TopicResponseDto update(
-            @PathVariable String slug,
-            @Valid @RequestBody TopicRequestDto topicDto
-    ) {
-        return topicService.update(slug, topicDto);
+    @GetMapping("/options")
+    public List<TopicOptionDto> getTopicOptions() {
+        return topicService.getOptions();
     }
 
     /**
@@ -106,18 +71,5 @@ public class TopicController {
             @PathVariable String slug
     ) {
         topicService.unsubscribe(slug);
-    }
-
-    /**
-     * Checks whether a topic slug is available.
-     *
-     * @param slug the slug to check
-     * @return information about the slug availability
-     */
-    @GetMapping("/available-slug/{slug}")
-    public AvailableSlugDto availableSlug(
-            @PathVariable String slug
-    ) {
-        return topicService.availableSlug(slug);
     }
 }

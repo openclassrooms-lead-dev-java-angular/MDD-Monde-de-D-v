@@ -1,13 +1,12 @@
 package com.openclassrooms.mddapi.topic.repository;
 
+import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface TopicRepository extends JpaRepository<Topic, Long> {
 
@@ -16,4 +15,14 @@ public interface TopicRepository extends JpaRepository<Topic, Long> {
     Optional<Topic> findBySlug(String slug);
 
     Topic getReferenceBySlug(String slug);
+
+    @Query("""
+        SELECT new com.openclassrooms.mddapi.topic.dto.TopicOptionDto(
+            t.name, 
+            t.slug
+        )
+        FROM Topic t
+        ORDER BY t.name ASC
+        """)
+    List<TopicOptionDto> findAllTopicOptions();
 }
