@@ -1,12 +1,5 @@
 # Application and Spring configuration for production
 
-spring:
-  mail:
-    properties.mail.smtp:
-      auth: true
-      starttls:
-        enable: true
-
 app:
   jwt:
     cookie:

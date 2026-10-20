@@ -12,13 +12,6 @@ spring:
     username: ${DATASOURCE_USERNAME}
     password: ${DATASOURCE_PASSWORD}
 
-  ## Mail config
-  mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-
   ## JPA
   jpa:
     hibernate.ddl-auto: validate
@@ -33,20 +26,6 @@ app:
     expiration:
       access-token: 15 # MIN
       refresh-token: 30 # DAYS
-
-
-  ## MINIO
-  minio:
-    entrypoint: ${MINIO_ENTRYPOINT}
-    access-key: ${MINIO_ACCESS_KEY}
-    secret-key: ${MINIO_SECRET_KEY}
-    bucket: ${MINIO_BUCKET}
-
-  media-url: ${STORAGE_PUBLIC_URL}
-
-  storage-path:
-    article: "articles"
-    avatar: "avatars"
 
 
 ## Logs
