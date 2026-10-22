@@ -7,12 +7,23 @@
     {{ topic().description }}
   </p>
 
-  <button
-    type="button"
-    class="topic-card__button"
-    [class.topic-card__button--subscribed]="topic().subscribed"
-    (click)="subscribe.emit(topic())"
-  >
-    {{ topic().subscribed ? 'Déjà abonné' : 'S’abonner' }}
-  </button>
+  @if (showUnsubscribe()) {
+    <button
+      type="button"
+      class="topic-card__button"
+      [class.topic-card__button--subscribed]="topic().subscribed"
+      (click)="unsubscribe.emit(topic())"
+    >
+      Se désabonner
+    </button>
+  } @else {
+    <button
+      type="button"
+      class="topic-card__button"
+      [class.topic-card__button--subscribed]="topic().subscribed"
+      (click)="subscribe.emit(topic())"
+    >
+      {{ topic().subscribed ? 'Déjà abonné' : 'S’abonner' }}
+    </button>
+  }
 </article>
