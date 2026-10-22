@@ -18,4 +18,8 @@ export class UserStateService {
   setUser(user: User): void {
     this._user.set(user);
   }
+
+  getUser(): User | null {
+    return this._user();
+  }
 }
