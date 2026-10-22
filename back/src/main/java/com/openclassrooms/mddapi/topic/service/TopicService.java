@@ -1,14 +1,12 @@
 package com.openclassrooms.mddapi.topic.service;
 
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.subscription.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
-import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
+import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
-import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
 import com.openclassrooms.mddapi.topic.mapper.TopicMapper;
 import com.openclassrooms.mddapi.topic.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,26 +36,6 @@ public class TopicService {
     private final SubscriptionRepository subscriptionRepository;
 
     /**
-     * Retrieves a topic by its slug.
-     *
-     * @param slug the topic slug
-     * @return the topic response
-     * @throws TopicNotFoundException if no topic matches the given slug
-     */
-    @Transactional(readOnly = true)
-    public TopicResponseDto findBySlug(String slug) {
-        Topic topic = topicRepository
-                .findBySlug(slug)
-                .orElseThrow(TopicNotFoundException::new);
-
-        Long userId = userDetailsServiceImpl.getPrincipalUserId();
-        boolean isSubscribedTopic = subscriptionRepository.existsByUserIdAndTopicId(userId, topic.getId());
-
-        return topicMapper.toDto(topic, isSubscribedTopic);
-
-    }
-
-    /**
      * Retrieves all topics using the given pagination and sorting parameters.
      *
      * @param pageable pagination and sorting parameters
@@ -81,56 +59,6 @@ public class TopicService {
                 topic,
                 subscribedTopicIds.contains(topic.getId())
         ));
-    }
-
-    /**
-     * Creates a new topic.
-     *
-     * @param topicRequestDto the data used to create the topic
-     * @return the created topic response
-     * @throws TopicSlugAlreadyExists if the requested slug is already in use
-     */
-    @Transactional
-    public TopicResponseDto create(TopicRequestDto topicRequestDto) {
-
-        if (topicRepository.existsBySlug(topicRequestDto.slug())) {
-            throw new TopicSlugAlreadyExists("Slug already exists");
-        }
-
-        Topic topic = topicMapper.toEntity(topicRequestDto);
-
-        log.info("Creating topic with slug '{}'", topicRequestDto.slug());
-
-
-
-        return topicMapper.toDto(topicRepository.save(topic), false);
-    }
-
-    /**
-     * Updates an existing topic identified by its slug.
-     *
-     * @param slug            the slug of the topic to update
-     * @param topicRequestDto the data used to update the topic
-     * @return the updated topic response * @throws TopicNotFoundException if no topic matches the given slug
-     */
-    @Transactional
-    public TopicResponseDto update(String slug, TopicRequestDto topicRequestDto) {
-
-        if (!topicRepository.existsBySlug(slug)) {
-            throw new TopicNotFoundException("Topic not found");
-        }
-
-        Topic topic = topicRepository
-                .getReferenceBySlug(slug);
-
-        topicMapper.updateEntity(topic, topicRequestDto);
-
-        log.info("Updating topic with slug '{}'", slug);
-
-        Long userId = userDetailsServiceImpl.getPrincipalUserId();
-        boolean isSubscribedTopic = subscriptionRepository.existsByUserIdAndTopicId(userId, topic.getId());
-
-        return topicMapper.toDto(topicRepository.save(topic),  isSubscribedTopic);
     }
 
     /**
@@ -166,19 +94,6 @@ public class TopicService {
     }
 
     /**
-     * Checks whether a topic slug is available.
-     *
-     * @param slug the slug to check
-     * @return a response indicating whether the slug is available
-     */
-    @Transactional(readOnly = true)
-    public AvailableSlugDto availableSlug(String slug) {
-        boolean exists = topicRepository.existsBySlug(slug);
-
-        return new AvailableSlugDto(!exists);
-    }
-
-    /**
      * Checks whether a topic exists with the given slug.
      *
      * @param slug the slug of the topic to check
@@ -204,5 +119,26 @@ public class TopicService {
     @Transactional(readOnly = true)
     public Topic loadBySlug(String slug) {
         return topicRepository.getReferenceBySlug(slug);
+    }
+
+    /**
+     * Retrieves the list of available topic options.
+     *
+     * @return a list of topic options
+     */
+    @Transactional(readOnly = true)
+    public List<TopicOptionDto> getOptions() {
+        return topicRepository.findAllTopicOptions();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TopicResponseDto> getSubscribedTopics(Pageable pageable) {
+        Long userId = userDetailsServiceImpl.getPrincipalUserId();
+
+        return topicRepository
+                .findSubscribedTopics(pageable, userId)
+                .map(topic ->
+                        topicMapper.toDto(topic, true)
+                );
     }
 }

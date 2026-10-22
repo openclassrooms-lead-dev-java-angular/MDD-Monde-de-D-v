@@ -6,21 +6,17 @@
   (scrolled)="loadMore()"
 >
   @for (topic of topicList(); track topic.slug) {
-    <app-topic-card 
-      [topic]="topic" 
-      (subscribe)="subscribeToTopic($event)" 
+    <app-topic-card
+      [topic]="topic"
+      (subscribe)="subscribeToTopic($event)"
     />
   } @empty {
     @if (!loading()) {
-      <p class="topic-list__empty">
-        Aucun thème disponible.
-      </p>
+      <p class="topic-list__empty">Aucun thème disponible.</p>
     }
   }
 
   @if (loading()) {
-    <div class="topic-list__loader">
-      Chargement...
-    </div>
+    <div class="topic-list__loader">Chargement...</div>
   }
 </section>

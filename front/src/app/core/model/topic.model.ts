@@ -6,3 +6,8 @@ export interface Topic {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface TopicOption {
+  slug: string;
+  name: string;
+}

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+} from '@angular/core';
 import { Topic } from '@model/topic.model';
 
 @Component({
@@ -12,5 +17,8 @@ import { Topic } from '@model/topic.model';
 export class TopicCardComponent {
   readonly topic = input.required<Topic>();
 
+  readonly showUnsubscribe = input(false);
+
   readonly subscribe = output<Topic>();
+  readonly unsubscribe = output<Topic>();
 }
