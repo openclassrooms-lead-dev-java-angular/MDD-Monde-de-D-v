@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@env/environment.prod';
 import { Page } from '@type/page.type';
@@ -36,6 +36,15 @@ export class TopicService {
   public unsubscribe(slug: string): Observable<void> {
     return this.httpClient.delete<void>(
       `${this.pathService}/${slug}/subscribe`,
+    );
+  }
+
+  public getSubscribed(page: number, size: number): Observable<Page<Topic>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+
+    return this.httpClient.get<Page<Topic>>(
+      `${this.pathService}/subscribed`,
+      { params },
     );
   }
 }

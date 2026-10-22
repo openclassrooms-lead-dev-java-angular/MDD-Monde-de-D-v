@@ -49,7 +49,7 @@ describe('TopicService', () => {
         totalPages: 1,
         size: 10,
         number: 0,
-        numberOfElements:0, 
+        numberOfElements: 0,
         first: true,
         last: true,
         empty: false,
@@ -135,6 +135,64 @@ describe('TopicService', () => {
       expect(req.request.method).toBe('DELETE');
 
       req.flush(null);
+    });
+  });
+
+  describe('getSubscribed', () => {
+    it('should retrieve the subscribed topics', () => {
+      const mockResponse: Page<Topic[]> = {
+        content: [
+          [
+            { name: 'Java', slug: 'java' },
+            { name: 'Angular', slug: 'angular' },
+          ],
+        ],
+        totalElements: 1,
+        totalPages: 1,
+        size: 10,
+        number: 0,
+        numberOfElements: 1,
+        first: true,
+        last: true,
+        empty: false,
+      } as Page<Topic[]>;
+
+      service.getSubscribed().subscribe((response) => {
+        expect(response).toEqual(mockResponse);
+        expect(response.content).toEqual(mockResponse.content);
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/subscribed`);
+
+      expect(req.request.method).toBe('GET');
+
+      req.flush(mockResponse);
+    });
+
+    it('should retrieve an empty page when the user has no subscribed topics', () => {
+      const mockResponse: Page<Topic[]> = {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: 10,
+        number: 0,
+        numberOfElements: 0,
+        first: true,
+        last: true,
+        empty: true,
+      } as Page<Topic[]>;
+
+      service.getSubscribed().subscribe((response) => {
+        expect(response).toEqual(mockResponse);
+        expect(response.content).toEqual([]);
+        expect(response.empty).toBe(true);
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/subscribed`);
+
+      expect(req.request.method).toBe('GET');
+
+      req.flush(mockResponse);
     });
   });
 });
