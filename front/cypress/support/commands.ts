@@ -35,3 +35,42 @@
 //     }
 //   }
 // }
+
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      login(): Chainable<void>;
+    }
+  }
+}
+
+export {};
+
+Cypress.Commands.add('login', () => {
+  cy.intercept('POST', '**/login', {
+    statusCode: 200,
+    body: null,
+  }).as('login');
+
+  cy.intercept('GET', '**/me', {
+    statusCode: 200,
+    body: {
+      email: 'test.e2e@example.com',
+      username: 'testuser123',
+      createdAt: '2026-01-01T10:00:00.000Z',
+      updatedAt: '2026-01-01T10:00:00.000Z',
+    },
+  }).as('getMe');
+
+  cy.visit('/login');
+
+  cy.get('input').then(() => {
+    cy.get('input[type="text"]').type('testuser123');
+    cy.get('input[type="password"]').type('TestPassword1!');
+  });
+
+  cy.get('app-button button[type="submit"]').should('not.be.disabled').click();
+
+  cy.wait('@login');
+  cy.wait('@getMe');
+});

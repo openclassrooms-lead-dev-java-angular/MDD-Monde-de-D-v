@@ -46,7 +46,7 @@ module.exports = [
   },
 
   {
-    files: ['cypress/e2e/**/*.cy.ts'],
+    files: ['cypress/e2e/**/*.cy.ts', 'cypress/**/*.ts'],
     languageOptions: {
       globals: {
         ...globals.cypress,
@@ -54,6 +54,25 @@ module.exports = [
         Cypress: 'readonly',
         expect: 'readonly',
       },
+    },
+  },
+
+  {
+    files: ['cypress/**/*.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.mocha,
+        cy: 'readonly',
+        Cypress: 'readonly',
+      },
+    },
+  },
+
+  {
+    files: ['cypress/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
 ];
