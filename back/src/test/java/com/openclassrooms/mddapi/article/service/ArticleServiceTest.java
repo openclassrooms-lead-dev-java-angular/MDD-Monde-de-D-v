@@ -60,9 +60,9 @@ class ArticleServiceTest {
     @Test
     void shouldFindFeedArticles() {
         Long userId = 1L;
-        Article article = ArticleTestFactory.createArticle(false);
+        Article article = ArticleTestFactory.createArticle();
         ArticleResponseDto response =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
         PageRequest pageable = PageRequest.of(0, 10);
 
         Page<Article> articlePage = new PageImpl<>(
@@ -108,9 +108,9 @@ class ArticleServiceTest {
 
     @Test
     void shouldFindArticleBySlug() {
-        Article article = ArticleTestFactory.createArticle(false);
+        Article article = ArticleTestFactory.createArticle();
         ArticleResponseDto response =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
 
         when(articleRepository.findBySlug("my-article"))
                 .thenReturn(Optional.of(article));
@@ -126,7 +126,7 @@ class ArticleServiceTest {
 
     @Test
     void shouldReturnArticleWithCommentsWhenMapperProvidesComments() {
-        Article article = ArticleTestFactory.createArticle(false);
+        Article article = ArticleTestFactory.createArticle();
         TopicResponseDto topicResponse = mock(TopicResponseDto.class);
         CommentResponseDto comment1 = mock(CommentResponseDto.class);
         CommentResponseDto comment2 = mock(CommentResponseDto.class);
@@ -156,7 +156,7 @@ class ArticleServiceTest {
 
     @Test
     void shouldReturnArticleWithEmptyCommentsWhenMapperProvidesNoComments() {
-        Article article = ArticleTestFactory.createArticle(false);
+        Article article = ArticleTestFactory.createArticle();
         TopicResponseDto topicResponse = mock(TopicResponseDto.class);
 
         ArticleResponseDto response = new ArticleResponseDto(
@@ -198,10 +198,10 @@ class ArticleServiceTest {
     void shouldCreateArticle() {
         ArticleRequestDto request =
                 ArticleTestFactory.createArticleRequestDto();
-        Article article = ArticleTestFactory.createArticle(false);
-        Article savedArticle = ArticleTestFactory.createArticle(false);
+        Article article = ArticleTestFactory.createArticle();
+        Article savedArticle = ArticleTestFactory.createArticle();
         ArticleResponseDto response =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
         Topic topic = TopicTestFactory.createTopic();
         User author = UserTestFactory.createUser();
 
@@ -286,7 +286,7 @@ class ArticleServiceTest {
 
     @Test
     void shouldLoadArticleBySlug() {
-        Article article = ArticleTestFactory.createArticle(false);
+        Article article = ArticleTestFactory.createArticle();
 
         when(articleRepository.getReferenceBySlug("my-article"))
                 .thenReturn(article);

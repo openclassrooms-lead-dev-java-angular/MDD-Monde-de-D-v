@@ -21,7 +21,7 @@ class ArticleMapperTest {
 
     @Test
     void shouldMapArticleToArticleResponseDto() {
-        Article article = ArticleTestFactory.createArticle(false);
+        Article article = ArticleTestFactory.createArticle();
 
         ArticleResponseDto result = articleMapper.toDto(article);
 

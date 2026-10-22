@@ -16,7 +16,7 @@ public class CommentTestFactory {
 
     public static Comment createComment() {
         User author = UserTestFactory.createUser();
-        Article article = ArticleTestFactory.createArticle(false);
+        Article article = ArticleTestFactory.createArticle();
 
         Comment comment = new Comment();
         comment.setAuthor(author);

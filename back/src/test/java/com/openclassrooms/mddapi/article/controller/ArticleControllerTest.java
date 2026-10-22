@@ -49,7 +49,7 @@ class ArticleControllerTest {
     @Test
     void shouldGetFeedArticles() throws Exception {
         ArticleResponseDto article =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
 
         Pageable pageable = PageRequest.of(0, 10);
         Page<ArticleResponseDto> page =
@@ -96,7 +96,7 @@ class ArticleControllerTest {
     @Test
     void shouldGetArticleBySlug() throws Exception {
         ArticleResponseDto article =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
 
         when(articleService.findBySlug("my-article"))
                 .thenReturn(article);
@@ -121,7 +121,7 @@ class ArticleControllerTest {
 
         ArticleResponseDto article = new ArticleResponseDto(
                 "Jane_Doe",
-                ArticleTestFactory.createArticleResponseDto(false).topic(),
+                ArticleTestFactory.createArticleResponseDto().topic(),
                 "my-article",
                 "article title",
                 "my article content",
@@ -144,7 +144,7 @@ class ArticleControllerTest {
     @Test
     void shouldReturnArticleWithEmptyComments() throws Exception {
         ArticleResponseDto original =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
 
         ArticleResponseDto article = new ArticleResponseDto(
                 original.username(),
@@ -188,7 +188,7 @@ class ArticleControllerTest {
     @Test
     void shouldCreateArticle() throws Exception {
         ArticleResponseDto response =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
 
         when(articleService.create(any(ArticleRequestDto.class)))
                 .thenReturn(response);

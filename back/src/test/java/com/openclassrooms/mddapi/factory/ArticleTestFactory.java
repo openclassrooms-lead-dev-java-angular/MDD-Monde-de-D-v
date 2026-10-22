@@ -13,19 +13,17 @@ import java.util.List;
 
 public class ArticleTestFactory {
 
-    public static Article createArticle(boolean withMedia) {
+    public static Article createArticle() {
 
         User user = UserTestFactory.createUser();
         Topic topic = TopicTestFactory.createTopic();
 
-        Article article = new Article()
+        return new Article()
                 .setAuthor(user)
                 .setTopic(topic)
                 .setSlug("my-article")
                 .setTitle("article title")
                 .setContent("my article content");
-
-        return article;
     }
 
     public static ArticleRequestDto createArticleRequestDto() {
@@ -37,11 +35,11 @@ public class ArticleTestFactory {
         );
     }
 
-    public static ArticleResponseDto createArticleResponseDto(boolean withMedia) {
+    public static ArticleResponseDto createArticleResponseDto() {
 
         User user = UserTestFactory.createUser();
         TopicResponseDto topicResponseDto = TopicTestFactory.createTopicResponseDto();
-        List<CommentResponseDto> comments = new ArrayList<CommentResponseDto>();
+        List<CommentResponseDto> comments = new ArrayList<>();
 
         comments.add(new CommentResponseDto(
                 "john_doe",
