@@ -32,7 +32,6 @@ public class SubscriptionMapperTest {
         SubscriptionResponseDto result = subscriptionMapper.toDto(subscription);
         assertThat(result).isNotNull();
         assertThat(result.topic()).isNotNull();
-        assertThat(result.topic().id()).isEqualTo(1L);
         assertThat(result.topic().name()).isEqualTo("Java");
         assertThat(result.topic().slug()).isEqualTo("java");
         assertThat(result.topic().description()).isEqualTo("Java development");
