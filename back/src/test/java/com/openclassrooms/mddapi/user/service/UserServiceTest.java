@@ -102,18 +102,10 @@ class UserServiceTest {
     @Test
     void updateUserShouldUpdateAndReturnUserResponseDtoWithMedia() {
         Long userId = 1L;
-        String oldFilename = "old-avatar.png";
-        String newFilename = "new-avatar.png";
 
         User user = mock(User.class);
         UpdateUserDto userDto = mock(UpdateUserDto.class);
         UserResponseDto expectedDto = mock(UserResponseDto.class);
-        MultipartFile media = new MockMultipartFile(
-                "media",
-                "avatar.png",
-                "image/png",
-                new byte[]{1, 2, 3}
-        );
 
         when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
         when(userRepository.getReferenceById(userId)).thenReturn(user);
@@ -158,12 +150,6 @@ class UserServiceTest {
         User user = mock(User.class);
         UpdateUserDto userDto = mock(UpdateUserDto.class);
         UserResponseDto expectedDto = mock(UserResponseDto.class);
-        MultipartFile media = new MockMultipartFile(
-                "media",
-                "avatar.png",
-                "image/png",
-                new byte[]{1, 2, 3}
-        );
 
         when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
         when(userRepository.getReferenceById(userId)).thenReturn(user);

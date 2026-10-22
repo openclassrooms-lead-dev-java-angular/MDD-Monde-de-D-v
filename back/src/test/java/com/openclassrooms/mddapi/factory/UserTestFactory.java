@@ -20,28 +20,4 @@ public class UserTestFactory {
 
         return user;
     }
-
-    public static UserResponseDto createUserResponseDto() {
-        return new UserResponseDto(
-                "jane@email.com",
-                "Jane_Doe",
-                LocalDateTime.of(2026, 6, 1, 10, 0),
-                LocalDateTime.of(2026, 7, 1, 10, 0)
-        );
-    }
-
-    public static UpdateUserDto createUpdateUserDto(boolean isMediaUpload) {
-        return new UpdateUserDto(
-                "jane@email.com",
-                "Jane Doe"
-        );
-    }
-
-    public static RegisterRequestDto createRegisterRequestDto() {
-        return new RegisterRequestDto(
-                "jane@email.com",
-                "Password/1234",
-                "Jane Doe"
-        );
-    }
 }
