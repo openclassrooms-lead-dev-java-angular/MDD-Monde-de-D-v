@@ -1,3 +1,4 @@
+import { ArticleComment } from './article-comment.model';
 import { Topic } from './topic.model';
 
 export interface Article {
@@ -8,6 +9,7 @@ export interface Article {
   content: string;
   createdAt: Date;
   updatedAt: Date;
+  comments?: ArticleComment[];
 }
 
 export interface ArticleNew {
