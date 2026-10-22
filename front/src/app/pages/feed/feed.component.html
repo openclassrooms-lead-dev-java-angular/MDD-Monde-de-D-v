@@ -26,7 +26,10 @@
     </button>
   </div>
 
-  <div class="article-list__grid">
+  <div class="article-list__grid" infiniteScroll
+  [infiniteScrollDistance]="2"
+  [infiniteScrollThrottle]="150"
+  (scrolled)="loadMore()">
     @for (article of articleList(); track article.slug) {
       <app-article-card [article]="article" />
     }
