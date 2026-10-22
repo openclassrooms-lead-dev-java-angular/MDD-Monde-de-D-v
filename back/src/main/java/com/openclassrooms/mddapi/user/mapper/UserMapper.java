@@ -12,7 +12,9 @@ import org.springframework.stereotype.Component;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    UserResponseDto toDto(User entity);
+    UserResponseDto toDto(
+            User entity
+    );
 
     void updateEntity(
             UpdateUserDto dto,

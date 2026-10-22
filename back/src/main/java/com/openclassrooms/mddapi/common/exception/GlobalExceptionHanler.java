@@ -1,5 +1,7 @@
 package com.openclassrooms.mddapi.common.exception;
 
+import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
+import com.openclassrooms.mddapi.article.exception.ArticleSlugAlreadyExists;
 import com.openclassrooms.mddapi.auth.exception.InvalidTokenException;
 import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.common.dto.ErrorResponseDto;
@@ -11,6 +13,8 @@ import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
 import com.openclassrooms.mddapi.user.exceptions.UsernameAlreadyExistsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,6 +30,13 @@ public class GlobalExceptionHanler {
     @ExceptionHandler(value = NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponseDto handleNotFoundException(NotFoundException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(value = ArticleNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponseDto handleArticleNotFoundException(ArticleNotFoundException e) {
         log.warn(e.getMessage(), e);
         return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
     }
@@ -74,13 +85,20 @@ public class GlobalExceptionHanler {
         return buildResponse(HttpStatus.CONFLICT, e.getMessage());
     }
 
+    @ExceptionHandler(value = ArticleSlugAlreadyExists.class)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    public ErrorResponseDto handleArticleSlugAlreadyExists(ArticleSlugAlreadyExists e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
+
     // unauthorized
 
     @ExceptionHandler(value = UnauthorizedException.class)
     @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
     public ErrorResponseDto handleUnauthorizedException(UnauthorizedException e) {
         log.warn(e.getMessage(), e);
-        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, e.getMessage());
     }
 
     @ExceptionHandler(value = InvalidTokenException.class)
@@ -88,6 +106,15 @@ public class GlobalExceptionHanler {
     public ErrorResponseDto handleInvalidTokenException(InvalidTokenException e) {
         log.warn(e.getMessage(), e);
         return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    // Method argument not valid exceptions
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponseDto handleValidationException(MethodArgumentNotValidException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
     // Internal server error exceptions
@@ -102,7 +129,7 @@ public class GlobalExceptionHanler {
     /**
      * Response builder
      *
-     * @param status http status
+     * @param status  http status
      * @param message string
      * @return ErrorResponseDto
      */

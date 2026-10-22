@@ -1,0 +1,76 @@
+@if (isLogged()) {
+  <nav class="navbar">
+    <mat-toolbar class="navbar__toolbar">
+      <a
+        class="navbar__logo"
+        [routerLink]="getHomeRoute()"
+        aria-label="Accueil"
+      >
+        <img src="/assets/logo_p6.png" alt="Logo" class="navbar__logo-image" />
+      </a>
+
+      @if (!isMobile()) {
+        <div class="navbar__links">
+          <button type="button" mat-button (click)="logout()">
+            Se déconnecter
+          </button>
+          <a mat-button routerLink="/feed">Articles</a>
+          <a mat-button routerLink="/topics">Thèmes</a>
+          <a mat-icon-button routerLink="/profile" aria-label="Mon profil">
+            <mat-icon>account_circle</mat-icon>
+          </a>
+        </div>
+      }
+
+      @if (isMobile()) {
+        <button
+          mat-icon-button
+          class="navbar__menu-button"
+          (click)="toggleMobileMenu()"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          aria-label="Ouvrir le menu"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+    </mat-toolbar>
+
+    @if (mobileMenuOpen() && isMobile()) {
+      <!-- Fond semi-transparent -->
+      <div class="navbar__backdrop" (click)="closeMobileMenu()"></div>
+
+      <!-- Panneau latéral -->
+      <aside class="navbar__mobile-panel" aria-label="Navigation mobile">
+        <button
+          mat-icon-button
+          class="navbar__close-button"
+          (click)="closeMobileMenu()"
+          aria-label="Fermer le menu"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+
+        <nav class="navbar__mobile-links">
+          <button type="button" class="navbar__logout" (click)="logout()">
+            Se déconnecter
+          </button>
+
+          <a routerLink="/feed" (click)="closeMobileMenu()"> Articles </a>
+
+          <a routerLink="/topics" (click)="closeMobileMenu()"> Thèmes </a>
+
+          <a routerLink="/about" (click)="closeMobileMenu()"> À propos </a>
+        </nav>
+
+        <a
+          class="navbar__profile"
+          routerLink="/profile"
+          (click)="closeMobileMenu()"
+          aria-label="Mon profil"
+        >
+          <mat-icon>person_outline</mat-icon>
+        </a>
+      </aside>
+    }
+  </nav>
+}

@@ -27,15 +27,13 @@ public class JwtSecurityHandlerTest {
 
     @Test
     void shouldReturnForbiddenResponseWhenAccessIsDenied() throws Exception {
-        // Given
+        
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         AccessDeniedException exception = new AccessDeniedException("Access denied");
 
-        // When
         accessDeniedHandler.handle(request, response, exception);
 
-        // Then
         int status = response.getStatus();
 
         assertThat(status)
@@ -53,15 +51,13 @@ public class JwtSecurityHandlerTest {
 
     @Test
     void shouldReturnUnauthorizedResponseWhenAuthenticationFails() throws Exception {
-        // Given
+        
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         AuthenticationException exception = new AuthenticationException("Authentication failed") { };
 
-        // When
         authenticationEntryPoint.commence( request, response, exception );
 
-        // Then
         assertThat(response.getStatus())
                 .isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(response.getContentType())

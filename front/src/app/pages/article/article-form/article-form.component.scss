@@ -1,0 +1,127 @@
+@use '../../../../styles/variables.scss' as *;
+
+.article-form {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  box-sizing: border-box;
+  padding: 20px 24px 24px;
+
+  &__back {
+    position: absolute;
+    top: 18px;
+    left: 16px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #111;
+    text-decoration: none;
+
+    mat-icon {
+      width: 32px;
+      height: 32px;
+      font-size: 32px;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #7960c9;
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
+  }
+
+  &__title {
+    margin: 0 0 30px;
+    text-align: center;
+
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    width: 100%;
+    max-width: 210px;
+    margin: 0 auto;
+  }
+
+  &__field {
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+
+    // Couleur du contour
+    --mdc-outlined-text-field-outline-color: #7960c9;
+    --mdc-outlined-text-field-hover-outline-color: #7960c9;
+    --mdc-outlined-text-field-focus-outline-color: #7960c9;
+    --mdc-outlined-text-field-focus-label-text-color: #7960c9;
+  }
+
+  &__input {
+    display: block;
+    width: 100%;
+  }
+
+  &__content-field {
+    textarea {
+      min-height: 125px;
+      resize: vertical;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+  }
+}
+
+// Desktop
+@media (min-width: 769px) {
+  .article-form {
+    padding-top: 18px;
+
+    &__form {
+      max-width: 210px;
+    }
+  }
+}
+
+// Mobile
+@media (max-width: 560px) {
+  .article-form {
+    padding: 24px 16px;
+
+    &__back {
+      border: none;
+      margin: 20px 0 0 50px;
+      background-color: transparent;
+      cursor: pointer;
+    }
+
+    &__title {
+      margin: 16px 0 18px;
+      text-align: left;
+      font-size: 18px;
+    }
+
+    &__form {
+      max-width: none;
+      gap: 10px;
+    }
+
+    &__content-field textarea {
+      min-height: 125px;
+    }
+
+    &__actions {
+      margin-top: 10px;
+    }
+  }
+}

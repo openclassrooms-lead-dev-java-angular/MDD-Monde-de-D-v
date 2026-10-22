@@ -1,12 +1,12 @@
 package com.openclassrooms.mddapi.topic.service;
 
-import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
+import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
+import com.openclassrooms.mddapi.subscription.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
-import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
+import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
-import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
 import com.openclassrooms.mddapi.topic.mapper.TopicMapper;
 import com.openclassrooms.mddapi.topic.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Service responsible for managing topics.
@@ -29,21 +32,8 @@ public class TopicService {
     private final TopicRepository topicRepository;
     private final TopicMapper topicMapper;
     private final SubscriptionService subscriptionService;
-
-    /**
-     * Retrieves a topic by its slug.
-     *
-     * @param slug the topic slug
-     * @return the topic response
-     * @throws TopicNotFoundException if no topic matches the given slug
-     */
-    @Transactional(readOnly = true)
-    public TopicResponseDto findBySlug(String slug) {
-        return topicRepository
-                .findBySlug(slug)
-                .map(topicMapper::toDto)
-                .orElseThrow(TopicNotFoundException::new);
-    }
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
+    private final SubscriptionRepository subscriptionRepository;
 
     /**
      * Retrieves all topics using the given pagination and sorting parameters.
@@ -53,54 +43,22 @@ public class TopicService {
      */
     @Transactional(readOnly = true)
     public Page<TopicResponseDto> findAll(Pageable pageable) {
-        return topicRepository
-                .findAll(pageable)
-                .map(topicMapper::toDto);
-    }
+        Page<Topic> topics = topicRepository.findAll(pageable);
 
-    /**
-     * Creates a new topic.
-     *
-     * @param topicRequestDto the data used to create the topic
-     * @return the created topic response
-     * @throws TopicSlugAlreadyExists if the requested slug is already in use
-     */
-    @Transactional
-    public TopicResponseDto create(TopicRequestDto topicRequestDto) {
-
-        if (topicRepository.existsBySlug(topicRequestDto.slug())) {
-            throw new TopicSlugAlreadyExists("Slug already exists");
+        if (topics.isEmpty()) {
+            return Page.empty(pageable);
         }
 
-        Topic topic = topicMapper.toEntity(topicRequestDto);
+        Long userId = userDetailsServiceImpl.getPrincipalUserId();
 
-        log.info("Creating topic with slug '{}'", topicRequestDto.slug());
+        List<Long> topicIds = topics.getContent().stream().map(Topic::getId).toList();
 
-        return topicMapper.toDto(topicRepository.save(topic));
-    }
+        Set<Long> subscribedTopicIds = subscriptionRepository.findSubscribedTopicIds(userId, topicIds);
 
-    /**
-     * Updates an existing topic identified by its slug.
-     *
-     * @param slug the slug of the topic to update
-     * @param topicRequestDto the data used to update the topic
-     * @return the updated topic response * @throws TopicNotFoundException if no topic matches the given slug
-     */
-    @Transactional
-    public TopicResponseDto update(String slug, TopicRequestDto topicRequestDto) {
-
-        if (!topicRepository.existsBySlug(slug)) {
-            throw new TopicNotFoundException("Topic not found");
-        }
-
-        Topic topic = topicRepository
-                .getReferenceBySlug(slug);
-
-        topicMapper.updateEntity(topic, topicRequestDto);
-
-        log.info("Updating topic with slug '{}'", slug);
-
-        return topicMapper.toDto(topicRepository.save(topic));
+        return topics.map(topic -> topicMapper.toDto(
+                topic,
+                subscribedTopicIds.contains(topic.getId())
+        ));
     }
 
     /**
@@ -136,15 +94,51 @@ public class TopicService {
     }
 
     /**
-     * Checks whether a topic slug is available.
+     * Checks whether a topic exists with the given slug.
      *
-     * @param slug the slug to check
-     * @return a response indicating whether the slug is available
+     * @param slug the slug of the topic to check
+     * @return {@code true} if a topic with the given slug exists,
+     * {@code false} otherwise
      */
     @Transactional(readOnly = true)
-    public AvailableSlugDto availableSlug(String slug) {
-        boolean  exists = topicRepository.existsBySlug(slug);
+    public boolean existsBySlug(String slug) {
+        return topicRepository.existsBySlug(slug);
+    }
 
-        return new AvailableSlugDto(!exists);
+    /**
+     * Loads a topic reference by its slug.
+     *
+     * <p>loaded from the database immediately and can trigger a database access when
+     * its properties are accessed.</p>
+     *
+     * @param slug the slug of the topic to load
+     * @return a reference to the topic identified by the given slug
+     * @throws jakarta.persistence.EntityNotFoundException if the topic does not
+     *                                                     exist when the reference is accessed
+     */
+    @Transactional(readOnly = true)
+    public Topic loadBySlug(String slug) {
+        return topicRepository.getReferenceBySlug(slug);
+    }
+
+    /**
+     * Retrieves the list of available topic options.
+     *
+     * @return a list of topic options
+     */
+    @Transactional(readOnly = true)
+    public List<TopicOptionDto> getOptions() {
+        return topicRepository.findAllTopicOptions();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TopicResponseDto> getSubscribedTopics(Pageable pageable) {
+        Long userId = userDetailsServiceImpl.getPrincipalUserId();
+
+        return topicRepository
+                .findSubscribedTopics(pageable, userId)
+                .map(topic ->
+                        topicMapper.toDto(topic, true)
+                );
     }
 }

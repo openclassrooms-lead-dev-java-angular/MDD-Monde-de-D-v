@@ -1,0 +1,20 @@
+<a [routerLink]="['/articles', article().slug]" class="article-link">
+  <article class="article-card">
+    <h2 class="article-card__title">
+      {{ article().title }}
+    </h2>
+
+    <div class="article-card__meta">
+      <span class="article-date">{{
+        article().createdAt | date: 'dd/MM/yyyy'
+      }}</span>
+      <span class="article-card__author">
+        {{ article().username }}
+      </span>
+    </div>
+
+    <p class="article-card__content">
+      {{ article().content | truncate: 100 }}
+    </p>
+  </article>
+</a>

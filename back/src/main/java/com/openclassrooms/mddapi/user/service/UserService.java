@@ -2,8 +2,6 @@ package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.auth.service.AuthService;
-import com.openclassrooms.mddapi.common.enums.Role;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.exceptions.UserAlreadyExistsException;
@@ -13,8 +11,10 @@ import com.openclassrooms.mddapi.user.mapper.UserMapper;
 import com.openclassrooms.mddapi.user.repository.UserRepository;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -78,14 +78,18 @@ public class UserService {
      * @throws UserNotFoundException if no user exists with the given identifier
      */
     @Transactional
-    public UserResponseDto updateUser(final UpdateUserDto userDto) {
+    public UserResponseDto updateUser(
+            final UpdateUserDto userDto
+    ) {
         Long userId = userDetailsServiceImpl.getPrincipalUserId();
 
         User user = userRepository.getReferenceById(userId);
-
         userMapper.updateEntity(userDto, user);
 
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         User updatedUser = userRepository.save(user);
+
         log.info("User updated with id {}: ", user.getId());
 
         return userMapper.toDto(updatedUser);
@@ -108,9 +112,8 @@ public class UserService {
     /**
      * Registers a new user.
      *
-     * <p>Checks email and username uniqueness, assigns the default
-     * { @link Role#USER } role and encodes the user's password before
-     * persisting the user.</p>
+     * <p>Checks email and username uniqueness, encodes the user's
+     * password before persisting the user.</p>
      *
      * @param dto the registration data
      * @throws EmailAlreadyExistsException if the email is already registered
@@ -130,7 +133,6 @@ public class UserService {
             throw new UsernameAlreadyExistsException();
         }
 
-        user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         try {
@@ -150,5 +152,12 @@ public class UserService {
     public boolean usernameAvailable(final String username) {
 
         return !userRepository.existsByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
+    public User loadCurrentUserAuthor() {
+        Long authorId = userDetailsServiceImpl.getPrincipalUserId();
+
+        return userRepository.getReferenceById(authorId);
     }
 }

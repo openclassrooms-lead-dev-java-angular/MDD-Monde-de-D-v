@@ -10,8 +10,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     firstname VARCHAR(50) NOT NULL,
     lastname VARCHAR(50) NOT NULL,
-    role VARCHAR(10) NOT NULL,
-    last_login_at TIMESTAMP DEFAULT NULL,
+    avatar VARCHAR(255),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 
@@ -26,10 +25,9 @@ CREATE TABLE articles (
     author_id BIGINT NOT NULL,
     topic_id BIGINT NOT NULL,
     title VARCHAR(100) NOT NULL,
-    slug VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
     content TEXT,
     media VARCHAR(255),
-    status VARCHAR(15) NOT NULL ,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 

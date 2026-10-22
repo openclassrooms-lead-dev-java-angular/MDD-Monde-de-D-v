@@ -1,0 +1,75 @@
+<section class="login">
+  <button
+    type="button"
+    class="login__back-button"
+    aria-label="Retour à l'accueil"
+    (click)="goBack()"
+  >
+    <img src="/assets/icons/arrow-left.svg" alt="" aria-hidden="true" />
+  </button>
+
+  <div class="login__content">
+    <div class="login__content__header">
+      <div class="login__content__header__logo-container">
+        <img class="logo" src="/assets/logo_p6.png" alt="Logo" />
+      </div>
+
+      <h1 class="login__content__header__title">Connexion</h1>
+    </div>
+
+    <form class="login__form" [formGroup]="loginForm" (ngSubmit)="submit()">
+      <div class="form-input">
+        <label for="usernameOrEmail"> E-mail ou nom d'utilisateur </label>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <input
+            id="usernameOrEmail"
+            matInput
+            class="form-input__input"
+            type="text"
+            autocomplete="username"
+            formControlName="usernameOrEmail"
+          />
+
+          @for (error of usernameOrEmailErrors; track error) {
+            <mat-error>{{ error }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-input">
+        <label for="password">Mot de passe</label>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <input
+            id="password"
+            matInput
+            type="password"
+            autocomplete="current-password"
+            formControlName="password"
+          />
+
+          @for (error of passwordErrors; track error) {
+            <mat-error>{{ error }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (errorMessage) {
+        <p class="error" role="alert">
+          {{ errorMessage }}
+        </p>
+      }
+
+      <div class="login__form__actions">
+        <app-button
+          class="login__content__submit-button"
+          type="submit"
+          color="primary"
+          [disabled]="isLoading || loginForm.invalid || loginForm.pending"
+          [label]="isLoading ? 'Connexion...' : 'Se connecter'"
+        />
+      </div>
+    </form>
+  </div>
+</section>

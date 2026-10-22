@@ -1,0 +1,121 @@
+<section class="article-form">
+  <a
+    class="article-form__back"
+    routerLink="/feed"
+    aria-label="Retour aux articles"
+  >
+    <mat-icon>arrow_back</mat-icon>
+  </a>
+
+  <h1 class="article-form__title">Créer un nouvel article</h1>
+
+  <form
+    class="article-form__form"
+    [formGroup]="articleForm"
+    (ngSubmit)="submitForm()"
+  >
+    <!-- Topic -->
+    <div class="form-select">
+      <mat-label>Sélectionner un thème</mat-label>
+
+      <mat-form-field appearance="outline" class="article-form__field">
+        <mat-select formControlName="topicSlug">
+          @for (topic of topics(); track topic.slug) {
+            <mat-option [value]="topic.slug">
+              {{ topic.name }}
+            </mat-option>
+          }
+        </mat-select>
+
+        @if (topicErrors.length > 0) {
+          <mat-error>{{ topicErrors[0] }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Title -->
+    <div class="form-input">
+      <mat-label for="article-title">Titre</mat-label>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <input
+          id="article-title"
+          matInput
+          class="form-input__input"
+          type="text"
+          formControlName="title"
+          (focusout)="autocompleteSlug()"
+        />
+
+        @for (error of titleErrors; track error) {
+          <mat-error>{{ error }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Slug -->
+    <div class="form-input">
+      <mat-label for="article-slug">Adresse (slug)</mat-label>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <input
+          id="article-slug"
+          matInput
+          class="form-input__input"
+          type="text"
+          formControlName="slug"
+          (focusout)="autocompleteSlug()"
+        />
+
+        @for (error of slugErrors; track error) {
+          <mat-error>{{ error }}</mat-error>
+        }
+
+        @if (isLoading()) {
+          <mat-spinner matSuffix diameter="20" />
+        }
+      </mat-form-field>
+    </div>
+
+    @if (articleForm.controls.slug.pending) {
+      <p class="form-hint" role="status">Vérification de la disponibilité...</p>
+    }
+
+    <!-- Content -->
+    <div class="form-input">
+      <mat-label for="article-content">Contenu de l’article</mat-label>
+
+      <mat-form-field
+        appearance="outline"
+        class="article-form__field article-form__content-field"
+      >
+        <textarea
+          id="article-content"
+          matInput
+          formControlName="content"
+          placeholder="Contenu de l’article"
+          rows="7"
+        ></textarea>
+
+        @for (error of contentErrors; track error) {
+          <mat-error>{{ error }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (errorMessage()) {
+      <p class="article-form__error" role="alert">
+        {{ errorMessage() }}
+      </p>
+    }
+
+    <div class="article-form__actions">
+      <app-button
+        type="submit"
+        label="Créer"
+        color="primary"
+        [disabled]="submitting() || isLoading()"
+      />
+    </div>
+  </form>
+</section>

@@ -21,13 +21,5 @@ public record RegisterRequestDto(
 
         @NotBlank(message = "error.register.username.required")
         @Size(max = 20, message = "error.register.username.length")
-        String username,
-
-        @NotBlank(message = "error.register.firstname.required")
-        @Size(max = 50, message = "error.register.firstname.length")
-        String firstName,
-
-        @NotBlank(message = "error.register.lastname.required")
-        @Size(max = 50, message = "error.register.lastname.length")
-        String lastName
+        String username
 ) { }

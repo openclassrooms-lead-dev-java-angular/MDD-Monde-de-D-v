@@ -1,7 +1,9 @@
 package com.openclassrooms.mddapi.cli;
 
-import com.openclassrooms.mddapi.seeder.TopicSeeder;
-import com.openclassrooms.mddapi.seeder.UserSeeder;
+import com.openclassrooms.mddapi.cli.seeder.ArticleSeeder;
+import com.openclassrooms.mddapi.cli.seeder.CommentSeeder;
+import com.openclassrooms.mddapi.cli.seeder.TopicSeeder;
+import com.openclassrooms.mddapi.cli.seeder.UserSeeder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
@@ -23,11 +25,19 @@ public class SeedCommand implements Runnable {
     @Option(names = "--topics", description = "Seed topics")
     private boolean topics;
 
+    @Option(names = "--articles", description = "Seed articles")
+    private boolean articles;
+
+    @Option(names = "--comments", description = "Seed comments")
+    private boolean comments;
+
     @Option(names = "--all", description = "Seed all")
     private boolean all;
 
     private final UserSeeder userSeeder;
     private final TopicSeeder topicSeeder;
+    private final ArticleSeeder articleSeeder;
+    private final CommentSeeder commentSeeder;
 
     @Override
     public void run() {
@@ -45,16 +55,30 @@ public class SeedCommand implements Runnable {
                 topicSeeder.clear();
                 topicSeeder.seed();
             }
+
+            if (articles) {
+                articleSeeder.clear();
+                articleSeeder.seed();
+            }
+
+            if (comments) {
+                commentSeeder.clear();
+                commentSeeder.seed();
+            }
         }
 
         log.info("Seed command finished");
     }
 
     private void seedAll() {
+        commentSeeder.clear();
+        articleSeeder.clear();
         userSeeder.clear();
         topicSeeder.clear();
 
         userSeeder.seed();
         topicSeeder.seed();
+        articleSeeder.seed();
+        commentSeeder.seed();
     }
 }

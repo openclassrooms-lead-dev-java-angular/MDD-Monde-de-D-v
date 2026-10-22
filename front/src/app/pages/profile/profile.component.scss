@@ -1,0 +1,161 @@
+
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.profile {
+  width: 100%;
+  padding: 1.5rem 1.75rem;
+  box-sizing: border-box;
+  color: #171717;
+
+  &__layout {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  &__form-section {
+    width: 100%;
+  }
+
+  &__title,
+  &__topics-title {
+    margin: 0;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  &__title {
+    margin-bottom: 0.5rem;
+  }
+
+  &__form {
+    width: 100%;
+    max-width: 390px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    .input,
+    .form-input {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      gap: 0.25rem;
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+  }
+
+  &__form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.35rem;
+
+    app-button {
+      display: inline-block;
+      max-width: 100%;
+    }
+  }
+
+  &__error {
+    margin: 0.25rem 0;
+    color: #b3261e;
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+
+  &__divider {
+    height: 1px;
+    width: 100%;
+    margin: 1rem 0 0.6rem;
+    background-color: #777;
+  }
+
+  &__topics-title {
+    margin-bottom: 0.5rem;
+  }
+
+  &__topics-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    align-items: stretch;
+
+    app-topic-card {
+      display: block;
+      min-width: 0;
+    }
+  }
+
+  &__loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem;
+  }
+
+  &__empty {
+    margin: 1rem 0;
+    color: #666;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  // Tablettes
+  @media (max-width: 768px) {
+    padding: 1.25rem 1rem;
+
+    &__form {
+      max-width: 100%;
+    }
+
+    &__topics-list {
+      grid-template-columns: 1fr;
+      gap: 0.65rem;
+    }
+  }
+
+  // Mobiles
+  @media (max-width: 480px) {
+    padding: 1rem 0.6rem;
+
+    &__title,
+    &__topics-title {
+      font-size: 1.1rem;
+    }
+
+    &__title {
+      margin-bottom: 0.75rem;
+    }
+
+    &__divider {
+      margin: 1rem 0 0.75rem;
+    }
+
+    &__topics-title {
+      margin-bottom: 0.65rem;
+    }
+
+    &__topics-list {
+      gap: 0.5rem;
+    }
+
+    &__form-actions {
+      margin-top: 0.5rem;
+    }
+  }
+}

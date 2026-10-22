@@ -45,18 +45,18 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void register(
-            @Valid @RequestBody RegisterRequestDto dto
-    ) {
+    public void register(@Valid @RequestBody() RegisterRequestDto dto) {
         authService.register(dto);
     }
 
     @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void refreshToken(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        ResponseCookie accessTokenCookie = authService.refreshAccessToken(request);
+        ResponseCookie accessTokenCookie =
+                authService.refreshAccessToken(request);
 
         response.addHeader(
                 HttpHeaders.SET_COOKIE,
@@ -82,9 +82,9 @@ public class AuthController {
         );
     }
 
-    @GetMapping("/username-available/{username}")
+    @GetMapping("/username-available")
     public UsernameAvailableDto usernameAvailable(
-            @PathVariable String username
+            @RequestParam String username
     ) {
         return authService.usernameAvailable(username);
     }

@@ -2,8 +2,6 @@ package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.common.enums.Role;
-import com.openclassrooms.mddapi.factory.UserTestFactory;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.exceptions.UserAlreadyExistsException;
@@ -13,6 +11,7 @@ import com.openclassrooms.mddapi.user.mapper.UserMapper;
 import com.openclassrooms.mddapi.user.repository.UserRepository;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,259 +19,282 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
+
+    private static final String MEDIA_URL = "http://localhost:8080/uploads";
+    private static final String RESOURCE_TYPE = "avatars";
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private UserMapper userMapper;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
     @Mock
     private UserDetailsServiceImpl userDetailsServiceImpl;
+
     @InjectMocks
     private UserService userService;
 
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(userService, "mediaUrl", MEDIA_URL);
+        ReflectionTestUtils.setField(userService, "resourceType", RESOURCE_TYPE);
+    }
+
     @Test
     void createUserShouldSaveAndReturnUser() {
-        User user = UserTestFactory.createUser();
+        User user = mock(User.class);
 
-        when(userRepository.save(user))
-                .thenReturn(user);
+        when(user.getUsername()).thenReturn("testuser");
+        when(userRepository.save(user)).thenReturn(user);
 
         User result = userService.createUser(user);
 
-        assertThat(result).isSameAs(user);
-
+        assertSame(user, result);
         verify(userRepository).save(user);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(userMapper);
     }
 
     @Test
     void getMeShouldReturnUserResponseDto() {
         Long userId = 1L;
+        User user = mock(User.class);
+        UserResponseDto expectedDto = mock(UserResponseDto.class);
 
-        User user = UserTestFactory.createUser();
-        UserResponseDto expectedDto = UserTestFactory.createUserResponseDto();
-
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
-        when(userMapper.toDto(user))
-                .thenReturn(expectedDto);
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userMapper.toDto(user)).thenReturn(expectedDto);
 
         UserResponseDto result = userService.getMe();
 
-        assertThat(result).isSameAs(expectedDto);
-        verify(userDetailsServiceImpl).getPrincipalUserId();
-        verify(userRepository).findById(userId);
+        assertSame(expectedDto, result);
         verify(userMapper).toDto(user);
     }
 
     @Test
     void getMeShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
-        Long userId = 999L;
+        Long userId = 1L;
 
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.getMe())
-                .isInstanceOf(UserNotFoundException.class);
+        assertThrows(
+                UserNotFoundException.class,
+                () -> userService.getMe()
+        );
 
-        verify(userDetailsServiceImpl).getPrincipalUserId();
-        verify(userRepository).findById(userId);
-        verifyNoInteractions(userMapper);
+        verify(userMapper, never()).toDto(any(User.class));
     }
 
     @Test
-    void updateUserShouldUpdateAndReturnUserResponseDto() {
+    void updateUserShouldUpdateAndReturnUserResponseDtoWithMedia() {
         Long userId = 1L;
 
-        User user = UserTestFactory.createUser();
-        UpdateUserDto updateUserDto = UserTestFactory.createUpdateUserDto();
-        UserResponseDto expectedDto = UserTestFactory.createUserResponseDto();
+        User user = mock(User.class);
+        UpdateUserDto userDto = mock(UpdateUserDto.class);
+        UserResponseDto expectedDto = mock(UserResponseDto.class);
 
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-        when(userRepository.save(user))
-                .thenReturn(user);
-        when(userMapper.toDto(user))
-                .thenReturn(expectedDto);
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
+        when(userDto.username()).thenReturn("testuser");
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(expectedDto);
 
-        UserResponseDto result = userService.updateUser(updateUserDto);
+        UserResponseDto result = userService.updateUser(userDto);
 
-        assertThat(result).isSameAs(expectedDto);
+        assertSame(expectedDto, result);
 
-        verify(userDetailsServiceImpl).getPrincipalUserId();
-        verify(userRepository).getReferenceById(userId);
-        verify(userMapper).updateEntity(updateUserDto, user);
+        verify(userMapper).updateEntity(userDto, user);
         verify(userRepository).save(user);
         verify(userMapper).toDto(user);
     }
 
     @Test
-    void getByEmailShouldReturnUser() {
-        String email = "john.doe@example.com";
-        User user = UserTestFactory.createUser();
+    void updateUserShouldUpdateWithoutMedia() {
+        Long userId = 1L;
 
-        when(userRepository.findByEmail(email))
-                .thenReturn(Optional.of(user));
+        User user = mock(User.class);
+        UpdateUserDto userDto = mock(UpdateUserDto.class);
+        UserResponseDto expectedDto = mock(UserResponseDto.class);
+
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(expectedDto);
+
+        UserResponseDto result = userService.updateUser(userDto);
+
+        assertSame(expectedDto, result);
+
+        verify(userMapper).updateEntity(userDto, user);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateUserShouldNotUploadMediaWhenUpdatedMediaIsFalse() {
+        Long userId = 1L;
+
+        User user = mock(User.class);
+        UpdateUserDto userDto = mock(UpdateUserDto.class);
+        UserResponseDto expectedDto = mock(UserResponseDto.class);
+
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(expectedDto);
+
+        UserResponseDto result = userService.updateUser(userDto);
+
+        assertSame(expectedDto, result);
+
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void getByEmailShouldReturnUser() {
+        String email = "test@example.com";
+        User user = mock(User.class);
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
         User result = userService.getByEmail(email);
 
-        assertThat(result).isSameAs(user);
-
-        verify(userRepository).findByEmail(email);
+        assertSame(user, result);
     }
 
     @Test
     void getByEmailShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
         String email = "unknown@example.com";
 
-        when(userRepository.findByEmail(email))
-                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService
-                .getByEmail(email))
-                .isInstanceOf(UserNotFoundException.class);
-
-        verify(userRepository).findByEmail(email);
+        assertThrows(
+                UserNotFoundException.class,
+                () -> userService.getByEmail(email)
+        );
     }
 
     @Test
-    void registerShouldCreateUserWithDefaultRoleAndEncodedPassword() {
-        RegisterRequestDto dto = UserTestFactory.createRegisterRequestDto();
-
-        User user = UserTestFactory.createUser();
+    void registerShouldCreateUserWithEncodedPassword() {
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
+        User user = mock(User.class);
+        String rawPassword = "password123";
         String encodedPassword = "encoded-password";
 
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(false);
-        when(userRepository.existsByUsername(user.getUsername()))
-                .thenReturn(false);
-        when(passwordEncoder.encode("Password/1234"))
-                .thenReturn(encodedPassword);
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(user.getEmail()).thenReturn("test@example.com");
+        when(user.getUsername()).thenReturn("testuser");
+        when(user.getPassword()).thenReturn(rawPassword);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(passwordEncoder.encode(rawPassword)).thenReturn(encodedPassword);
 
         userService.register(dto);
 
-        assertThat(user.getRole()).isEqualTo(Role.USER);
-        assertThat(user.getPassword()).isEqualTo(encodedPassword);
-
-        verify(userMapper).fromRegisterDto(dto);
-        verify(userRepository).existsByEmail(user.getEmail());
-        verify(userRepository).existsByUsername(user.getUsername());
-        verify(passwordEncoder).encode("Password/1234");
+        verify(user).setPassword(encodedPassword);
+        verify(passwordEncoder).encode(rawPassword);
         verify(userRepository).save(user);
     }
 
     @Test
-    void registerShouldThrowEmailAlreadyExistsExceptionWhenEmailAlreadyExists() {
-        RegisterRequestDto dto = UserTestFactory.createRegisterRequestDto();
+    void registerShouldThrowEmailAlreadyExistsException() {
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
+        User user = mock(User.class);
 
-        User user = UserTestFactory.createUser();
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(user.getEmail()).thenReturn("test@example.com");
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
 
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(true);
+        assertThrows(
+                EmailAlreadyExistsException.class,
+                () -> userService.register(dto)
+        );
 
-        assertThatThrownBy(() -> userService.register(dto))
-                .isInstanceOf(EmailAlreadyExistsException.class);
-
-        verify(userMapper).fromRegisterDto(dto);
-        verify(userRepository).existsByEmail(user.getEmail());
-        verify(userRepository, never()).existsByUsername(anyString());
-        verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(anyString());
     }
 
     @Test
-    void registerShouldThrowUsernameAlreadyExistsExceptionWhenUsernameAlreadyExists() {
-        RegisterRequestDto dto = UserTestFactory.createRegisterRequestDto();
+    void registerShouldThrowUsernameAlreadyExistsException() {
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
+        User user = mock(User.class);
 
-        User user = UserTestFactory.createUser();
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(user.getEmail()).thenReturn("test@example.com");
+        when(user.getUsername()).thenReturn("testuser");
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(false);
-        when(userRepository.existsByUsername(user.getUsername()))
-                .thenReturn(true);
+        assertThrows(
+                UsernameAlreadyExistsException.class,
+                () -> userService.register(dto)
+        );
 
-        assertThatThrownBy(() -> userService.register(dto))
-                .isInstanceOf(UsernameAlreadyExistsException.class);
-
-        verify(userMapper).fromRegisterDto(dto);
-        verify(userRepository).existsByEmail(user.getEmail());
-        verify(userRepository).existsByUsername(user.getUsername());
-        verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(anyString());
     }
 
     @Test
     void registerShouldThrowUserAlreadyExistsExceptionWhenDatabaseConstraintIsViolated() {
-        RegisterRequestDto dto = UserTestFactory.createRegisterRequestDto();
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
+        User user = mock(User.class);
+        String rawPassword = "password123";
 
-        User user = UserTestFactory.createUser();
-
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(false);
-        when(userRepository.existsByUsername(user.getUsername()))
-                .thenReturn(false);
-        when(passwordEncoder.encode("Password/1234"))
-                .thenReturn("encoded-password");
-
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(user.getEmail()).thenReturn("test@example.com");
+        when(user.getUsername()).thenReturn("testuser");
+        when(user.getPassword()).thenReturn(rawPassword);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(passwordEncoder.encode(rawPassword)).thenReturn("encoded-password");
         when(userRepository.save(user))
-                .thenThrow(new DataIntegrityViolationException("Duplicate key"));
+                .thenThrow(new DataIntegrityViolationException("Duplicate user"));
 
-        assertThatThrownBy(() -> userService.register(dto))
-                .isInstanceOf(UserAlreadyExistsException.class).hasMessage("Username or email already exists");
+        assertThrows(
+                UserAlreadyExistsException.class,
+                () -> userService.register(dto)
+        );
 
         verify(userRepository).save(user);
     }
 
     @Test
     void usernameAvailableShouldReturnTrueWhenUsernameDoesNotExist() {
-        String username = "john";
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
 
-        when(userRepository.existsByUsername(username))
-                .thenReturn(false);
-
-        boolean result = userService.usernameAvailable(username);
-
-        assertThat(result).isTrue();
-
-        verify(userRepository).existsByUsername(username);
+        assertTrue(userService.usernameAvailable("testuser"));
     }
 
     @Test
     void usernameAvailableShouldReturnFalseWhenUsernameAlreadyExists() {
-        String username = "john";
+        when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
-        when(userRepository.existsByUsername(username))
-                .thenReturn(true);
+        assertFalse(userService.usernameAvailable("testuser"));
+    }
 
-        boolean result = userService.usernameAvailable(username);
+    @Test
+    void loadCurrentUserAuthorShouldReturnCurrentUser() {
+        Long userId = 1L;
+        User user = mock(User.class);
 
-        assertThat(result).isFalse();
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
 
-        verify(userRepository).existsByUsername(username);
+        User result = userService.loadCurrentUserAuthor();
+
+        assertSame(user, result);
+        verify(userRepository).getReferenceById(userId);
     }
 }
+

@@ -1,7 +1,6 @@
 package com.openclassrooms.mddapi.user.entity;
 
 import com.openclassrooms.mddapi.common.entity.BaseEntity;
-import com.openclassrooms.mddapi.common.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +9,6 @@ import lombok.*;
 import lombok.experimental.Accessors;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -45,39 +43,8 @@ public class User extends BaseEntity {
     @NotBlank
     private String email;
 
-    @Column(
-            nullable = false,
-            length = 255
-    )
+    @Column(nullable = false)
     @NotBlank
     @Size(max = 255)
     private String password;
-
-    @Column(
-            name = "firstname",
-            nullable = false,
-            length = 50
-    )
-    @NotBlank
-    @Size(max = 50)
-    private String firstName;
-
-    @Column(
-            name = "lastname",
-            nullable = false,
-            length = 50
-    )
-    @NotBlank
-    @Size(max = 50)
-    private String lastName;
-
-    @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 10
-    )
-    private Role role;
-
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
 }

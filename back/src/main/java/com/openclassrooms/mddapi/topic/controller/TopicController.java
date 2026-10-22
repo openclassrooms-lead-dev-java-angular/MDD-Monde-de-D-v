@@ -1,16 +1,16 @@
 package com.openclassrooms.mddapi.topic.controller;
 
-import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
+import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
 import com.openclassrooms.mddapi.topic.service.TopicService;
-import com.openclassrooms.mddapi.topic.dto.TopicRequestDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 /**
  * REST controller for managing topics.
@@ -41,45 +41,16 @@ public class TopicController {
         return topicService.findAll(pageable);
     }
 
-    /**
-     * Retrieves a topic by its slug.
-     *
-     * @param slug the topic slug
-     * @return the requested topic
-     */
-    @GetMapping("/{slug}")
-    public TopicResponseDto findOne(
-            @PathVariable String slug
-    ) {
-        return topicService.findBySlug(slug);
+    @GetMapping("/options")
+    public List<TopicOptionDto> getTopicOptions() {
+        return topicService.getOptions();
     }
 
-    /**
-     * Creates a new topic.
-     *
-     * @param topicDto the topic data
-     * @return the created topic
-     */
-    @PostMapping("")
-    public TopicResponseDto save(
-            @Valid @RequestBody TopicRequestDto topicDto
+    @GetMapping("/subscribed")
+    public Page<TopicResponseDto>getSubscribedTopics(
+            Pageable pageable
     ) {
-        return topicService.create(topicDto);
-    }
-
-    /**
-     * Updates an existing topic identified by its slug.
-     *
-     * @param slug the slug of the topic to update
-     * @param topicDto the updated topic data
-     * @return the updated topic
-     */
-    @PutMapping("/{slug}")
-    public TopicResponseDto update(
-            @PathVariable String slug,
-            @Valid @RequestBody TopicRequestDto topicDto
-    ) {
-        return topicService.update(slug, topicDto);
+        return topicService.getSubscribedTopics(pageable);
     }
 
     /**
@@ -87,10 +58,10 @@ public class TopicController {
      *
      * @param slug the slug of the topic
      */
-    @PostMapping("/{id}/subscribe")
+    @PostMapping("/{slug}/subscribe")
     @ResponseStatus(HttpStatus.CREATED)
     public void subscribe(
-            @PathVariable String slug
+            @PathVariable("slug") String slug
     ) {
         topicService.subscribe(slug);
     }
@@ -100,24 +71,11 @@ public class TopicController {
      *
      * @param slug the slug of the topic
      */
-    @DeleteMapping("/{id}/subscribe")
+    @DeleteMapping("/{slug}/subscribe")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unsubscribe(
-            @PathVariable String slug
+            @PathVariable("slug") String slug
     ) {
         topicService.unsubscribe(slug);
-    }
-
-    /**
-     * Checks whether a topic slug is available.
-     *
-     * @param slug the slug to check
-     * @return information about the slug availability
-     */
-    @GetMapping("/available-slug/{slug}")
-    public AvailableSlugDto availableSlug(
-            @PathVariable String slug
-    ) {
-        return topicService.availableSlug(slug);
     }
 }

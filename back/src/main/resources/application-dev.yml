@@ -1,16 +1,11 @@
 # Application and Spring configuration for development
 
-spring:
-  mail:
-    properties.mail.smtp:
-      auth: false
-      starttls:
-        enable: false
-
 app:
   jwt:
     cookie:
       secure: false
+  minio:
+    bucket-name: ${MINIO_BUCKET_NAME}
   environment: DEV
 
 logging:

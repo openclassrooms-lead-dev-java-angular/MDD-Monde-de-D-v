@@ -1,0 +1,111 @@
+<section class="register">
+  <div>
+    <button
+      type="button"
+      class="register__back-button"
+      aria-label="Retour à l'accueil"
+      (click)="goBack()"
+    >
+      <img src="/assets/icons/arrow-left.svg" alt="" aria-hidden="true" />
+    </button>
+  </div>
+
+  <div class="register__content">
+    <div class="register__content__header">
+      <div class="register__content__header__logo-container">
+        <img
+          class="register__content__logo"
+          src="/assets/logo_p6.png"
+          alt="Logo"
+        />
+      </div>
+
+      <h1 class="register__content__title">Inscription</h1>
+    </div>
+
+    <form
+      class="register__form"
+      [formGroup]="registerForm"
+      (ngSubmit)="submit()"
+    >
+      <div class="input">
+        <label for="registerEmail">Adresse e-mail</label>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <input
+            id="registerEmail"
+            matInput
+            type="email"
+            autocomplete="email"
+            formControlName="email"
+          />
+
+          @for (error of emailErrors; track error) {
+            <mat-error>{{ error }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="input">
+        <label for="registerUsername">Nom d'utilisateur</label>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <input
+            id="registerUsername"
+            matInput
+            type="text"
+            autocomplete="username"
+            formControlName="username"
+            [attr.aria-busy]="isUsernameLoading"
+          />
+
+          @for (error of usernameErrors; track error) {
+            <mat-error>{{ error }}</mat-error>
+          }
+
+          @if (isUsernameLoading) {
+            <mat-spinner
+              matSuffix
+              diameter="20"
+              aria-label="Vérification du nom d'utilisateur"
+            />
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-input">
+        <label for="registerPassword">Mot de passe</label>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <input
+            id="registerPassword"
+            matInput
+            type="password"
+            autocomplete="new-password"
+            formControlName="password"
+          />
+
+          @for (error of passwordErrors; track error) {
+            <mat-error>{{ error }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (errorMessage) {
+        <p class="error" role="alert">
+          {{ errorMessage }}
+        </p>
+      }
+
+      <div class="register__form__actions">
+        <app-button
+          class="register__content__submit-button"
+          type="submit"
+          color="primary"
+          [disabled]="isLoading || registerForm.pending || registerForm.invalid"
+          [label]="isLoading ? 'Création...' : 'S’inscrire'"
+        />
+      </div>
+    </form>
+  </div>
+</section>

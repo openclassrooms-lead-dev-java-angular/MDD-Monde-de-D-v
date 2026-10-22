@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class AuthService {
     ) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.email(),
+                        loginRequest.usernameOrEmail(),
                         loginRequest.password()
                 )
         );
@@ -63,7 +64,7 @@ public class AuthService {
         String refreshToken = jwtTokenService.generateRefreshToken(userDetails);
 
         ResponseCookie accessTokenCookie = cookieService.generateAccessTokenCookie(accessToken);
-        ResponseCookie refreshTokenCookie = cookieService.generateAccessTokenCookie(refreshToken);
+        ResponseCookie refreshTokenCookie = cookieService.generateRefreshTokenCookie(refreshToken);
 
         return Map.of(
                 "accessTokenCookie", accessTokenCookie,

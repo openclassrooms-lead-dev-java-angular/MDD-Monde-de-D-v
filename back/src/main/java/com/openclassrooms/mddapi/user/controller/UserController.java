@@ -40,7 +40,7 @@ public class UserController {
      */
     @PatchMapping("/me")
     public UserResponseDto patch(
-            @Valid @RequestBody UpdateUserDto userDto
+            @Valid @RequestBody() UpdateUserDto userDto
     ) {
         return userService.updateUser(userDto);
     }

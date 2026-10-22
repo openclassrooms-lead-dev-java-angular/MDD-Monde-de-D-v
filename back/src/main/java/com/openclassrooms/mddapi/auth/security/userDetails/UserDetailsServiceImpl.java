@@ -4,6 +4,7 @@ import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
 import com.openclassrooms.mddapi.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
@@ -31,13 +33,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      * <p>This method is used by Spring Security during the authentication
      * process.</p>
      *
-     * @param email the email address of the user to load
+     * @param usernameOrEmail the email address or the username of the user to load
      * @return the user details associated with the given email
      * @throws UserNotFoundException if no user is found with the given email
      */
     @Override
-    public UserDetailsImpl loadUserByUsername(String email) {
-        return userRepository.findByEmail(email)
+    public UserDetailsImpl loadUserByUsername(String usernameOrEmail) {
+        return userRepository.findByEmail(usernameOrEmail)
+                .or(() -> userRepository.findByUsername(usernameOrEmail))
                 .map(userDetailsMapper::toUserDetails)
                 .orElseThrow(UserNotFoundException::new);
     }
@@ -63,7 +66,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      *
      * @return the identifier of the currently authenticated user
      * @throws UnauthorizedException if no authenticated user is available
-     * or if the authenticated principal is invalid
+     *                               or if the authenticated principal is invalid
      */
     @Transactional(readOnly = true)
     public Long getPrincipalUserId() {
@@ -73,10 +76,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UnauthorizedException("User is not authenticated");
         }
 
-        if (!(authentication.getPrincipal() instanceof UserDetailsImpl userDetails)) {
-            throw new UnauthorizedException("Invalid authenticated user");
-        }
-
-        return userDetails.getId();
+        return Long.valueOf(authentication.getName());
     }
 }

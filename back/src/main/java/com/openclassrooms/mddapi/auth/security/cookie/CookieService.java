@@ -33,6 +33,7 @@ public class CookieService {
         return ResponseCookie
                 .from("access_token", token)
                 .secure(secureCookie)
+                .httpOnly(true)
                 .sameSite("Lax")
                 .path("/")
                 .maxAge(Duration.ofMinutes(accessTokenExpiration))
