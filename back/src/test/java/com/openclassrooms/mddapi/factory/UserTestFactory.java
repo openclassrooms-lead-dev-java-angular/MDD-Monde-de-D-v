@@ -1,9 +1,6 @@
 package com.openclassrooms.mddapi.factory;
 
-import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.user.entity.User;
-import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
-import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 
 import java.time.LocalDateTime;
 

@@ -5,10 +5,8 @@ import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import com.openclassrooms.mddapi.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * REST controller responsible for user-related operations.
