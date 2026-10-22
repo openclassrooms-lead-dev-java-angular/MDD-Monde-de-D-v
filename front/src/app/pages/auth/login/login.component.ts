@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
@@ -16,11 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [
-    ButtonComponent,
-    ReactiveFormsModule,
-    MatInputModule,
-  ],
+  imports: [ButtonComponent, ReactiveFormsModule, MatInputModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -37,7 +33,7 @@ export class LoginComponent {
   });
 
   isLoading = false;
-  errorMessage = '';
+  errorMessage = signal<string>('');
 
   get usernameOrEmailErrors(): string[] {
     const control = this.loginForm.controls.usernameOrEmail;
@@ -64,7 +60,7 @@ export class LoginComponent {
   }
 
   submit(): void {
-    this.errorMessage = '';
+    this.errorMessage.set('');
 
     if (this.loginForm.invalid || this.loginForm.pending || this.isLoading) {
       this.loginForm.markAllAsTouched();
@@ -86,13 +82,15 @@ export class LoginComponent {
       .subscribe({
         next: (user) => {
           this.userStateService.setUser(user);
+          console.log('Login success:', user);
           void this.router.navigate(['/feed']);
         },
         error: (error: unknown) => {
-          console.error('Login error:', error);
+          console.log('LOGIN ERROR', error);
 
-          this.errorMessage =
-            'Erreur lors de la connexion. Vérifiez vos identifiants et réessayez.';
+          this.errorMessage.set(
+            'Erreur lors de la connexion. Vérifiez vos identifiants et réessayez.',
+          );
         },
       });
   }

@@ -55,9 +55,9 @@
         </mat-form-field>
       </div>
 
-      @if (errorMessage) {
+      @if (errorMessage()) {
         <p class="error" role="alert">
-          {{ errorMessage }}
+          {{ errorMessage() }}
         </p>
       }
 
