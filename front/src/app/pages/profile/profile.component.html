@@ -35,8 +35,14 @@
               [attr.aria-busy]="isUsernameLoading"
             />
 
-            @for (error of usernameErrors; track error) {
-              <mat-error>{{ error }}</mat-error>
+            @if (
+              userForm.controls.username.invalid &&
+              (userForm.controls.username.touched ||
+                userForm.controls.username.dirty)
+            ) {
+              @for (error of usernameErrors; track error) {
+                <mat-error>{{ error }}</mat-error>
+              }
             }
 
             @if (isUsernameLoading) {
@@ -67,17 +73,17 @@
           </mat-form-field>
         </div>
 
-        @if (errorMessage) {
+        @if (errorMessage()) {
           <p class="profile__error" role="alert">
-            {{ errorMessage }}
+            {{ errorMessage() }}
           </p>
         }
 
         <div class="profile__form-actions">
           <app-button
             type="submit"
-            [disabled]="isLoadingForm || userForm.pending || userForm.invalid"
-            [label]="isLoadingForm ? 'Enregistrement...' : 'Sauvegarder'"
+            [disabled]="isLoadingForm() || userForm.pending || userForm.invalid"
+            [label]="isLoadingForm() ? 'Enregistrement...' : 'Sauvegarder'"
           />
         </div>
       </form>

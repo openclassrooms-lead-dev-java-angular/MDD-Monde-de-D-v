@@ -64,8 +64,8 @@ export class ProfileComponent implements OnInit {
     password: this.fb.control('', [Validators.required, passwordValidator()]),
   });
 
-  isLoadingForm = false;
-  errorMessage = '';
+  isLoadingForm = signal<boolean>(false);
+  errorMessage = signal<string>('');
 
   ngOnInit() {
     const user: User = this.userStateService.getUser()!;
@@ -106,14 +106,18 @@ export class ProfileComponent implements OnInit {
   }
 
   submit(): void {
-    this.errorMessage = '';
+    this.errorMessage.set('');
 
-    if (this.userForm.invalid || this.userForm.pending || this.isLoadingForm) {
+    if (
+      this.userForm.invalid ||
+      this.userForm.pending ||
+      this.isLoadingForm()
+    ) {
       this.userForm.markAllAsTouched();
       return;
     }
 
-    this.isLoadingForm = true;
+    this.isLoadingForm.set(true);
 
     const { email, username, password } = this.userForm.getRawValue();
 
@@ -121,7 +125,7 @@ export class ProfileComponent implements OnInit {
       .updateUser({ email, username, password })
       .pipe(
         finalize(() => {
-          this.isLoadingForm = false;
+          this.isLoadingForm.set(false);
         }),
       )
       .subscribe({
@@ -131,9 +135,9 @@ export class ProfileComponent implements OnInit {
         error: (error: { error?: { message?: string } }) => {
           console.error('Erreur lors de l’inscription :', error);
 
-          this.errorMessage =
-            error.error?.message ??
-            "Une erreur est survenue lors de l'inscription.";
+          this.errorMessage.set(
+            "Une erreur est survenue lors de l'inscription.",
+          );
         },
       });
   }

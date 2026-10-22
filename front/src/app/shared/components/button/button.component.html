@@ -1,4 +1,4 @@
-@if (type() === "link") {
+@if (type() === 'link') {
   <a
     mat-stroked-button
     [routerLink]="routerLink()"
@@ -14,6 +14,7 @@
     <button
       mat-stroked-button
       [type]="type()"
+      [disabled]="disabled()"
       [class]="variantClass()"
       [style.font-weight]="fontWeight()"
       (click)="action()?.()"
@@ -24,6 +25,7 @@
     <button
       mat-flat-button
       [type]="type()"
+      [disabled]="disabled()"
       [style.font-weight]="fontWeight()"
       [class]="variantClass()"
       (click)="action()?.()"
