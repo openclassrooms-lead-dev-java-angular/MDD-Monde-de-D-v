@@ -1,35 +1,43 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, RouterLink, convertToParamMap } from '@angular/router';
-import { Subject, throwError } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, RouterLink } from '@angular/router';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { of, Subject, throwError } from 'rxjs';
 
 import { ArticleDetailComponent } from './article-detail.component';
 import { ArticleService } from '@service/article.service';
+import { CommentService } from '@service/comment.service';
+import { ArticleComment } from '@model/article-comment.model';
 import { Article } from '@model/article.model';
 
 describe('ArticleDetailComponent', () => {
   let component: ArticleDetailComponent;
   let fixture: ComponentFixture<ArticleDetailComponent>;
+
   let articleService: jasmine.SpyObj<ArticleService>;
-  let articleSubject: Subject<Article>;
+  let commentService: jasmine.SpyObj<CommentService>;
 
-  const date = new Date('2026-10-15');
+  const articleSlug = 'test-article';
 
-  const mockTopic = {
-    slug: 'topic-example',
-    name: 'topic example',
-    description: 'topic description',
-    subscribed: true,
-    createdAt: date,
-    updatedAt: date,
-  };
+  const mockComment = {
+    content: 'Mon premier commentaire',
+  } as ArticleComment;
+
   const mockArticle = {
-    title: 'My first article',
-    topic: mockTopic,
-    slug: 'my-first-article',
-    content: '<p>My article content</p>',
-    createdAt: date,
-    updatedAt: date,
-    username: 'fred',
+    slug: articleSlug,
+    title: 'Mon article de test',
+    content: '<p>Contenu de mon article</p>',
+    createdAt: new Date('2026-10-21'),
+    username: 'test-user',
+    updatedAt: new Date('2026-10-21'),
+    topic: {
+      slug: 'angular',
+      name: 'Angular',
+      description: 'Discussions autour d’Angular.',
+      subscribed: false,
+      createdAt: new Date('2025-01-01T00:00:00Z'),
+      updatedAt: new Date('2025-01-02T00:00:00Z'),
+    },
+    comments: [],
   } as Article;
 
   beforeEach(async () => {
@@ -37,34 +45,39 @@ describe('ArticleDetailComponent', () => {
       'getArticleBySlug',
     ]);
 
-    articleSubject = new Subject<Article>();
+    commentService = jasmine.createSpyObj<CommentService>('CommentService', [
+      'postComment',
+    ]);
 
-    articleService.getArticleBySlug.and.returnValue(
-      articleSubject.asObservable(),
-    );
+    articleService.getArticleBySlug.and.returnValue(of(mockArticle));
+    commentService.postComment.and.returnValue(of(mockComment));
 
     await TestBed.configureTestingModule({
       imports: [ArticleDetailComponent],
       providers: [
         {
+          provide: ArticleService,
+          useValue: articleService,
+        },
+        {
+          provide: CommentService,
+          useValue: commentService,
+        },
+        {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
               paramMap: convertToParamMap({
-                slug: 'my-first-article',
+                slug: articleSlug,
               }),
             },
           },
         },
-        {
-          provide: ArticleService,
-          useValue: articleService,
-        },
       ],
     })
       .overrideComponent(ArticleDetailComponent, {
-        set: {
-          imports: [RouterLink],
+        add: {
+          imports: [RouterLink, MatFormFieldModule],
         },
       })
       .compileComponents();
@@ -73,95 +86,287 @@ describe('ArticleDetailComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('should create the component', () => {
-    expect(component).toBeTruthy();
+  afterEach(() => {
+    fixture.destroy();
   });
 
-  it('should retrieve the article using the route slug', () => {
-    fixture.detectChanges();
+  describe('initialization', () => {
+    it('should create the component', () => {
+      expect(component).toBeTruthy();
+    });
 
-    expect(articleService.getArticleBySlug).toHaveBeenCalledWith(
-      'my-first-article',
-    );
+    it('should retrieve the article using the route slug', () => {
+      fixture.detectChanges();
+
+      expect(articleService.getArticleBySlug).toHaveBeenCalledOnceWith(
+        articleSlug,
+      );
+    });
+
+    it('should display the article after loading', () => {
+      fixture.detectChanges();
+
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      expect(compiled.querySelector('h1')?.textContent).toContain(
+        mockArticle.title,
+      );
+
+      expect(compiled.querySelector('.article__content')?.innerHTML).toContain(
+        'Contenu de mon article',
+      );
+    });
+
+    it('should display the article metadata', () => {
+      fixture.detectChanges();
+
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      expect(compiled.querySelector('.article__meta')?.textContent).toContain(
+        mockArticle.createdAt,
+      );
+
+      expect(compiled.querySelector('.article__meta')?.textContent).toContain(
+        mockArticle.username,
+      );
+
+      expect(compiled.querySelector('.article__meta')?.textContent).toContain(
+        mockArticle.topic.name,
+      );
+    });
+
+    it('should display the loading indicator while retrieving the article', () => {
+      const articleSubject = new Subject<Article>();
+
+      articleService.getArticleBySlug.and.returnValue(
+        articleSubject.asObservable(),
+      );
+
+      fixture.detectChanges();
+
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      expect(compiled.querySelector('.article-detail__loading')).toBeTruthy();
+
+      expect(compiled.textContent).toContain('Chargement de l’article.');
+
+      articleSubject.next(mockArticle);
+      articleSubject.complete();
+
+      fixture.detectChanges();
+
+      expect(compiled.querySelector('.article-detail__loading')).toBeFalsy();
+
+      expect(compiled.querySelector('.article')).toBeTruthy();
+    });
+
+    it('should display the not-found message when the article request fails', () => {
+      spyOn(console, 'error');
+
+      articleService.getArticleBySlug.and.returnValue(
+        throwError(() => new Error('Article not found')),
+      );
+
+      fixture.detectChanges();
+
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      expect(compiled.querySelector('.article-detail__empty')).toBeTruthy();
+
+      expect(compiled.textContent).toContain('Article introuvable');
+    });
   });
 
-  it('should display the loading indicator while the request is pending', () => {
-    fixture.detectChanges();
+  describe('comments display', () => {
+    it('should display the empty message when the article has no comments', () => {
+      fixture.detectChanges();
 
-    const loading = fixture.nativeElement.querySelector(
-      '.article-detail__loading',
-    );
+      const compiled: HTMLElement = fixture.nativeElement;
 
-    expect(loading).toBeTruthy();
-    expect(loading.textContent).toContain('Loading article...');
+      expect(compiled.querySelector('.comments__empty')).toBeTruthy();
+
+      expect(compiled.textContent).toContain(
+        'Il n’y a pas de commentaire, soyez le premier à en écrire un.',
+      );
+    });
+
+    it('should display the article comments', () => {
+      const articleWithComments = {
+        ...mockArticle,
+        comments: [mockComment],
+      } as Article;
+
+      articleService.getArticleBySlug.and.returnValue(of(articleWithComments));
+
+      fixture.detectChanges();
+
+      const compiled: HTMLElement = fixture.nativeElement;
+
+      expect(compiled.querySelector('app-comment')).toBeTruthy();
+      expect(compiled.querySelector('.comments__empty')).toBeFalsy();
+    });
   });
 
-  it('should display the article details after loading', () => {
-    fixture.detectChanges();
+  describe('comment form', () => {
+    it('should disable the submit button when the form is empty', () => {
+      fixture.detectChanges();
 
-    articleSubject.next(mockArticle);
-    fixture.detectChanges();
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        'button[type="submit"]',
+      );
 
-    const title = fixture.nativeElement.querySelector('.article__title');
+      expect(button.disabled).toBeTrue();
+    });
 
-    const content = fixture.nativeElement.querySelector('.article__content');
+    it('should enable the submit button when the comment is valid', () => {
+      fixture.detectChanges();
 
-    const meta = fixture.nativeElement.querySelector('.article__meta');
+      const textarea: HTMLTextAreaElement =
+        fixture.nativeElement.querySelector('#comment-content');
 
-    expect(title.textContent).toContain('My first article');
-    expect(content.textContent).toContain('My article content');
-    expect(meta.textContent).toContain('2026-10-15');
-    expect(meta.textContent).toContain('fred');
+      textarea.value = 'Mon nouveau commentaire';
+      textarea.dispatchEvent(new Event('input'));
 
-    expect(
-      fixture.nativeElement.querySelector('.article-detail__loading'),
-    ).toBeNull();
-  });
+      fixture.detectChanges();
 
-  it('should display a message when the article cannot be found', () => {
-    articleService.getArticleBySlug.and.returnValue(
-      throwError(() => new Error('Article not found')),
-    );
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        'button[type="submit"]',
+      );
 
-    fixture.detectChanges();
+      expect(button.disabled).toBeFalse();
+    });
 
-    const empty = fixture.nativeElement.querySelector('.article-detail__empty');
+    it('should not submit an empty comment', () => {
+      fixture.detectChanges();
 
-    expect(empty).toBeTruthy();
-    expect(empty.textContent).toContain('Article not found');
-    expect(empty.textContent).toContain(
-      'The article you are looking for does not exist or is no longer available.',
-    );
-  });
+      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
 
-  it('should stop loading when an error occurs', () => {
-    spyOn(console, 'error');
+      form.dispatchEvent(
+        new Event('submit', {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
 
-    articleService.getArticleBySlug.and.returnValue(
-      throwError(() => new Error('Server error')),
-    );
+      expect(commentService.postComment).not.toHaveBeenCalled();
+    });
 
-    fixture.detectChanges();
+    it('should submit a valid comment using the article slug', () => {
+      fixture.detectChanges();
 
-    expect(console.error).toHaveBeenCalled();
-    expect(
-      fixture.nativeElement.querySelector('.article-detail__loading'),
-    ).toBeNull();
-  });
+      const textarea: HTMLTextAreaElement =
+        fixture.nativeElement.querySelector('#comment-content');
 
-  it('should render the article HTML content', () => {
-    fixture.detectChanges();
+      textarea.value = 'Mon nouveau commentaire';
+      textarea.dispatchEvent(new Event('input'));
 
-    articleSubject.next({
-      ...mockArticle,
-      content: '<p>Formatted <strong>content</strong></p>',
-    } as Article);
+      fixture.detectChanges();
 
-    fixture.detectChanges();
+      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
 
-    const content = fixture.nativeElement.querySelector('.article__content');
+      form.dispatchEvent(
+        new Event('submit', {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
 
-    expect(content.querySelector('strong')).toBeTruthy();
-    expect(content.textContent).toContain('content');
+      expect(commentService.postComment).toHaveBeenCalledOnceWith(
+        articleSlug,
+        'Mon nouveau commentaire',
+      );
+    });
+
+    it('should reset the form after successfully submitting a comment', () => {
+      fixture.detectChanges();
+
+      const textarea: HTMLTextAreaElement =
+        fixture.nativeElement.querySelector('#comment-content');
+
+      textarea.value = 'Mon nouveau commentaire';
+      textarea.dispatchEvent(new Event('input'));
+
+      fixture.detectChanges();
+
+      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+
+      form.dispatchEvent(
+        new Event('submit', {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+
+      fixture.detectChanges();
+
+      expect(textarea.value).toBe('');
+    });
+
+    it('should append the new comment to the article', () => {
+      fixture.detectChanges();
+
+      const textarea: HTMLTextAreaElement =
+        fixture.nativeElement.querySelector('#comment-content');
+
+      textarea.value = 'Mon nouveau commentaire';
+      textarea.dispatchEvent(new Event('input'));
+
+      fixture.detectChanges();
+
+      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+
+      form.dispatchEvent(
+        new Event('submit', {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+
+      fixture.detectChanges();
+
+      const comments: HTMLElement[] = Array.from(
+        fixture.nativeElement.querySelectorAll('app-comment'),
+      );
+
+      expect(comments.length).toBe(1);
+      expect(
+        fixture.nativeElement.querySelector('.comments__empty'),
+      ).toBeFalsy();
+    });
+
+    it('should stop loading after a comment submission error', () => {
+      spyOn(console, 'error');
+
+      commentService.postComment.and.returnValue(
+        throwError(() => new Error('Comment submission failed')),
+      );
+
+      fixture.detectChanges();
+
+      const textarea: HTMLTextAreaElement =
+        fixture.nativeElement.querySelector('#comment-content');
+
+      textarea.value = 'Mon nouveau commentaire';
+      textarea.dispatchEvent(new Event('input'));
+
+      fixture.detectChanges();
+
+      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+
+      form.dispatchEvent(
+        new Event('submit', {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+
+      fixture.detectChanges();
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        'button[type="submit"]',
+      );
+
+      expect(button.disabled).toBeFalse();
+    });
   });
 });

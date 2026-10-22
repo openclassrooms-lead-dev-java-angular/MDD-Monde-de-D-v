@@ -1,41 +1,91 @@
 <section class="article-detail">
-  @if (loading()) {
+  @if (isLoading()) {
     <div class="article-detail__loading">
       <div class="loader"></div>
       <p>Chargement de l'article...</p>
     </div>
   }
 
-  @if (!loading() && article(); as currentArticle) {
+  @if (!isLoading() && article(); as currentArticle) {
     <article class="article">
-      <a routerLink="/articles" class="article__back"> ← Retour aux articles </a>
-
-      <header class="article__header">
-        <h1 class="article__title">
-          {{ currentArticle.title }}
-        </h1>
+      <div class="article__header">
+        <div class="article__title">
+          <button
+            type="button"
+            class="article__back-button"
+            aria-label="Retour à l'accueil"
+            (click)="goBack()"
+          >
+            <img src="/assets/icons/arrow-left.svg" alt="" aria-hidden="true" />
+          </button>
+          <h1>
+            {{ currentArticle.title }}
+          </h1>
+        </div>
 
         <div class="article__meta">
           <span>
-            {{ currentArticle.createdAt }}
+            {{ currentArticle.createdAt | date: 'dd/MM/yyyy' }}
           </span>
-
-          <span class="article__separator">•</span>
-
           <span>
             {{ currentArticle.username }}
           </span>
+          <span>
+            {{ currentArticle.topic.name }}
+          </span>
         </div>
-      </header>
+      </div>
 
       <div class="article__content" [innerHTML]="currentArticle.content"></div>
     </article>
+
+    <div class="comments">
+      <h2>Commentaires</h2>
+      @if (article()?.comments; as comments) {
+        @if (comments.length > 0) {
+          @for (comment of comments; track $index) {
+            <app-comment [comment]="comment" />
+          }
+        } @else {
+          <p class="comments__empty">
+            Il n'y a pas de commentaire, soyez le premier à en écrire un.
+          </p>
+        }
+      }
+    </div>
+    <div class="comments__form">
+      <form class="form" [formGroup]="commentForm" (ngSubmit)="submitForm()">
+        <mat-form-field appearance="outline" class="form__field">
+          <textarea
+            id="comment-content"
+            matInput
+            formControlName="comment"
+            placeholder="Écrivez votre commentaire"
+            rows="3"
+          ></textarea>
+        </mat-form-field>
+
+        <div class="form__actions">
+          <button
+            type="submit"
+            aria-label="Envoyer le commentaire"
+            [disabled]="
+              isLoadingForm() || commentForm.pending || commentForm.invalid
+            "
+          >
+            <img src="/assets/icons/send.svg" alt="" aria-hidden="true" />
+          </button>
+        </div>
+      </form>
+    </div>
   }
 
-  @if (!loading() && !article()) {
+  @if (!isLoading() && !article()) {
     <div class="article-detail__empty">
       <h1>Article introuvable</h1>
-      <p>L'article que vous recherchez n'existe pas ou n'est plus disponible.</p>
+      <p>
+        L'article que vous recherchez n'existe pas ou n'est plus disponible.
+      </p>
 
       <a routerLink="/articles" class="button"> Retour aux articles </a>
     </div>
