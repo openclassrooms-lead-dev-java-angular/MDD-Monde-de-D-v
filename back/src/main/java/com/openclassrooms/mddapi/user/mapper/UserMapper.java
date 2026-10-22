@@ -14,13 +14,8 @@ import org.springframework.stereotype.Component;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    @Mapping(
-            target = "avatar",
-            expression = "java(buildMediaUrl(mediaUrl, entity.getAvatar()))"
-    )
     UserResponseDto toDto(
-            User entity,
-            @Context String mediaUrl
+            User entity
     );
 
     void updateEntity(
@@ -29,11 +24,4 @@ public interface UserMapper {
     );
 
     User fromRegisterDto(RegisterRequestDto registerDto);
-
-    default String buildMediaUrl(String media, String mediaUrl) {
-        if (media == null) {
-            return null;
-        }
-        return mediaUrl + media;
-    }
 }

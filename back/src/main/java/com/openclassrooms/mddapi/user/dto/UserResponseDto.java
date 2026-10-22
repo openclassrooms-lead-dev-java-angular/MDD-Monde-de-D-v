@@ -8,8 +8,6 @@ public record UserResponseDto(
 
         String username,
 
-        String avatar,
-
         LocalDateTime createdAt,
 
         LocalDateTime updatedAt
