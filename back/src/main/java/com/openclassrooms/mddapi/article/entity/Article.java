@@ -1,5 +1,6 @@
 package com.openclassrooms.mddapi.article.entity;
 
+import com.openclassrooms.mddapi.comment.entity.Comment;
 import com.openclassrooms.mddapi.common.entity.BaseEntity;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.user.entity.User;
@@ -7,6 +8,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "articles")
@@ -60,4 +64,7 @@ public class Article extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String content;
+
+    @OneToMany(mappedBy = "article")
+    private List<Comment> comments = new ArrayList<>();
 }

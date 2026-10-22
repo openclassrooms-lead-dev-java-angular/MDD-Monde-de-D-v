@@ -4,25 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mddapi.comment.dto.CommentRequestDto;
 import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
 import com.openclassrooms.mddapi.comment.service.CommentService;
-import com.openclassrooms.mddapi.factory.CommentTestFactory;
+import com.openclassrooms.mddapi.factory.LocalDateTimeTestFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,95 +25,85 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class CommentControllerTest {
 
+    private static final String ARTICLE_SLUG = "test-article";
+    private static final String CONTENT = "Mon commentaire de test";
+
     @Autowired
     private MockMvc mockMvc;
-
-    @MockitoBean
-    private CommentService commentService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Test
-    void shouldGetArticleComments() throws Exception {
-        String articleSlug = "mon-article";
-        CommentResponseDto commentResponseDto = CommentTestFactory.createCommentResponseDto();
-        Page<CommentResponseDto> response = new PageImpl<>(
-                List.of(commentResponseDto),
-                PageRequest.of(0, 10),
-                1);
-
-        when(commentService.getArticleComments(
-                any(Pageable.class),
-                eq(articleSlug))
-        )
-                .thenReturn(response);
-
-        mockMvc.perform(
-                        get("/api/v1/comments/article/{articleSlug}",
-                                articleSlug
-                        )
-                                .param("page", "0")
-                                .param("size", "10")
-                )
-                .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.content")
-                                .isArray())
-                .andExpect(
-                        jsonPath("$.content[0].username")
-                                .value(response.getContent().getFirst().username()))
-                .andExpect(
-                        jsonPath("$.content[0].content")
-                                .value(response.getContent().getFirst().content()));
-
-        verify(commentService).getArticleComments(
-                any(Pageable.class),
-                eq(articleSlug));
-    }
+    @MockitoBean
+    private CommentService commentService;
 
     @Test
     void shouldCreateComment() throws Exception {
-        String articleSlug = "my-article";
-        CommentRequestDto request = CommentTestFactory.createCommentRequestDto();
-        CommentResponseDto response = CommentTestFactory.createCommentResponseDto();
+        CommentRequestDto requestDto = new CommentRequestDto(CONTENT);
+
+        CommentResponseDto responseDto = new CommentResponseDto(
+                "John_Doe",
+                CONTENT,
+                LocalDateTimeTestFactory.generateCreatedAt()
+        );
 
         when(commentService.create(
-                eq(articleSlug),
-                any(CommentRequestDto.class))
-        ).thenReturn(response);
+                eq(ARTICLE_SLUG),
+                any(CommentRequestDto.class)
+        )).thenReturn(responseDto);
 
-        mockMvc.perform(
-                        post("/api/v1/comments/article/{articleSlug}", articleSlug)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(post("/api/v1/articles/{slug}/comments", ARTICLE_SLUG)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.username")
-                                .value(response.username()))
-                .andExpect(
-                        jsonPath("$.content")
-                                .value(response.content()));
+                .andExpect(jsonPath("$.username").value("John_Doe"))
+                .andExpect(jsonPath("$.content").value(CONTENT))
+                .andExpect(jsonPath("$.createdAt").exists());
 
         verify(commentService).create(
-                eq(articleSlug),
-                any(CommentRequestDto.class));
+                eq(ARTICLE_SLUG),
+                any(CommentRequestDto.class)
+        );
     }
 
     @Test
-    void shouldRejectBlankComment() throws Exception {
-        CommentRequestDto request = new CommentRequestDto("");
+    void shouldPassArticleSlugAndCommentContentToService() throws Exception {
+        CommentRequestDto requestDto = new CommentRequestDto(CONTENT);
 
-        mockMvc.perform(
-                        post("/api/v1/comments/article/{articleSlug}",
-                                "my-article")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isInternalServerError());
+        when(commentService.create(
+                eq(ARTICLE_SLUG),
+                any(CommentRequestDto.class)
+        )).thenReturn(new CommentResponseDto(
+                "John_Doe",
+                CONTENT,
+                LocalDateTimeTestFactory.generateCreatedAt()
+        ));
 
-        verify(commentService, never()).create(
-                anyString(),
-                any(CommentRequestDto.class));
+        mockMvc.perform(post("/api/v1/articles/{slug}/comments", ARTICLE_SLUG)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk());
+
+        org.mockito.ArgumentCaptor<CommentRequestDto> captor =
+                org.mockito.ArgumentCaptor.forClass(CommentRequestDto.class);
+
+        verify(commentService).create(eq(ARTICLE_SLUG), captor.capture());
+
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().content())
+                .isEqualTo(CONTENT);
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenRequestBodyIsInvalid() throws Exception {
+        String invalidRequest = """
+                {
+                    "content": ""
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/articles/{slug}/comments", ARTICLE_SLUG)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -10,6 +10,7 @@ export const environment = {
     user: `v1/users`,
     topic: `v1/topics`,
     article: `v1/articles`,
+    comment: `v1/articles`,
   },
 };
 

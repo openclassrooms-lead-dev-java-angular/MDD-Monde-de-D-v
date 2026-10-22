@@ -3,48 +3,61 @@ package com.openclassrooms.mddapi.comment.mapper;
 import com.openclassrooms.mddapi.comment.dto.CommentRequestDto;
 import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
 import com.openclassrooms.mddapi.comment.entity.Comment;
-import com.openclassrooms.mddapi.factory.CommentTestFactory;
+import com.openclassrooms.mddapi.user.entity.User;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CommentMapperTest {
 
-    private final CommentMapper commentMapper = Mappers.getMapper(CommentMapper.class);
+    private CommentMapper commentMapper;
+
+    @BeforeEach
+    void setUp() {
+        commentMapper = Mappers.getMapper(CommentMapper.class);
+    }
 
     @Test
     void shouldMapCommentToDto() {
-        Comment comment = CommentTestFactory.createComment();
+        User author = new User();
+        author.setUsername("john_doe");
+
+        Comment comment = new Comment();
+        comment.setId(1L);
+        comment.setContent("Mon commentaire");
+        comment.setAuthor(author);
 
         CommentResponseDto result = commentMapper.toDto(comment);
 
-        assertThat(result).isNotNull();
-        assertThat(result.username()).isEqualTo("Jane_Doe");
-        assertThat(result.content()).isEqualTo("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
-        assertThat(result.createdAt()).isEqualTo(comment.getCreatedAt());
+        assertNotNull(result);
+        assertEquals("Mon commentaire", result.content());
+        assertEquals("john_doe", result.username());
     }
 
     @Test
     void shouldMapCommentRequestDtoToEntity() {
-        CommentRequestDto request = CommentTestFactory.createCommentRequestDto();
+        CommentRequestDto requestDto =
+                new CommentRequestDto("Mon commentaire");
 
-        Comment result = commentMapper.toEntity(request);
+        Comment result = commentMapper.toEntity(requestDto);
 
-        assertThat(result).isNotNull();
-        assertThat(result.getContent())
-                .isEqualTo("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        assertNotNull(result);
+        assertEquals("Mon commentaire", result.getContent());
     }
 
     @Test
-    void shouldReturnNullWhenMappingNullComment() {
+    void shouldReturnNullWhenCommentIsNull() {
         CommentResponseDto result = commentMapper.toDto(null);
-        assertThat(result).isNull();
+
+        assertNull(result);
     }
 
     @Test
-    void shouldReturnNullWhenMappingNullRequest() {
+    void shouldReturnNullWhenCommentRequestDtoIsNull() {
         Comment result = commentMapper.toEntity(null);
-        assertThat(result).isNull();
+
+        assertNull(result);
     }
 }

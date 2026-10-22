@@ -4,8 +4,10 @@ import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
 import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
 import com.openclassrooms.mddapi.article.service.ArticleService;
+import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
 import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.factory.ArticleTestFactory;
+import com.openclassrooms.mddapi.factory.LocalDateTimeTestFactory;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +49,7 @@ class ArticleControllerTest {
     @Test
     void shouldGetFeedArticles() throws Exception {
         ArticleResponseDto article =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
 
         Pageable pageable = PageRequest.of(0, 10);
         Page<ArticleResponseDto> page =
@@ -64,7 +66,25 @@ class ArticleControllerTest {
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].username").value("Jane_Doe"))
                 .andExpect(jsonPath("$.content[0].title").value("article title"))
-                .andExpect(jsonPath("$.content[0].slug").value("my-article"));
+                .andExpect(jsonPath("$.content[0].slug").value("my-article"))
+                .andExpect(jsonPath("$.content[0].comments").isArray());
+
+        verify(articleService).findFeedArticles(any(Pageable.class));
+    }
+
+    @Test
+    void shouldReturnEmptyFeed() throws Exception {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(articleService.findFeedArticles(any(Pageable.class)))
+                .thenReturn(Page.empty(pageable));
+
+        mockMvc.perform(get("/api/v1/articles/feed")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty());
 
         verify(articleService).findFeedArticles(any(Pageable.class));
     }
@@ -76,7 +96,7 @@ class ArticleControllerTest {
     @Test
     void shouldGetArticleBySlug() throws Exception {
         ArticleResponseDto article =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
 
         when(articleService.findBySlug("my-article"))
                 .thenReturn(article);
@@ -88,7 +108,62 @@ class ArticleControllerTest {
                 .andExpect(jsonPath("$.slug").value("my-article"))
                 .andExpect(jsonPath("$.content").value("my article content"))
                 .andExpect(jsonPath("$.createdAt").exists())
-                .andExpect(jsonPath("$.updatedAt").exists());
+                .andExpect(jsonPath("$.updatedAt").exists())
+                .andExpect(jsonPath("$.comments").isArray());
+
+        verify(articleService).findBySlug("my-article");
+    }
+
+    @Test
+    void shouldGetArticleBySlugWithComments() throws Exception {
+        CommentResponseDto comment1 = mock(CommentResponseDto.class);
+        CommentResponseDto comment2 = mock(CommentResponseDto.class);
+
+        ArticleResponseDto article = new ArticleResponseDto(
+                "Jane_Doe",
+                ArticleTestFactory.createArticleResponseDto().topic(),
+                "my-article",
+                "article title",
+                "my article content",
+                LocalDateTimeTestFactory.generateCreatedAt(),
+                LocalDateTimeTestFactory.generateUpdatedAt(),
+                List.of(comment1, comment2)
+        );
+
+        when(articleService.findBySlug("my-article"))
+                .thenReturn(article);
+
+        mockMvc.perform(get("/api/v1/articles/my-article"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.comments").isArray())
+                .andExpect(jsonPath("$.comments.length()").value(2));
+
+        verify(articleService).findBySlug("my-article");
+    }
+
+    @Test
+    void shouldReturnArticleWithEmptyComments() throws Exception {
+        ArticleResponseDto original =
+                ArticleTestFactory.createArticleResponseDto();
+
+        ArticleResponseDto article = new ArticleResponseDto(
+                original.username(),
+                original.topic(),
+                original.slug(),
+                original.title(),
+                original.content(),
+                original.createdAt(),
+                original.updatedAt(),
+                List.of()
+        );
+
+        when(articleService.findBySlug("my-article"))
+                .thenReturn(article);
+
+        mockMvc.perform(get("/api/v1/articles/my-article"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.comments").isArray())
+                .andExpect(jsonPath("$.comments").isEmpty());
 
         verify(articleService).findBySlug("my-article");
     }
@@ -97,7 +172,8 @@ class ArticleControllerTest {
     void shouldReturn404WhenArticleDoesNotExist() throws Exception {
         when(articleService.findBySlug("article-unknown"))
                 .thenThrow(new ArticleNotFoundException(
-                        "Article not found with slug : article-unknown"));
+                        "Article not found with slug : article-unknown"
+                ));
 
         mockMvc.perform(get("/api/v1/articles/article-unknown"))
                 .andExpect(status().isNotFound());
@@ -112,7 +188,7 @@ class ArticleControllerTest {
     @Test
     void shouldCreateArticle() throws Exception {
         ArticleResponseDto response =
-                ArticleTestFactory.createArticleResponseDto(false);
+                ArticleTestFactory.createArticleResponseDto();
 
         when(articleService.create(any(ArticleRequestDto.class)))
                 .thenReturn(response);
@@ -131,7 +207,8 @@ class ArticleControllerTest {
                 .andExpect(jsonPath("$.username").value("Jane_Doe"))
                 .andExpect(jsonPath("$.title").value("article title"))
                 .andExpect(jsonPath("$.slug").value("my-article"))
-                .andExpect(jsonPath("$.content").value("my article content"));
+                .andExpect(jsonPath("$.content").value("my article content"))
+                .andExpect(jsonPath("$.comments").isArray());
 
         ArgumentCaptor<ArticleRequestDto> captor =
                 ArgumentCaptor.forClass(ArticleRequestDto.class);

@@ -5,8 +5,6 @@ import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
 import com.openclassrooms.mddapi.comment.service.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -17,29 +15,10 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/comments")
+@RequestMapping("/api/v1/articles/{slug}/comments")
 public class CommentController {
 
     private final CommentService commentService;
-
-    /**
-     * Retrieves the comments associated with an article.
-     *
-     * <p>Comments are returned in descending order of creation date
-     * and support pagination and sorting through the provided
-     * {@link Pageable}.</p>
-     *
-     * @param articleSlug the slug identifying the article
-     * @param pageable    pagination and sorting information
-     * @return a page containing the article's comments
-     */
-    @GetMapping("/article/{articleSlug}")
-    public Page<CommentResponseDto> getArticleComments(
-            @PathVariable String articleSlug,
-            Pageable pageable
-    ) {
-        return commentService.getArticleComments(pageable, articleSlug);
-    }
 
     /**
      *  Creates a new comment for an article.
@@ -51,9 +30,9 @@ public class CommentController {
      *  @param commentRequestDto the data required to create the comment
      *  @return the created comment
      */
-    @PostMapping("/article/{articleSlug}")
+    @PostMapping("")
     public CommentResponseDto createComment(
-            @PathVariable String articleSlug,
+            @PathVariable("slug") String articleSlug,
             @Valid @RequestBody CommentRequestDto commentRequestDto
     ) {
         return commentService.create(articleSlug, commentRequestDto);
