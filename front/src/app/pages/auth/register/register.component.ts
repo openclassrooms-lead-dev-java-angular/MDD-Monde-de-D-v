@@ -1,32 +1,18 @@
 import { Component, inject } from '@angular/core';
 import {
-  AbstractControl,
-  AsyncValidatorFn,
   NonNullableFormBuilder,
   ReactiveFormsModule,
-  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '@service/auth.service';
-import {
-  catchError,
-  finalize,
-  map,
-  Observable,
-  of,
-  switchMap,
-  take,
-  timer,
-} from 'rxjs';
-
-import { RegisterForm } from '@type/register-form.type';
-import { AvailableResponse } from '@type/available-response.type';
+import { finalize } from 'rxjs';
 import { ButtonComponent } from 'src/app/shared/components/button/button.component';
+import { ValidationErrorService } from '@service/validation.service';
+import { usernameAvailabilityValidator } from '@shared/validator/username-availbility.validator';
 
 @Component({
   selector: 'app-register',
@@ -34,7 +20,6 @@ import { ButtonComponent } from 'src/app/shared/components/button/button.compone
   imports: [
     ButtonComponent,
     ReactiveFormsModule,
-    MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
   ],
@@ -45,8 +30,9 @@ export class RegisterComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly validationErrorService = inject(ValidationErrorService);
 
-  readonly registerForm = this.fb.group<RegisterForm>({
+  readonly registerForm = this.fb.group({
     email: this.fb.control('', [
       Validators.required,
       Validators.email,
@@ -55,7 +41,7 @@ export class RegisterComponent {
     username: this.fb.control(
       '',
       [Validators.required, Validators.minLength(3), Validators.maxLength(20)],
-      [this.usernameAvailabilityValidator()],
+      [usernameAvailabilityValidator(this.authService)],
     ),
     password: this.fb.control('', [
       Validators.required,
@@ -71,119 +57,28 @@ export class RegisterComponent {
   errorMessage = '';
 
   get emailErrors(): string[] {
-    const control = this.registerForm.controls.email;
-
-    if (!control.touched && !control.dirty) {
-      return [];
-    }
-
-    if (control.hasError('required')) {
-      return ["L'adresse e-mail est obligatoire."];
-    }
-
-    if (control.hasError('email')) {
-      return ["L'adresse e-mail n'est pas valide."];
-    }
-
-    if (control.hasError('maxlength')) {
-      return ['Maximum 50 caractères.'];
-    }
-
-    return [];
+    return this.validationErrorService.getErrors(
+      this.registerForm.controls.email,
+      'email',
+    );
   }
 
   get usernameErrors(): string[] {
-    const control = this.registerForm.controls.username;
-
-    if (!control.touched && !control.dirty) {
-      return [];
-    }
-
-    if (control.hasError('required')) {
-      return ["Le nom d'utilisateur est obligatoire."];
-    }
-
-    if (control.hasError('minlength')) {
-      return ['Le nom d’utilisateur doit contenir au moins 3 caractères.'];
-    }
-
-    if (control.hasError('maxlength')) {
-      return ['Maximum 20 caractères.'];
-    }
-
-    if (control.hasError('usernameTaken')) {
-      return ['Ce nom d’utilisateur est déjà utilisé.'];
-    }
-
-    return [];
+    return this.validationErrorService.getErrors(
+      this.registerForm.controls.username,
+      'username',
+    );
   }
 
   get passwordErrors(): string[] {
-    const control = this.registerForm.controls.password;
-
-    if (!control.touched && !control.dirty) {
-      return [];
-    }
-
-    const password = control.value;
-    const errors: string[] = [];
-
-    if (control.hasError('required')) {
-      return ['Le mot de passe est obligatoire.'];
-    }
-
-    if (control.hasError('minlength')) {
-      errors.push('Minimum 8 caractères.');
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      errors.push('Au moins une lettre majuscule.');
-    }
-
-    if (!/[a-z]/.test(password)) {
-      errors.push('Au moins une lettre minuscule.');
-    }
-
-    if (!/\d/.test(password)) {
-      errors.push('Au moins un chiffre.');
-    }
-
-    if (!/[^a-zA-Z0-9]/.test(password)) {
-      errors.push('Au moins un caractère spécial.');
-    }
-
-    if (control.hasError('usernameCheckFailed')) {
-      return ['Impossible de vérifier le nom d’utilisateur. Réessayez.'];
-    }
-
-    return errors;
+    return this.validationErrorService.getErrors(
+      this.registerForm.controls.password,
+      'password',
+    );
   }
 
   get isUsernameLoading(): boolean {
     return this.registerForm.controls.username.pending;
-  }
-
-  protected usernameAvailabilityValidator(): AsyncValidatorFn {
-    return (control: AbstractControl): Observable<ValidationErrors | null> => {
-      const username = (control.value as string).trim();
-
-      if (username.length < 3) {
-        return of(null);
-      }
-
-      return timer(400).pipe(
-        switchMap(() => this.authService.checkUsernameAvailability(username)),
-        map((response: AvailableResponse) =>
-          response.available ? null : { usernameTaken: true },
-        ),
-        catchError((error: unknown) => {
-          console.error('Erreur de vérification du nom utilisateur :', error);
-
-          return of({ usernameCheckFailed: true });
-        }),
-        take(1),
-      );
-    };
   }
 
   submit(): void {

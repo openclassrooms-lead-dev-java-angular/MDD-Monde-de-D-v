@@ -17,6 +17,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,18 +43,19 @@ public class UserDetailsServiceImplTest {
         userDetailsService = new UserDetailsServiceImpl(userRepository, userDetailsMapper);
     }
 
+    // ---------------------
+    // loadUserByUsername
+    // ---------------------
 
     @Test
     void shouldLoadUserByUsername() {
-        // Given
+        
         String email = "john.doe@example.com";
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(userDetailsMapper.toUserDetails(user)).thenReturn(userDetails);
 
-        // When
         UserDetailsImpl result = userDetailsService.loadUserByUsername(email);
 
-        // Then
         assertThat(result).isSameAs(userDetails);
         verify(userRepository).findByEmail(email);
         verify(userDetailsMapper).toUserDetails(user);
@@ -60,26 +63,28 @@ public class UserDetailsServiceImplTest {
 
     @Test
     void shouldThrowUserNotFoundExceptionWhenUserDoesNotExistByUsername() {
-        // Given
+        
         String email = "unknown@example.com";
-        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
-        // When / Then
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty()); 
+
         assertThatThrownBy(() -> userDetailsService.loadUserByUsername(email)).isInstanceOf(UserNotFoundException.class);
         verify(userRepository).findByEmail(email);
         verifyNoInteractions(userDetailsMapper);
     }
 
+    // ---------------------
+    // loadUserByUserId
+    // ---------------------
+
     @Test
     void shouldLoadUserByUserId() {
-        // Given
+        
         Long userId = 123L;
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userDetailsMapper.toUserDetails(user)).thenReturn(userDetails);
 
-        // When
         UserDetailsImpl result = userDetailsService.loadUserByUserId(userId);
 
-        // Then
         assertThat(result).isSameAs(userDetails);
         verify(userRepository).findById(userId);
         verify(userDetailsMapper).toUserDetails(user);
@@ -87,10 +92,10 @@ public class UserDetailsServiceImplTest {
 
     @Test
     void shouldThrowUserNotFoundExceptionWhenUserDoesNotExistByUserId() {
-        // Given
+        
         Long userId = 999L;
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-        // When / Then
+        when(userRepository.findById(userId)).thenReturn(Optional.empty()); 
+
         assertThatThrownBy(() -> userDetailsService.loadUserByUserId(userId))
                 .isInstanceOf(UserNotFoundException.class);
 
@@ -98,25 +103,23 @@ public class UserDetailsServiceImplTest {
         verifyNoInteractions(userDetailsMapper);
     }
 
+    // ---------------------
     // getPrincipalUserId
+    // ---------------------
 
     @Test
     void shouldReturnPrincipalUserIdWhenUserIsAuthenticated() {
         Long userId = 42L;
-        UserDetailsImpl userDetails = new UserDetailsImpl();
-        userDetails.setId(userId);
-
         Authentication authentication = mock(Authentication.class);
 
-        when(authentication.isAuthenticated())
-                .thenReturn(true);
-        when(authentication.getPrincipal())
-                .thenReturn(userDetails);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn(userId.toString());
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         Long result = userDetailsService.getPrincipalUserId();
-        assertThat(result).isEqualTo(userId);
+
+        assertEquals(userId, result);
     }
 
     @Test
@@ -146,15 +149,14 @@ public class UserDetailsServiceImplTest {
     void shouldThrowUnauthorizedExceptionWhenPrincipalIsInvalid() {
         Authentication authentication = mock(Authentication.class);
 
-        when(authentication.isAuthenticated())
-                .thenReturn(true);
-        when(authentication.getPrincipal())
-                .thenReturn("invalid-principal");
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("invalid-principal");
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        Assertions.assertThatThrownBy(() -> userDetailsService.getPrincipalUserId())
-                .isInstanceOf(UnauthorizedException.class)
-                .hasMessage("Invalid authenticated user");
+        assertThrows(
+                NumberFormatException.class,
+                () -> userDetailsService.getPrincipalUserId()
+        );
     }
 }

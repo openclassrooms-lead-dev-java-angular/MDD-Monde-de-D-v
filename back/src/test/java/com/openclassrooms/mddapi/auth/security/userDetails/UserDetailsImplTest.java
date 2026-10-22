@@ -1,9 +1,6 @@
 package com.openclassrooms.mddapi.auth.security.userDetails;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.GrantedAuthority;
-
-import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
