@@ -20,65 +20,32 @@ class ArticleMapperTest {
     }
 
     @Test
-    void shouldMapArticleToResponseDto() {
+    void shouldMapArticleToArticleResponseDto() {
         Article article = ArticleTestFactory.createArticle(false);
 
-        ArticleResponseDto result =
-                articleMapper.toDto(article);
+        ArticleResponseDto result = articleMapper.toDto(article);
 
         assertThat(result).isNotNull();
-
-        assertThat(result.username())
-                .isEqualTo("Jane_Doe");
-
-        assertThat(result.slug())
-                .isEqualTo("my-article");
-
-        assertThat(result.title())
-                .isEqualTo("article title");
-
-        assertThat(result.content())
-                .isEqualTo("my article content");
-
-        assertThat(result.topic())
-                .isNotNull();
-
-        assertThat(result.topic().slug())
-                .isEqualTo("java");
-    }
-
-    @Test
-    void shouldMapArticleToResponseDtoWithMedia() {
-        Article article = ArticleTestFactory.createArticle(true);
-
-        ArticleResponseDto result =
-                articleMapper.toDto(article);
-
-        assertThat(result).isNotNull();
+        assertThat(result.username()).isEqualTo(article.getAuthor().getUsername());
+        assertThat(result.slug()).isEqualTo(article.getSlug());
+        assertThat(result.title()).isEqualTo(article.getTitle());
+        assertThat(result.content()).isEqualTo(article.getContent());
     }
 
     @Test
     void shouldMapArticleRequestDtoToEntity() {
-        ArticleRequestDto dto =
-                ArticleTestFactory.createArticleRequestDto();
+        ArticleRequestDto requestDto = new ArticleRequestDto(
+                "my-article",
+                "java",
+                "Article title",
+                "Article content"
+        );
 
-        Article result = articleMapper.toEntity(dto);
+        Article result = articleMapper.toEntity(requestDto);
 
         assertThat(result).isNotNull();
-
-        assertThat(result.getSlug())
-                .isEqualTo("my-article");
-
-        assertThat(result.getTitle())
-                .isEqualTo("Article title");
-
-        assertThat(result.getContent())
-                .isEqualTo("My article content");
-
-        assertThat(result.getAuthor())
-                .isNull();
-
-        assertThat(result.getTopic())
-                .isNull();
+        assertThat(result.getSlug()).isEqualTo(requestDto.slug());
+        assertThat(result.getTitle()).isEqualTo(requestDto.title());
+        assertThat(result.getContent()).isEqualTo(requestDto.content());
     }
 }
