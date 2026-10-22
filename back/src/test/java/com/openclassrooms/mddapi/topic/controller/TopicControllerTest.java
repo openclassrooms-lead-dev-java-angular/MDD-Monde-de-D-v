@@ -209,4 +209,88 @@ class TopicControllerTest {
 
         verify(topicService).unsubscribe(slug);
     }
+
+    // -------------------------------------------------------------------------
+// GET /api/v1/topics/subscribed
+// -------------------------------------------------------------------------
+
+    @Test
+    void shouldReturnPaginatedSubscribedTopics() throws Exception {
+        TopicResponseDto topic = org.mockito.Mockito.mock(TopicResponseDto.class);
+
+        Page<TopicResponseDto> page = new PageImpl<>(
+                List.of(topic),
+                PageRequest.of(0, 10),
+                1
+        );
+
+        when(topicService.getSubscribedTopics(any(Pageable.class)))
+                .thenReturn(page);
+
+        mockMvc.perform(get("/api/v1/topics/subscribed")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sort", "name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(10));
+
+        verify(topicService).getSubscribedTopics(argThat(pageable ->
+                pageable.getPageNumber() == 0
+                        && pageable.getPageSize() == 10
+                        && pageable.getSort().getOrderFor("name") != null
+                        && Objects.requireNonNull(
+                        pageable.getSort().getOrderFor("name")
+                ).isAscending()
+        ));
+
+        verifyNoMoreInteractions(topicService);
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoSubscribedTopicsExist() throws Exception {
+        when(topicService.getSubscribedTopics(any(Pageable.class)))
+                .thenReturn(Page.empty(PageRequest.of(0, 10)));
+
+        mockMvc.perform(get("/api/v1/topics/subscribed")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(10));
+
+        verify(topicService).getSubscribedTopics(any(Pageable.class));
+        verifyNoMoreInteractions(topicService);
+    }
+
+    @Test
+    void shouldPassSortParameterToSubscribedTopicsService() throws Exception {
+        when(topicService.getSubscribedTopics(any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/v1/topics/subscribed")
+                        .param("sort", "name,asc"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Pageable> pageableCaptor =
+                ArgumentCaptor.forClass(Pageable.class);
+
+        verify(topicService).getSubscribedTopics(pageableCaptor.capture());
+
+        assertEquals(
+                Sort.Direction.ASC,
+                Objects.requireNonNull(
+                        pageableCaptor.getValue()
+                                .getSort()
+                                .getOrderFor("name")
+                ).getDirection()
+        );
+    }
 }

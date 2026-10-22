@@ -368,4 +368,97 @@ class TopicServiceTest {
 
         verify(topicRepository).findAllTopicOptions();
     }
+
+    // --------------------------------------------------
+// getSubscribedTopics
+// --------------------------------------------------
+
+    @Test
+    void shouldReturnSubscribedTopics() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Long userId = 42L;
+
+        Page<Topic> topics = new PageImpl<>(
+                List.of(topic1, topic2),
+                pageable,
+                2
+        );
+
+        when(userDetailsServiceImpl.getPrincipalUserId())
+                .thenReturn(userId);
+
+        when(topicRepository.findSubscribedTopics(pageable, userId))
+                .thenReturn(topics);
+
+        when(topicMapper.toDto(topic1, true)).thenReturn(response1);
+        when(topicMapper.toDto(topic2, true)).thenReturn(response2);
+
+        Page<TopicResponseDto> result =
+                topicService.getSubscribedTopics(pageable);
+
+        assertNotNull(result);
+        assertEquals(2, result.getTotalElements());
+        assertEquals(List.of(response1, response2), result.getContent());
+
+        verify(userDetailsServiceImpl).getPrincipalUserId();
+        verify(topicRepository).findSubscribedTopics(pageable, userId);
+        verify(topicMapper).toDto(topic1, true);
+        verify(topicMapper).toDto(topic2, true);
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoSubscribedTopicsExist() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Long userId = 42L;
+
+        when(userDetailsServiceImpl.getPrincipalUserId())
+                .thenReturn(userId);
+
+        when(topicRepository.findSubscribedTopics(pageable, userId))
+                .thenReturn(Page.empty(pageable));
+
+        Page<TopicResponseDto> result =
+                topicService.getSubscribedTopics(pageable);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotalElements());
+
+        verify(userDetailsServiceImpl).getPrincipalUserId();
+        verify(topicRepository).findSubscribedTopics(pageable, userId);
+        verifyNoInteractions(topicMapper);
+    }
+
+    @Test
+    void shouldPreservePaginationInformationForSubscribedTopics() {
+        Pageable pageable = PageRequest.of(1, 10);
+        Long userId = 42L;
+
+        Page<Topic> topics = new PageImpl<>(
+                List.of(topic1),
+                pageable,
+                21
+        );
+
+        when(userDetailsServiceImpl.getPrincipalUserId())
+                .thenReturn(userId);
+
+        when(topicRepository.findSubscribedTopics(pageable, userId))
+                .thenReturn(topics);
+
+        when(topicMapper.toDto(topic1, true)).thenReturn(response1);
+
+        Page<TopicResponseDto> result =
+                topicService.getSubscribedTopics(pageable);
+
+        assertEquals(1, result.getNumber());
+        assertEquals(10, result.getSize());
+        assertEquals(21, result.getTotalElements());
+        assertEquals(3, result.getTotalPages());
+        assertFalse(result.isFirst());
+        assertFalse(result.isLast());
+
+        verify(topicRepository).findSubscribedTopics(pageable, userId);
+        verify(topicMapper).toDto(topic1, true);
+    }
 }
