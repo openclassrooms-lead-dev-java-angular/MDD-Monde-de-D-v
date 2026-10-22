@@ -8,7 +8,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
@@ -23,8 +22,6 @@ import {
   take,
   timer,
 } from 'rxjs';
-
-import { RegisterForm } from '@type/register-form.type';
 import { AvailableResponse } from '@type/available-response.type';
 import { ButtonComponent } from 'src/app/shared/components/button/button.component';
 
@@ -34,7 +31,6 @@ import { ButtonComponent } from 'src/app/shared/components/button/button.compone
   imports: [
     ButtonComponent,
     ReactiveFormsModule,
-    MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
   ],
@@ -46,7 +42,7 @@ export class RegisterComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  readonly registerForm = this.fb.group<RegisterForm>({
+  readonly registerForm = this.fb.group({
     email: this.fb.control('', [
       Validators.required,
       Validators.email,

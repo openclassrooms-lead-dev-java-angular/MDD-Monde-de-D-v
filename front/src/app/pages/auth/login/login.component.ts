@@ -4,7 +4,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { AuthService } from '@service/auth.service';
 import { UserStateService } from '@service/user-state.service';
@@ -20,7 +19,6 @@ import { MatInputModule } from '@angular/material/input';
   imports: [
     ButtonComponent,
     ReactiveFormsModule,
-    MatIconModule,
     MatInputModule,
   ],
   templateUrl: './login.component.html',
@@ -100,6 +98,6 @@ export class LoginComponent {
   }
 
   goBack(): void {
-    void this.router.navigate(['/']);
+    this.router.navigate(['/']);
   }
 }
