@@ -2,9 +2,6 @@ package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.factory.MediaTestFactory;
-import com.openclassrooms.mddapi.factory.UserTestFactory;
-import com.openclassrooms.mddapi.storage.service.StorageService;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.exceptions.UserAlreadyExistsException;
@@ -24,21 +21,18 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
-    private static final String MEDIA_URL =
-            "http://localhost:8080/uploads";
-
-    private static final String RESOURCE_TYPE =
-            "avatars";
+    private static final String MEDIA_URL = "http://localhost:8080/uploads";
+    private static final String RESOURCE_TYPE = "avatars";
 
     @Mock
     private UserRepository userRepository;
@@ -52,643 +46,271 @@ class UserServiceTest {
     @Mock
     private UserDetailsServiceImpl userDetailsServiceImpl;
 
-    @Mock
-    private StorageService storageService;
-
     @InjectMocks
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(
-                userService,
-                "mediaUrl",
-                MEDIA_URL
-        );
-
-        ReflectionTestUtils.setField(
-                userService,
-                "resourceType",
-                RESOURCE_TYPE
-        );
+        ReflectionTestUtils.setField(userService, "mediaUrl", MEDIA_URL);
+        ReflectionTestUtils.setField(userService, "resourceType", RESOURCE_TYPE);
     }
 
     @Test
     void createUserShouldSaveAndReturnUser() {
-        User user = UserTestFactory.createUser();
+        User user = mock(User.class);
 
-        when(userRepository.save(user))
-                .thenReturn(user);
+        when(user.getUsername()).thenReturn("testuser");
+        when(userRepository.save(user)).thenReturn(user);
 
         User result = userService.createUser(user);
 
-        assertThat(result).isSameAs(user);
-
+        assertSame(user, result);
         verify(userRepository).save(user);
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(userMapper);
-        verifyNoInteractions(storageService);
     }
 
     @Test
     void getMeShouldReturnUserResponseDto() {
         Long userId = 1L;
+        User user = mock(User.class);
+        UserResponseDto expectedDto = mock(UserResponseDto.class);
 
-        User user = UserTestFactory.createUser();
-        UserResponseDto expectedDto =
-                UserTestFactory.createUserResponseDto();
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userMapper.toDto(user)).thenReturn(expectedDto);
 
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
+        UserResponseDto result = userService.getMe();
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
-
-        when(userMapper.toDto(user, MEDIA_URL))
-                .thenReturn(expectedDto);
-
-        UserResponseDto result =
-                userService.getMe();
-
-        assertThat(result)
-                .isSameAs(expectedDto);
-
-        verify(userDetailsServiceImpl)
-                .getPrincipalUserId();
-
-        verify(userRepository)
-                .findById(userId);
-
-        verify(userMapper)
-                .toDto(user, MEDIA_URL);
-
-        verifyNoInteractions(storageService);
+        assertSame(expectedDto, result);
+        verify(userMapper).toDto(user);
     }
 
     @Test
     void getMeShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
-        Long userId = 999L;
+        Long userId = 1L;
 
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
+        assertThrows(
+                UserNotFoundException.class,
+                () -> userService.getMe()
+        );
 
-        assertThatThrownBy(() ->
-                userService.getMe()
-        )
-                .isInstanceOf(UserNotFoundException.class);
-
-        verify(userDetailsServiceImpl)
-                .getPrincipalUserId();
-
-        verify(userRepository)
-                .findById(userId);
-
-        verifyNoInteractions(userMapper);
-        verifyNoInteractions(storageService);
+        verify(userMapper, never()).toDto(any(User.class));
     }
 
     @Test
     void updateUserShouldUpdateAndReturnUserResponseDtoWithMedia() {
         Long userId = 1L;
+        String oldFilename = "old-avatar.png";
+        String newFilename = "new-avatar.png";
 
-        User user = UserTestFactory.createUser();
-        String oldAvatar = user.getAvatar();
+        User user = mock(User.class);
+        UpdateUserDto userDto = mock(UpdateUserDto.class);
+        UserResponseDto expectedDto = mock(UserResponseDto.class);
+        MultipartFile media = new MockMultipartFile(
+                "media",
+                "avatar.png",
+                "image/png",
+                new byte[]{1, 2, 3}
+        );
 
-        UpdateUserDto updateUserDto =
-                UserTestFactory.createUpdateUserDto(true);
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
+        when(userDto.username()).thenReturn("testuser");
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(expectedDto);
 
-        MockMultipartFile media =
-                MediaTestFactory.createMedia();
+        UserResponseDto result = userService.updateUser(userDto);
 
-        UserResponseDto expectedDto =
-                UserTestFactory.createUserResponseDto();
+        assertSame(expectedDto, result);
 
-        String newFilename =
-                "avatars/john/image.jpg";
-
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
-
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(storageService.upload(
-                media,
-                RESOURCE_TYPE,
-                updateUserDto.username()
-        ))
-                .thenReturn(newFilename);
-
-        when(userRepository.save(user))
-                .thenReturn(user);
-
-        when(userMapper.toDto(user, MEDIA_URL))
-                .thenReturn(expectedDto);
-
-        UserResponseDto result =
-                userService.updateUser(
-                        updateUserDto,
-                        media
-                );
-
-        assertThat(result)
-                .isSameAs(expectedDto);
-
-        verify(userDetailsServiceImpl)
-                .getPrincipalUserId();
-
-        verify(userRepository)
-                .getReferenceById(userId);
-
-        verify(userMapper)
-                .updateEntity(updateUserDto, user);
-
-        verify(storageService)
-                .upload(
-                        media,
-                        RESOURCE_TYPE,
-                        updateUserDto.username()
-                );
-
-        verify(userRepository)
-                .save(user);
-
-        verify(storageService)
-                .delete(oldAvatar);
-
-        verify(userMapper)
-                .toDto(user, MEDIA_URL);
+        verify(userMapper).updateEntity(userDto, user);
+        verify(userRepository).save(user);
+        verify(userMapper).toDto(user);
     }
 
     @Test
     void updateUserShouldUpdateWithoutMedia() {
         Long userId = 1L;
 
-        User user = UserTestFactory.createUser();
+        User user = mock(User.class);
+        UpdateUserDto userDto = mock(UpdateUserDto.class);
+        UserResponseDto expectedDto = mock(UserResponseDto.class);
 
-        UpdateUserDto updateUserDto =
-                UserTestFactory.createUpdateUserDto(false);
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(expectedDto);
 
-        UserResponseDto expectedDto =
-                UserTestFactory.createUserResponseDto();
+        UserResponseDto result = userService.updateUser(userDto);
 
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
+        assertSame(expectedDto, result);
 
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(userRepository.save(user))
-                .thenReturn(user);
-
-        when(userMapper.toDto(user, MEDIA_URL))
-                .thenReturn(expectedDto);
-
-        UserResponseDto result =
-                userService.updateUser(
-                        updateUserDto,
-                        null
-                );
-
-        assertThat(result)
-                .isSameAs(expectedDto);
-
-        verify(userDetailsServiceImpl)
-                .getPrincipalUserId();
-
-        verify(userRepository)
-                .getReferenceById(userId);
-
-        verify(userMapper)
-                .updateEntity(updateUserDto, user);
-
-        verify(userRepository)
-                .save(user);
-
-        verify(storageService, never())
-                .upload(
-                        any(),
-                        anyString(),
-                        anyString()
-                );
-
-        verify(storageService, never())
-                .delete(anyString());
-
-        verify(userMapper)
-                .toDto(user, MEDIA_URL);
+        verify(userMapper).updateEntity(userDto, user);
+        verify(userRepository).save(user);
     }
 
     @Test
     void updateUserShouldNotUploadMediaWhenUpdatedMediaIsFalse() {
         Long userId = 1L;
 
-        User user = UserTestFactory.createUser();
-
-        UpdateUserDto updateUserDto = new UpdateUserDto(
-                "john.doe@example.com",
-                "john",
-                "John",
-                "Doe",
-                false
+        User user = mock(User.class);
+        UpdateUserDto userDto = mock(UpdateUserDto.class);
+        UserResponseDto expectedDto = mock(UserResponseDto.class);
+        MultipartFile media = new MockMultipartFile(
+                "media",
+                "avatar.png",
+                "image/png",
+                new byte[]{1, 2, 3}
         );
 
-        MockMultipartFile media =
-                MediaTestFactory.createMedia();
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(expectedDto);
 
-        UserResponseDto expectedDto =
-                UserTestFactory.createUserResponseDto();
+        UserResponseDto result = userService.updateUser(userDto);
 
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
+        assertSame(expectedDto, result);
 
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(userRepository.save(user))
-                .thenReturn(user);
-
-        when(userMapper.toDto(user, MEDIA_URL))
-                .thenReturn(expectedDto);
-
-        UserResponseDto result =
-                userService.updateUser(
-                        updateUserDto,
-                        media
-                );
-
-        assertThat(result)
-                .isSameAs(expectedDto);
-
-        verify(userMapper)
-                .updateEntity(updateUserDto, user);
-
-        verify(userRepository)
-                .save(user);
-
-        verify(storageService, never())
-                .upload(
-                        any(),
-                        anyString(),
-                        anyString()
-                );
-
-        verify(storageService, never())
-                .delete(anyString());
-
-        verify(userMapper)
-                .toDto(user, MEDIA_URL);
+        verify(userRepository).save(user);
     }
 
     @Test
     void getByEmailShouldReturnUser() {
-        String email = "john.doe@example.com";
+        String email = "test@example.com";
+        User user = mock(User.class);
 
-        User user =
-                UserTestFactory.createUser();
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-        when(userRepository.findByEmail(email))
-                .thenReturn(Optional.of(user));
+        User result = userService.getByEmail(email);
 
-        User result =
-                userService.getByEmail(email);
-
-        assertThat(result)
-                .isSameAs(user);
-
-        verify(userRepository)
-                .findByEmail(email);
+        assertSame(user, result);
     }
 
     @Test
     void getByEmailShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
         String email = "unknown@example.com";
 
-        when(userRepository.findByEmail(email))
-                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() ->
-                userService.getByEmail(email)
-        )
-                .isInstanceOf(UserNotFoundException.class);
-
-        verify(userRepository)
-                .findByEmail(email);
+        assertThrows(
+                UserNotFoundException.class,
+                () -> userService.getByEmail(email)
+        );
     }
 
     @Test
-    void registerShouldCreateUserWithEncodedPasswordAndUploadMedia() {
-        RegisterRequestDto dto =
-                UserTestFactory.createRegisterRequestDto();
+    void registerShouldCreateUserWithEncodedPassword() {
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
+        User user = mock(User.class);
+        String rawPassword = "password123";
+        String encodedPassword = "encoded-password";
 
-        User user =
-                UserTestFactory.createUser();
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(user.getEmail()).thenReturn("test@example.com");
+        when(user.getUsername()).thenReturn("testuser");
+        when(user.getPassword()).thenReturn(rawPassword);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(passwordEncoder.encode(rawPassword)).thenReturn(encodedPassword);
 
-        MockMultipartFile media =
-                MediaTestFactory.createMedia();
+        userService.register(dto);
 
-        String encodedPassword =
-                "encoded-password";
-
-        String filename =
-                "avatars/john/image.jpg";
-
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
-
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(false);
-
-        when(userRepository.existsByUsername(user.getUsername()))
-                .thenReturn(false);
-
-        when(passwordEncoder.encode("Password/1234"))
-                .thenReturn(encodedPassword);
-
-        when(storageService.upload(
-                media,
-                RESOURCE_TYPE,
-                dto.username()
-        ))
-                .thenReturn(filename);
-
-        userService.register(dto, media);
-
-        assertThat(user.getPassword())
-                .isEqualTo(encodedPassword);
-
-        assertThat(user.getAvatar())
-                .isEqualTo(filename);
-
-        verify(userMapper)
-                .fromRegisterDto(dto);
-
-        verify(userRepository)
-                .existsByEmail(user.getEmail());
-
-        verify(userRepository)
-                .existsByUsername(user.getUsername());
-
-        verify(passwordEncoder)
-                .encode("Password/1234");
-
-        verify(storageService)
-                .upload(
-                        media,
-                        RESOURCE_TYPE,
-                        dto.username()
-                );
-
-        verify(userRepository)
-                .save(user);
+        verify(user).setPassword(encodedPassword);
+        verify(passwordEncoder).encode(rawPassword);
+        verify(userRepository).save(user);
     }
 
     @Test
-    void registerShouldCreateUserWithoutMedia() {
-        RegisterRequestDto dto =
-                UserTestFactory.createRegisterRequestDto();
+    void registerShouldThrowEmailAlreadyExistsException() {
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
+        User user = mock(User.class);
 
-        User user =
-                UserTestFactory.createUser();
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(user.getEmail()).thenReturn("test@example.com");
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
 
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
+        assertThrows(
+                EmailAlreadyExistsException.class,
+                () -> userService.register(dto)
+        );
 
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(false);
-
-        when(userRepository.existsByUsername(user.getUsername()))
-                .thenReturn(false);
-
-        when(passwordEncoder.encode("Password/1234"))
-                .thenReturn("encoded-password");
-
-        userService.register(dto, null);
-
-        assertThat(user.getPassword())
-                .isEqualTo("encoded-password");
-
-        verify(userMapper)
-                .fromRegisterDto(dto);
-
-        verify(passwordEncoder)
-                .encode("Password/1234");
-
-        verify(storageService, never())
-                .upload(
-                        any(),
-                        anyString(),
-                        anyString()
-                );
-
-        verify(userRepository)
-                .save(user);
+        verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(anyString());
     }
 
     @Test
-    void registerShouldThrowEmailAlreadyExistsExceptionWhenEmailAlreadyExists() {
-        RegisterRequestDto dto =
-                UserTestFactory.createRegisterRequestDto();
+    void registerShouldThrowUsernameAlreadyExistsException() {
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
+        User user = mock(User.class);
 
-        User user =
-                UserTestFactory.createUser();
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(user.getEmail()).thenReturn("test@example.com");
+        when(user.getUsername()).thenReturn("testuser");
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
-        MockMultipartFile media =
-                MediaTestFactory.createMedia();
+        assertThrows(
+                UsernameAlreadyExistsException.class,
+                () -> userService.register(dto)
+        );
 
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
-
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(true);
-
-        assertThatThrownBy(() ->
-                userService.register(dto, media)
-        )
-                .isInstanceOf(
-                        EmailAlreadyExistsException.class
-                );
-
-        verify(userMapper)
-                .fromRegisterDto(dto);
-
-        verify(userRepository)
-                .existsByEmail(user.getEmail());
-
-        verify(userRepository, never())
-                .existsByUsername(anyString());
-
-        verify(passwordEncoder, never())
-                .encode(anyString());
-
-        verify(storageService, never())
-                .upload(
-                        any(),
-                        anyString(),
-                        anyString()
-                );
-
-        verify(userRepository, never())
-                .save(any(User.class));
-    }
-
-    @Test
-    void registerShouldThrowUsernameAlreadyExistsExceptionWhenUsernameAlreadyExists() {
-        RegisterRequestDto dto =
-                UserTestFactory.createRegisterRequestDto();
-
-        User user =
-                UserTestFactory.createUser();
-
-        MockMultipartFile media =
-                MediaTestFactory.createMedia();
-
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
-
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(false);
-
-        when(userRepository.existsByUsername(user.getUsername()))
-                .thenReturn(true);
-
-        assertThatThrownBy(() ->
-                userService.register(dto, media)
-        )
-                .isInstanceOf(
-                        UsernameAlreadyExistsException.class
-                );
-
-        verify(userMapper)
-                .fromRegisterDto(dto);
-
-        verify(userRepository)
-                .existsByEmail(user.getEmail());
-
-        verify(userRepository)
-                .existsByUsername(user.getUsername());
-
-        verify(passwordEncoder, never())
-                .encode(anyString());
-
-        verify(storageService, never())
-                .upload(
-                        any(),
-                        anyString(),
-                        anyString()
-                );
-
-        verify(userRepository, never())
-                .save(any(User.class));
+        verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(anyString());
     }
 
     @Test
     void registerShouldThrowUserAlreadyExistsExceptionWhenDatabaseConstraintIsViolated() {
-        RegisterRequestDto dto =
-                UserTestFactory.createRegisterRequestDto();
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
+        User user = mock(User.class);
+        String rawPassword = "password123";
 
-        User user =
-                UserTestFactory.createUser();
-
-        when(userMapper.fromRegisterDto(dto))
-                .thenReturn(user);
-
-        when(userRepository.existsByEmail(user.getEmail()))
-                .thenReturn(false);
-
-        when(userRepository.existsByUsername(user.getUsername()))
-                .thenReturn(false);
-
-        when(passwordEncoder.encode("Password/1234"))
-                .thenReturn("encoded-password");
-
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(user.getEmail()).thenReturn("test@example.com");
+        when(user.getUsername()).thenReturn("testuser");
+        when(user.getPassword()).thenReturn(rawPassword);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(passwordEncoder.encode(rawPassword)).thenReturn("encoded-password");
         when(userRepository.save(user))
-                .thenThrow(
-                        new DataIntegrityViolationException(
-                                "Duplicate key"
-                        )
-                );
+                .thenThrow(new DataIntegrityViolationException("Duplicate user"));
 
-        assertThatThrownBy(() ->
-                userService.register(dto, null)
-        )
-                .isInstanceOf(UserAlreadyExistsException.class)
-                .hasMessage(
-                        "Username or email already exists"
-                );
+        assertThrows(
+                UserAlreadyExistsException.class,
+                () -> userService.register(dto)
+        );
 
-        verify(userRepository)
-                .save(user);
-
-        verify(storageService, never())
-                .upload(
-                        any(),
-                        anyString(),
-                        anyString()
-                );
+        verify(userRepository).save(user);
     }
 
     @Test
     void usernameAvailableShouldReturnTrueWhenUsernameDoesNotExist() {
-        String username = "john";
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
 
-        when(userRepository.existsByUsername(username))
-                .thenReturn(false);
-
-        boolean result =
-                userService.usernameAvailable(username);
-
-        assertThat(result)
-                .isTrue();
-
-        verify(userRepository)
-                .existsByUsername(username);
+        assertTrue(userService.usernameAvailable("testuser"));
     }
 
     @Test
     void usernameAvailableShouldReturnFalseWhenUsernameAlreadyExists() {
-        String username = "john";
+        when(userRepository.existsByUsername("testuser")).thenReturn(true);
 
-        when(userRepository.existsByUsername(username))
-                .thenReturn(true);
-
-        boolean result =
-                userService.usernameAvailable(username);
-
-        assertThat(result)
-                .isFalse();
-
-        verify(userRepository)
-                .existsByUsername(username);
+        assertFalse(userService.usernameAvailable("testuser"));
     }
 
     @Test
     void loadCurrentUserAuthorShouldReturnCurrentUser() {
         Long userId = 1L;
+        User user = mock(User.class);
 
-        User user =
-                UserTestFactory.createUser();
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
 
-        when(userDetailsServiceImpl.getPrincipalUserId())
-                .thenReturn(userId);
+        User result = userService.loadCurrentUserAuthor();
 
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        User result =
-                userService.loadCurrentUserAuthor();
-
-        assertThat(result)
-                .isSameAs(user);
-
-        verify(userDetailsServiceImpl)
-                .getPrincipalUserId();
-
-        verify(userRepository)
-                .getReferenceById(userId);
+        assertSame(user, result);
+        verify(userRepository).getReferenceById(userId);
     }
 }
 

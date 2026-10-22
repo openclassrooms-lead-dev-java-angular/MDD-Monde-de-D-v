@@ -14,8 +14,6 @@ public class UserTestFactory {
         user.setId(1L)
                 .setEmail("jane@email.com")
                 .setUsername("Jane_Doe")
-                .setFirstName("Jane")
-                .setLastName("Doe")
                 .setPassword("Password/1234")
                 .setCreatedAt(LocalDateTime.of(2026, 6, 1, 10, 0));
         user.setUpdatedAt(LocalDateTime.of(2026, 7, 1, 10, 0));
@@ -25,12 +23,8 @@ public class UserTestFactory {
 
     public static UserResponseDto createUserResponseDto() {
         return new UserResponseDto(
-                1L,
                 "jane@email.com",
                 "Jane_Doe",
-                "Jane",
-                "Doe",
-                "",
                 LocalDateTime.of(2026, 6, 1, 10, 0),
                 LocalDateTime.of(2026, 7, 1, 10, 0)
         );
@@ -39,10 +33,7 @@ public class UserTestFactory {
     public static UpdateUserDto createUpdateUserDto(boolean isMediaUpload) {
         return new UpdateUserDto(
                 "jane@email.com",
-                "Jane Doe",
-                "Jane",
-                "Doe",
-                isMediaUpload
+                "Jane Doe"
         );
     }
 
@@ -50,9 +41,7 @@ public class UserTestFactory {
         return new RegisterRequestDto(
                 "jane@email.com",
                 "Password/1234",
-                "Jane Doe",
-                "Jane",
-                "Doe"
+                "Jane Doe"
         );
     }
 }

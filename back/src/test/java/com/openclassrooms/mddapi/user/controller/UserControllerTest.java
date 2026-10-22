@@ -1,8 +1,7 @@
 package com.openclassrooms.mddapi.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openclassrooms.mddapi.factory.MediaTestFactory;
-import com.openclassrooms.mddapi.factory.UserTestFactory;
+import com.openclassrooms.mddapi.factory.LocalDateTimeTestFactory;
 import com.openclassrooms.mddapi.user.service.UserService;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
@@ -11,11 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.mockito.ArgumentCaptor;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -26,6 +26,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class UserControllerTest {
 
+    private static final String USER_ME_URL = "/api/v1/users/me";
+
+    private static final String EMAIL = "john.doe@example.com";
+    private static final String USERNAME = "John_Doe";
+
+    private static final String UPDATED_EMAIL = "jane.doe@example.com";
+    private static final String UPDATED_USERNAME = "Jane_Doe";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -35,149 +43,116 @@ class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+    private UserResponseDto createUserResponseDto(
+            String email,
+            String username
+    ) {
+        return new UserResponseDto(
+                email,
+                username,
+                LocalDateTimeTestFactory.generateCreatedAt(),
+                LocalDateTimeTestFactory.generateUpdatedAt()
+        );
+    }
+
     @Test
-    void getMeShouldReturnUserResponseDto() throws Exception {
-        UserResponseDto userDto =
-                UserTestFactory.createUserResponseDto();
+    void shouldGetAuthenticatedUser() throws Exception {
+        UserResponseDto response = createUserResponseDto(EMAIL, USERNAME);
 
-        when(userService.getMe())
-                .thenReturn(userDto);
+        when(userService.getMe()).thenReturn(response);
 
-        mockMvc.perform(
-                        get("/api/v1/users/me")
-                )
+        mockMvc.perform(get(USER_ME_URL))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userDto.id()))
-                .andExpect(jsonPath("$.email").value(userDto.email()))
-                .andExpect(jsonPath("$.username").value(userDto.username()))
-                .andExpect(jsonPath("$.firstName").value(userDto.firstName()))
-                .andExpect(jsonPath("$.lastName").value(userDto.lastName()))
-                .andExpect(jsonPath("$.avatar").value(userDto.avatar()))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.createdAt").value("2026-06-01T10:00:00"))
-                .andExpect(jsonPath("$.updatedAt").value("2026-07-01T10:00:00"));
+                .andExpect(jsonPath("$.email").value(EMAIL))
+                .andExpect(jsonPath("$.username").value(USERNAME))
+                .andExpect(jsonPath("$.createdAt")
+                        .value("2026-09-16T10:00:00"))
+                .andExpect(jsonPath("$.updatedAt")
+                        .value("2026-09-16T11:00:00"));
 
         verify(userService).getMe();
+        verifyNoMoreInteractions(userService);
     }
 
     @Test
-    void updateShouldReturnUpdatedUserResponseDtoWithMedia()
-            throws Exception {
-
-        UpdateUserDto updateUserDto =
-                UserTestFactory.createUpdateUserDto(false);
-
-        MockMultipartFile userPart = new MockMultipartFile(
-                "user",
-                "",
-                MediaType.APPLICATION_JSON_VALUE,
-                objectMapper.writeValueAsBytes(updateUserDto)
+    void shouldUpdateAuthenticatedUser() throws Exception {
+        UpdateUserDto request = new UpdateUserDto(
+                UPDATED_EMAIL,
+                UPDATED_USERNAME
         );
 
-        MockMultipartFile media =
-                MediaTestFactory.createMedia();
+        UserResponseDto response = createUserResponseDto(
+                UPDATED_EMAIL,
+                UPDATED_USERNAME
+        );
 
-        UserResponseDto userDto =
-                UserTestFactory.createUserResponseDto();
+        when(userService.updateUser(any(UpdateUserDto.class)))
+                .thenReturn(response);
 
-        when(userService.updateUser(updateUserDto, media))
-                .thenReturn(userDto);
-
-        mockMvc.perform(
-                        multipart("/api/v1/users/me")
-                                .file(userPart)
-                                .file(media)
-                                .with(request -> {
-                                    request.setMethod("PATCH");
-                                    return request;
-                                })
-                )
+        mockMvc.perform(patch(USER_ME_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userDto.id()))
-                .andExpect(jsonPath("$.email").value(userDto.email()))
-                .andExpect(jsonPath("$.username").value(userDto.username()))
-                .andExpect(jsonPath("$.firstName").value(userDto.firstName()))
-                .andExpect(jsonPath("$.lastName").value(userDto.lastName()))
-                .andExpect(jsonPath("$.avatar").value(userDto.avatar()))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.createdAt").value("2026-06-01T10:00:00"))
-                .andExpect(jsonPath("$.updatedAt").value("2026-07-01T10:00:00"));
+                .andExpect(jsonPath("$.email").value(UPDATED_EMAIL))
+                .andExpect(jsonPath("$.username").value(UPDATED_USERNAME))
+                .andExpect(jsonPath("$.createdAt")
+                        .value("2026-09-16T10:00:00"))
+                .andExpect(jsonPath("$.updatedAt")
+                        .value("2026-09-16T11:00:00"));
 
-        verify(userService).updateUser(updateUserDto, media);
+        ArgumentCaptor<UpdateUserDto> captor =
+                ArgumentCaptor.forClass(UpdateUserDto.class);
+
+        verify(userService).updateUser(captor.capture());
+
+        assertThat(captor.getValue().email()).isEqualTo(UPDATED_EMAIL);
+        assertThat(captor.getValue().username()).isEqualTo(UPDATED_USERNAME);
+
+        verifyNoMoreInteractions(userService);
     }
 
     @Test
-    void updateShouldReturnUpdatedUserResponseDtoWithoutMedia()
-            throws Exception {
+    void shouldReturnBadRequestWhenEmailIsInvalid() throws Exception {
+        String invalidRequest = """
+                {
+                    "email": "email-invalide",
+                    "username": "John_Doe"
+                }
+                """;
 
-        UpdateUserDto updateUserDto =
-                UserTestFactory.createUpdateUserDto(false);
-
-        MockMultipartFile userPart = new MockMultipartFile(
-                "user",
-                "",
-                MediaType.APPLICATION_JSON_VALUE,
-                objectMapper.writeValueAsBytes(updateUserDto)
-        );
-
-        UserResponseDto userDto =
-                UserTestFactory.createUserResponseDto();
-
-        when(userService.updateUser(updateUserDto, null))
-                .thenReturn(userDto);
-
-        mockMvc.perform(
-                        multipart("/api/v1/users/me")
-                                .file(userPart)
-                                .with(request -> {
-                                    request.setMethod("PATCH");
-                                    return request;
-                                })
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userDto.id()))
-                .andExpect(jsonPath("$.email").value(userDto.email()))
-                .andExpect(jsonPath("$.username").value(userDto.username()))
-                .andExpect(jsonPath("$.firstName").value(userDto.firstName()))
-                .andExpect(jsonPath("$.lastName").value(userDto.lastName()))
-                .andExpect(jsonPath("$.avatar").value(userDto.avatar()))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.createdAt").value("2026-06-01T10:00:00"))
-                .andExpect(jsonPath("$.updatedAt").value("2026-07-01T10:00:00"));
-
-        verify(userService).updateUser(updateUserDto, null);
+        mockMvc.perform(patch(USER_ME_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void updateShouldReturnBadRequestWhenDtoIsInvalid()
-            throws Exception {
+    void shouldReturnBadRequestWhenUsernameIsBlank() throws Exception {
+        String invalidRequest = """
+                {
+                    "email": "john.doe@example.com",
+                    "username": ""
+                }
+                """;
 
-        UpdateUserDto invalidDto = new UpdateUserDto(
-                "",
-                "",
-                "",
-                "",
-                false
-        );
+        mockMvc.perform(patch(USER_ME_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
+    }
 
-        MockMultipartFile userPart = new MockMultipartFile(
-                "user",
-                "",
-                MediaType.APPLICATION_JSON_VALUE,
-                objectMapper.writeValueAsBytes(invalidDto)
-        );
+    @Test
+    void shouldReturnBadRequestWhenEmailIsBlank() throws Exception {
+        String invalidRequest = """
+                {
+                    "email": "",
+                    "username": "John_Doe"
+                }
+                """;
 
-        mockMvc.perform(
-                        multipart("/api/v1/users/me")
-                                .file(userPart)
-                                .with(request -> {
-                                    request.setMethod("PATCH");
-                                    return request;
-                                })
-                )
-                .andExpect(status().isInternalServerError());
-
-        verify(userService, never())
-                .updateUser(any(), any());
+        mockMvc.perform(patch(USER_ME_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
     }
 }

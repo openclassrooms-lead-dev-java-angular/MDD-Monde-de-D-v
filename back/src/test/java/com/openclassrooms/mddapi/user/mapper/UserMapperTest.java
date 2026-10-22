@@ -1,124 +1,93 @@
 package com.openclassrooms.mddapi.user.mapper;
 
-import com.openclassrooms.mddapi.factory.UserTestFactory;
+import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDateTime;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UserMapperTest {
 
-    private static final String MEDIA_URL =
-            "http://localhost:8080/uploads/";
+    private UserMapper userMapper;
 
-    private final UserMapper userMapper =
-            Mappers.getMapper(UserMapper.class);
+    @BeforeEach
+    void setUp() {
+        userMapper = Mappers.getMapper(UserMapper.class);
+    }
 
     @Test
-    void toDtoShouldMapUserEntityToUserResponseDto() {
-        LocalDateTime createdAt =
-                LocalDateTime.of(2026, 1, 10, 10, 0);
-        LocalDateTime updatedAt =
-                LocalDateTime.of(2026, 2, 10, 10, 0);
-        User user =
-                UserTestFactory.createUser();
-        user.setId(1L);
+    void shouldMapUserToDto() {
+        LocalDateTime createdAt = LocalDateTime.of(2026, 9, 16, 10, 0);
+        LocalDateTime updatedAt = LocalDateTime.of(2026, 9, 16, 11, 0);
+
+        User user = new User();
         user.setEmail("john.doe@example.com");
-        user.setUsername("john");
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setAvatar("avatars/john/image.jpg");
+        user.setUsername("John_Doe");
         user.setCreatedAt(createdAt);
         user.setUpdatedAt(updatedAt);
 
-        UserResponseDto result =
-                userMapper.toDto(user, MEDIA_URL);
+        UserResponseDto result = userMapper.toDto(user);
 
-        assertThat(result).isNotNull();
-        assertThat(result.id())
-                .isEqualTo(1L);
-        assertThat(result.email())
-                .isEqualTo("john.doe@example.com");
-        assertThat(result.username())
-                .isEqualTo("john");
-        assertThat(result.firstName())
-                .isEqualTo("John");
-        assertThat(result.lastName())
-                .isEqualTo("Doe");
-        assertThat(result.avatar())
-                .isEqualTo(
-                        "http://localhost:8080/uploads/avatars/john/image.jpg"
-                );
-        assertThat(result.createdAt())
-                .isEqualTo(createdAt);
-        assertThat(result.updatedAt())
-                .isEqualTo(updatedAt);
+        assertNotNull(result);
+        assertEquals("john.doe@example.com", result.email());
+        assertEquals("John_Doe", result.username());
+        assertEquals(createdAt, result.createdAt());
+        assertEquals(updatedAt, result.updatedAt());
     }
 
     @Test
-    void updateEntityShouldUpdateEditableUserFields() {
-        User user =
-                UserTestFactory.createUser();
-        user.setId(1L);
-        user.setEmail("old@example.com");
-        user.setUsername("oldUsername");
-        user.setFirstName("Old");
-        user.setLastName("Name");
+    void shouldUpdateEntityFromDto() {
+        LocalDateTime createdAt = LocalDateTime.of(2026, 9, 16, 10, 0);
+        LocalDateTime updatedAt = LocalDateTime.of(2026, 9, 16, 11, 0);
+
+        User user = new User();
+        user.setEmail("john.doe@example.com");
+        user.setUsername("John_Doe");
+        user.setCreatedAt(createdAt);
+        user.setUpdatedAt(updatedAt);
+
         UpdateUserDto dto = new UpdateUserDto(
-                "new@example.com",
-                "newUsername",
-                "New",
-                "User",
-                false
+                "jane.doe@example.com",
+                "Jane_Doe"
         );
 
         userMapper.updateEntity(dto, user);
 
-        assertThat(user.getEmail())
-                .isEqualTo("new@example.com");
-        assertThat(user.getUsername())
-                .isEqualTo("newUsername");
-        assertThat(user.getFirstName())
-                .isEqualTo("New");
-        assertThat(user.getLastName())
-                .isEqualTo("User");
+        assertEquals("jane.doe@example.com", user.getEmail());
+        assertEquals("Jane_Doe", user.getUsername());
+        assertEquals(createdAt, user.getCreatedAt());
+        assertEquals(updatedAt, user.getUpdatedAt());
     }
 
     @Test
-    void updateEntityShouldNotModifyTechnicalFields() {
-        LocalDateTime createdAt =
-                LocalDateTime.of(2026, 1, 10, 10, 0);
-        LocalDateTime updatedAt =
-                LocalDateTime.of(2026, 2, 10, 10, 0);
-        User user =
-                UserTestFactory.createUser();
-        user.setId(1L);
-        user.setEmail("old@example.com");
-        user.setUsername("oldUsername");
-        user.setFirstName("Old");
-        user.setLastName("Name");
-        user.setCreatedAt(createdAt);
-        user.setUpdatedAt(updatedAt);
-        UpdateUserDto dto = new UpdateUserDto(
-                "new@example.com",
-                "newUsername",
-                "New",
-                "User",
-                false
+    void shouldMapRegisterDtoToUser() {
+        RegisterRequestDto dto = new RegisterRequestDto(
+                "john.doe@example.com",
+                "Password/123",
+                "John_Doe"
         );
 
-        userMapper.updateEntity(dto, user);
+        User result = userMapper.fromRegisterDto(dto);
 
-        assertThat(user.getId())
-                .isEqualTo(1L);
-        assertThat(user.getCreatedAt())
-                .isEqualTo(createdAt);
-        assertThat(user.getUpdatedAt())
-                .isEqualTo(updatedAt);
+        assertNotNull(result);
+        assertEquals("john.doe@example.com", result.getEmail());
+        assertEquals("John_Doe", result.getUsername());
+        assertEquals("Password/123", result.getPassword());
+    }
+
+    @Test
+    void shouldReturnNullWhenUserToDtoIsNull() {
+        assertNull(userMapper.toDto(null));
+    }
+
+    @Test
+    void shouldReturnNullWhenRegisterDtoIsNull() {
+        assertNull(userMapper.fromRegisterDto(null));
     }
 }
