@@ -3,13 +3,11 @@ package com.openclassrooms.mddapi.comment.mapper;
 import com.openclassrooms.mddapi.comment.dto.CommentRequestDto;
 import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
 import com.openclassrooms.mddapi.comment.entity.Comment;
-import com.openclassrooms.mddapi.factory.CommentTestFactory;
 import com.openclassrooms.mddapi.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CommentMapperTest {

@@ -1,7 +1,6 @@
 package com.openclassrooms.mddapi.comment.service;
 
 import com.openclassrooms.mddapi.article.entity.Article;
-import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
 import com.openclassrooms.mddapi.article.service.ArticleService;
 import com.openclassrooms.mddapi.comment.dto.CommentRequestDto;
 import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
@@ -12,7 +11,6 @@ import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
