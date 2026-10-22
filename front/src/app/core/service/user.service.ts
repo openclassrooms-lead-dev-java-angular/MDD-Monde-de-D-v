@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '@env/environment.prod';
 import { User } from '../model/user.model';
 import { Observable } from 'rxjs';
+import { NewUserType } from '@type/new-user.type';
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +15,12 @@ export class UserService {
 
   public getMe(): Observable<User> {
     return this.httpClient.get<User>(`${this.path}/me`, {
+      withCredentials: true,
+    });
+  }
+
+  public updateUser(user: NewUserType): Observable<User> {
+    return this.httpClient.put<User>(`${this.path}/me`, user, {
       withCredentials: true,
     });
   }

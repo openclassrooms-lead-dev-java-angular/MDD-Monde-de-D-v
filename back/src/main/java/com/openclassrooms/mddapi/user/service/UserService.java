@@ -2,7 +2,6 @@ package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.storage.service.StorageService;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.exceptions.UserAlreadyExistsException;
@@ -12,14 +11,14 @@ import com.openclassrooms.mddapi.user.mapper.UserMapper;
 import com.openclassrooms.mddapi.user.repository.UserRepository;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Service responsible for user management operations.
@@ -36,13 +35,6 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
-    private final StorageService storageService;
-
-    @Value("${app.storage-path.avatar}")
-    private String resourceType;
-
-    @Value("${app.media-url}")
-    private String mediaUrl;
 
     /**
      * Persists a new user.
@@ -71,7 +63,7 @@ public class UserService {
 
         return userRepository
                 .findById(userId)
-                .map(user -> userMapper.toDto(user, mediaUrl))
+                .map(userMapper::toDto)
                 .orElseThrow(UserNotFoundException::new);
     }
 
@@ -87,37 +79,20 @@ public class UserService {
      */
     @Transactional
     public UserResponseDto updateUser(
-            final UpdateUserDto userDto,
-            MultipartFile media
+            final UpdateUserDto userDto
     ) {
         Long userId = userDetailsServiceImpl.getPrincipalUserId();
 
         User user = userRepository.getReferenceById(userId);
-        String oldFilename = user.getAvatar();
-
         userMapper.updateEntity(userDto, user);
 
-        boolean isMediaUploaded = media != null
-                && userDto.updatedMedia();
-
-        if (isMediaUploaded) {
-            String filename = storageService.upload(
-                    media,
-                    resourceType,
-                    userDto.username());
-
-            user.setAvatar(filename);
-        }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         User updatedUser = userRepository.save(user);
 
-        if (isMediaUploaded) {
-            storageService.delete(oldFilename);
-        }
-
         log.info("User updated with id {}: ", user.getId());
 
-        return userMapper.toDto(updatedUser, mediaUrl);
+        return userMapper.toDto(updatedUser);
     }
 
     /**

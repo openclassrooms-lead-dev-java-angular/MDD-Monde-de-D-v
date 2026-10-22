@@ -1,0 +1,124 @@
+<section class="profile">
+  <div class="profile__layout">
+    <section class="profile__form-section">
+      <h1 class="profile__title">Profil utilisateur</h1>
+
+      <form class="profile__form" [formGroup]="userForm" (ngSubmit)="submit()">
+        <div class="input">
+          <label for="registerEmail">Adresse e-mail</label>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <input
+              id="registerEmail"
+              matInput
+              type="email"
+              autocomplete="email"
+              formControlName="email"
+            />
+
+            @for (error of emailErrors; track error) {
+              <mat-error>{{ error }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="input">
+          <label for="registerUsername">Nom d'utilisateur</label>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <input
+              id="registerUsername"
+              matInput
+              type="text"
+              autocomplete="username"
+              formControlName="username"
+              [attr.aria-busy]="isUsernameLoading"
+            />
+
+            @for (error of usernameErrors; track error) {
+              <mat-error>{{ error }}</mat-error>
+            }
+
+            @if (isUsernameLoading) {
+              <mat-spinner
+                matSuffix
+                diameter="20"
+                aria-label="Vérification du nom d'utilisateur"
+              />
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="form-input">
+          <label for="registerPassword">Mot de passe</label>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <input
+              id="registerPassword"
+              matInput
+              type="password"
+              autocomplete="new-password"
+              formControlName="password"
+            />
+
+            @for (error of passwordErrors; track error) {
+              <mat-error>{{ error }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        @if (errorMessage) {
+          <p class="profile__error" role="alert">
+            {{ errorMessage }}
+          </p>
+        }
+
+        <div class="profile__form-actions">
+          <app-button
+            type="submit"
+            [disabled]="isLoadingForm || userForm.pending || userForm.invalid"
+            [label]="isLoadingForm ? 'Enregistrement...' : 'Sauvegarder'"
+          />
+        </div>
+      </form>
+    </section>
+
+    <div class="profile__divider"></div>
+
+    <section class="profile__topics">
+      <h2 class="profile__topics-title">Abonnements</h2>
+
+      @if (isLoadingTopics() && subscribedTopicList().length === 0) {
+        <div class="profile__loading">
+          <mat-spinner diameter="40" aria-label="Chargement des abonnements" />
+        </div>
+      } @else {
+        <div
+          class="profile__topics-list"
+          infiniteScroll
+          [infiniteScrollDistance]="2"
+          [infiniteScrollThrottle]="150"
+          (scrolled)="loadMore()"
+        >
+          @for (topic of subscribedTopicList(); track topic.slug) {
+            <app-topic-card
+              [topic]="topic"
+              [showUnsubscribe]="true"
+              (unsubscribe)="unsubscribeToTopic($event)"
+            />
+          }
+        </div>
+
+        @if (isLoadingTopics()) {
+          <div class="profile__loading">
+            <mat-spinner diameter="32" aria-label="Chargement" />
+          </div>
+        }
+
+        @if (!isLoadingTopics() && subscribedTopicList().length === 0) {
+          <p class="profile__empty">Vous n'êtes abonné à aucun thème.</p>
+        }
+      }
+    </section>
+  </div>
+</section>

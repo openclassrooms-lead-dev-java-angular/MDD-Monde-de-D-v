@@ -43,14 +43,8 @@ public class User extends BaseEntity {
     @NotBlank
     private String email;
 
-    @Column(
-            nullable = false,
-            length = 255
-    )
+    @Column(nullable = false)
     @NotBlank
     @Size(max = 255)
     private String password;
-
-    @Column()
-    private String avatar;
 }
