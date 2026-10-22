@@ -59,8 +59,14 @@
             [attr.aria-busy]="isUsernameLoading"
           />
 
-          @for (error of usernameErrors; track error) {
-            <mat-error>{{ error }}</mat-error>
+          @if (
+            registerForm.controls.username.invalid &&
+            (registerForm.controls.username.touched ||
+              registerForm.controls.username.dirty)
+          ) {
+            @for (error of usernameErrors; track error) {
+              <mat-error>{{ error }}</mat-error>
+            }
           }
 
           @if (isUsernameLoading) {
@@ -91,9 +97,9 @@
         </mat-form-field>
       </div>
 
-      @if (errorMessage) {
+      @if (errorMessage()) {
         <p class="error" role="alert">
-          {{ errorMessage }}
+          {{ errorMessage() }}
         </p>
       }
 
@@ -102,8 +108,10 @@
           class="register__content__submit-button"
           type="submit"
           color="primary"
-          [disabled]="isLoading || registerForm.pending || registerForm.invalid"
-          [label]="isLoading ? 'Création...' : 'S’inscrire'"
+          [disabled]="
+            isLoading() || registerForm.pending || registerForm.invalid
+          "
+          [label]="isLoading() ? 'Création...' : 'S’inscrire'"
         />
       </div>
     </form>

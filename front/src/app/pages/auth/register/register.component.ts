@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
@@ -53,8 +53,8 @@ export class RegisterComponent {
     ]),
   });
 
-  isLoading = false;
-  errorMessage = '';
+  isLoading = signal<boolean>(false);
+  errorMessage = signal<string>('');
 
   get emailErrors(): string[] {
     return this.validationErrorService.getErrors(
@@ -82,18 +82,18 @@ export class RegisterComponent {
   }
 
   submit(): void {
-    this.errorMessage = '';
+    this.errorMessage.set('');
 
     if (
       this.registerForm.invalid ||
       this.registerForm.pending ||
-      this.isLoading
+      this.isLoading()
     ) {
       this.registerForm.markAllAsTouched();
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
 
     const { email, username, password } = this.registerForm.getRawValue();
 
@@ -101,7 +101,7 @@ export class RegisterComponent {
       .register({ email, username, password })
       .pipe(
         finalize(() => {
-          this.isLoading = false;
+          this.isLoading.set(false);
         }),
       )
       .subscribe({
@@ -111,9 +111,9 @@ export class RegisterComponent {
         error: (error: { error?: { message?: string } }) => {
           console.error('Erreur lors de l’inscription :', error);
 
-          this.errorMessage =
-            error.error?.message ??
-            "Une erreur est survenue lors de l'inscription.";
+          this.errorMessage.set(
+            "Une erreur est survenue lors de l'inscription.",
+          );
         },
       });
   }
