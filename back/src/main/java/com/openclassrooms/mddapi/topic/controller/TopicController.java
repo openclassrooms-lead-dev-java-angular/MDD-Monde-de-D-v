@@ -46,6 +46,13 @@ public class TopicController {
         return topicService.getOptions();
     }
 
+    @GetMapping("/subscribed")
+    public Page<TopicResponseDto>getSubscribedTopics(
+            Pageable pageable
+    ) {
+        return topicService.getSubscribedTopics(pageable);
+    }
+
     /**
      * Subscribes the current user to a topic.
      *

@@ -130,4 +130,15 @@ public class TopicService {
     public List<TopicOptionDto> getOptions() {
         return topicRepository.findAllTopicOptions();
     }
+
+    @Transactional(readOnly = true)
+    public Page<TopicResponseDto> getSubscribedTopics(Pageable pageable) {
+        Long userId = userDetailsServiceImpl.getPrincipalUserId();
+
+        return topicRepository
+                .findSubscribedTopics(pageable, userId)
+                .map(topic ->
+                        topicMapper.toDto(topic, true)
+                );
+    }
 }
