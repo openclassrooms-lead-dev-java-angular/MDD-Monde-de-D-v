@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UserDetailsMapperTest {
 
@@ -13,31 +14,26 @@ public class UserDetailsMapperTest {
 
     @Test
     void shouldMapUserToUserDetails() {
-        // Given
+        
         User user = UserTestFactory.createUser();
 
-        // When
         UserDetailsImpl result = mapper.toUserDetails(user);
 
-        // Then
         assertThat(result).isNotNull();
         assertThat(result.getId())
                 .isEqualTo(1L);
         assertThat(result.getUsername())
                 .isEqualTo("jane@email.com");
-        assertThat(result.getPassword())
-                .isEqualTo("password");
+        assertEquals("Password/1234", result.getPassword());
     }
 
     @Test
     void shouldReturnNullWhenUserIsNull() {
-        // Given
+        
         User user = null;
 
-        // When
         UserDetailsImpl result = mapper.toUserDetails(user);
 
-        // Then
         assertThat(result).isNull();
     }
 }
