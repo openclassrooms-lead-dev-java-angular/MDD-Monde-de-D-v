@@ -50,7 +50,4 @@ public class User extends BaseEntity {
     @NotBlank
     @Size(max = 255)
     private String password;
-
-    @Column()
-    private String avatar;
 }

@@ -13,16 +13,6 @@ public record UpdateUserDto(
 
         @NotBlank
         @Size(max = 20)
-        String username,
+        String username
 
-        @NotBlank
-        @Size(max = 50)
-        String firstName,
-
-        @NotBlank
-        @Size(max = 50)
-        String lastName,
-
-        @NotNull
-        Boolean updatedMedia
 ) { }
