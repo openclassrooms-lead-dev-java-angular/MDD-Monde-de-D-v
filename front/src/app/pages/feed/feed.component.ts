@@ -4,13 +4,15 @@ import { ArticleService } from '@service/article.service';
 import { ArticleCardComponent } from '@shared/components/article-card/article-card.component';
 import { ButtonComponent } from '@shared/components/button/button.component';
 import { SortDirection } from '@type/sort-direction.type';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 
 @Component({
   selector: 'app-feed',
   standalone: true,
   imports: [
     ButtonComponent, 
-    ArticleCardComponent
+    ArticleCardComponent,
+    InfiniteScrollDirective,
   ],
   templateUrl: './feed.component.html',
   styleUrl: './feed.component.scss',
@@ -46,7 +48,6 @@ export class FeedComponent implements OnInit {
       .getArticlesFeed(pageNumber, this.pageSize, this.sortDirection())
       .subscribe({
         next: (page) => {
-          console.log(page.content);
           this.articleList.update((articles) => [...articles, ...page.content]);
           this.currentPage = page.number + 1;
           this.hasMore.set(!page.last);
