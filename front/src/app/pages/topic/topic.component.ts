@@ -17,12 +17,11 @@ export class TopicComponent implements OnInit {
   protected readonly topicList = signal<Topic[]>([]);
 
   protected readonly loading = signal(false);
-
+  protected readonly hasMore = signal(true);
   private currentPage = 0;
-
   private readonly pageSize = 10;
 
-  protected readonly hasMore = signal(true);
+  protected readonly topicErrorMessage = signal<string>('');
 
   ngOnInit(): void {
     this.loadMore();
@@ -41,8 +40,7 @@ export class TopicComponent implements OnInit {
 
     this.topicService.getTopics(pageNumber, this.pageSize).subscribe({
       next: (page) => {
-        this.topicList.update((topics) => [
-          ...topics, ...page.content]);
+        this.topicList.update((topics) => [...topics, ...page.content]);
         this.currentPage = page.number + 1;
         this.hasMore.set(!page.last);
         this.loading.set(false);
@@ -56,6 +54,19 @@ export class TopicComponent implements OnInit {
   }
 
   protected subscribeToTopic(topic: Topic): void {
-    console.log('Subscribe to:', topic.slug);
+    this.topicService.subscribe(topic.slug).subscribe({
+      next: () => {
+        this.topicList.update((topics) =>
+          topics.map((t) =>
+            t.slug === topic.slug ? { ...t, subscribed: true } : t,
+          ),
+        );
+        topic.subscribed = true;
+      },
+      error: (error) => {
+        console.error(error);
+        this.topicErrorMessage.set('Impossible de s’abonner au topic');
+      },
+    });
   }
 }
