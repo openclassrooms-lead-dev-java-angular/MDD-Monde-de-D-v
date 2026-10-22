@@ -86,6 +86,8 @@ public class UserService {
         User user = userRepository.getReferenceById(userId);
         userMapper.updateEntity(userDto, user);
 
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         User updatedUser = userRepository.save(user);
 
         log.info("User updated with id {}: ", user.getId());
