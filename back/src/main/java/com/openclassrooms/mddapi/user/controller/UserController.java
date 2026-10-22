@@ -40,15 +40,11 @@ public class UserController {
      * @param userDto the data to update
      * @return the updated user's information
      */
-    @PatchMapping(
-            value = "/me",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PatchMapping("/me")
     public UserResponseDto patch(
-            @Valid @RequestPart("user") UpdateUserDto userDto,
-            @RequestPart(value = "media", required = false) MultipartFile media
+            @Valid @RequestBody() UpdateUserDto userDto
     ) {
-        return userService.updateUser(userDto, media);
+        return userService.updateUser(userDto);
     }
 
 }
