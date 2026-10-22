@@ -44,4 +44,16 @@ module.exports = [
     },
     rules: {},
   },
+
+  {
+    files: ['cypress/e2e/**/*.cy.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.cypress,
+        cy: 'readonly',
+        Cypress: 'readonly',
+        expect: 'readonly',
+      },
+    },
+  },
 ];
