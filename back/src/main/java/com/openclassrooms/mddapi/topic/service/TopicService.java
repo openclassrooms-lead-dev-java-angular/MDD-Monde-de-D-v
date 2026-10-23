@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * Service responsible for managing topics.
  *
- * <p>Handles topic retrieval, creation, update and slug availability checks.</p>
+ * <p>Handles topic retrieval, creation and update </p>
  */
 @Log4j2
 @Service
@@ -64,15 +64,15 @@ public class TopicService {
     /**
      * Subscribes the current user to a topic.
      *
-     * @param slug the topic slug
+     * @param publicId the topic public id
      */
     @Transactional
-    public void subscribe(String slug) {
-        if (!topicRepository.existsBySlug(slug)) {
-            throw new TopicNotFoundException("Topic not found with slug '" + slug + "'");
+    public void subscribe(String publicId) {
+        if (!topicRepository.existsByPublicId(publicId)) {
+            throw new TopicNotFoundException("Topic not found with public id '" + publicId + "'");
         }
 
-        Topic topic = topicRepository.getReferenceBySlug(slug);
+        Topic topic = topicRepository.getReferenceByPublicId(publicId);
 
         subscriptionService.subscribe(topic);
     }
@@ -80,45 +80,45 @@ public class TopicService {
     /**
      * Unsubscribes the current user from a topic.
      *
-     * @param slug the topic slug
+     * @param publicID the topic public id
      */
     @Transactional
-    public void unsubscribe(String slug) {
-        if (!topicRepository.existsBySlug(slug)) {
-            throw new TopicNotFoundException("Topic not found with slug '" + slug + "'");
+    public void unsubscribe(String publicID) {
+        if (!topicRepository.existsByPublicId(publicID)) {
+            throw new TopicNotFoundException("Topic not found with public id '" + publicID + "'");
         }
 
-        Topic topic = topicRepository.getReferenceBySlug(slug);
+        Topic topic = topicRepository.getReferenceByPublicId(publicID);
 
         subscriptionService.unsubscribe(topic);
     }
 
     /**
-     * Checks whether a topic exists with the given slug.
+     * Checks whether a topic exists with the given public id.
      *
-     * @param slug the slug of the topic to check
-     * @return {@code true} if a topic with the given slug exists,
+     * @param publicID the public id of the topic to check
+     * @return {@code true} if a topic with the given public id exists,
      * {@code false} otherwise
      */
     @Transactional(readOnly = true)
-    public boolean existsBySlug(String slug) {
-        return topicRepository.existsBySlug(slug);
+    public boolean existsByPublicId(String publicID) {
+        return topicRepository.existsByPublicId(publicID);
     }
 
     /**
-     * Loads a topic reference by its slug.
+     * Loads a topic reference by its public id.
      *
      * <p>loaded from the database immediately and can trigger a database access when
      * its properties are accessed.</p>
      *
-     * @param slug the slug of the topic to load
-     * @return a reference to the topic identified by the given slug
+     * @param publicId the publicId of the topic to load
+     * @return a reference to the topic identified by the given public id
      * @throws jakarta.persistence.EntityNotFoundException if the topic does not
      *                                                     exist when the reference is accessed
      */
     @Transactional(readOnly = true)
-    public Topic loadBySlug(String slug) {
-        return topicRepository.getReferenceBySlug(slug);
+    public Topic loadByPublicId(String publicId) {
+        return topicRepository.getReferenceByPublicId(publicId);
     }
 
     /**
@@ -131,6 +131,16 @@ public class TopicService {
         return topicRepository.findAllTopicOptions();
     }
 
+    /**
+     * Retrieves the topics to which the currently authenticated user is subscribed.
+     * <p>
+     * The topics are retrieved using pagination and mapped to
+     * {@link TopicResponseDto} objects with their subscription status set to {@code true}.
+     * </p>
+     *
+     * @param pageable pagination and sorting information
+     * @return a page of subscribed topics mapped to {@link TopicResponseDto} objects
+     */
     @Transactional(readOnly = true)
     public Page<TopicResponseDto> getSubscribedTopics(Pageable pageable) {
         Long userId = userDetailsServiceImpl.getPrincipalUserId();

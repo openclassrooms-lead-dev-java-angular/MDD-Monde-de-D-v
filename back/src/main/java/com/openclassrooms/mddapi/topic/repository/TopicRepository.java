@@ -12,14 +12,14 @@ import java.util.List;
 
 public interface TopicRepository extends JpaRepository<Topic, Long> {
 
-    boolean existsBySlug(String slug);
+    boolean existsByPublicId(String publicId);
 
-    Topic getReferenceBySlug(String slug);
+    Topic getReferenceByPublicId(String publicId);
 
     @Query("""
         SELECT new com.openclassrooms.mddapi.topic.dto.TopicOptionDto(
             t.name,\s
-            t.slug
+            t.publicId
         )
         FROM Topic t
         ORDER BY t.name ASC
