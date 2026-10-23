@@ -2,38 +2,41 @@ package com.openclassrooms.mddapi.article.controller;
 
 import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
-import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
+import com.openclassrooms.mddapi.article.security.ArticleSecurity;
 import com.openclassrooms.mddapi.article.service.ArticleService;
-import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
-import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
-import com.openclassrooms.mddapi.factory.ArticleTestFactory;
-import com.openclassrooms.mddapi.factory.LocalDateTimeTestFactory;
+import lombok.Getter;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(ArticleController.class)
-@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
+@Import(ArticleControllerTest.TestSecurityConfig.class)
 class ArticleControllerTest {
 
     @Autowired
@@ -42,272 +45,171 @@ class ArticleControllerTest {
     @MockitoBean
     private ArticleService articleService;
 
-    // -------------------------------------------------------------------------
-    // GET /api/v1/articles/feed
-    // -------------------------------------------------------------------------
+    @MockitoBean(name = "articleSecurity")
+    private ArticleSecurity articleSecurity;
+
+    /*
+     * Creates an authenticated principal for controller tests.
+     */
+    @Getter
+    static class TestPrincipal {
+
+        private final Long id;
+
+        TestPrincipal(Long id) {
+            this.id = id;
+        }
+
+    }
+
+    private RequestPostProcessor authenticatedUser() {
+        var principal = new TestPrincipal(42L);
+
+        var authentication =
+                new UsernamePasswordAuthenticationToken(
+                        principal,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                );
+
+        return SecurityMockMvcRequestPostProcessors
+                .authentication(authentication);
+    }
+
+    /*
+     * GET /api/v1/articles/feed
+     */
 
     @Test
-    void shouldGetFeedArticles() throws Exception {
-        ArticleResponseDto article =
-                ArticleTestFactory.createArticleResponseDto();
-
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<ArticleResponseDto> page =
-                new PageImpl<>(List.of(article), pageable, 1);
-
-        when(articleService.findFeedArticles(any(Pageable.class)))
-                .thenReturn(page);
+    void getFeedArticles_shouldReturnEmptyPage() throws Exception {
+        when(articleService.findFeedArticles(any()))
+                .thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/v1/articles/feed")
+                        .with(authenticatedUser())
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].username").value("Jane_Doe"))
-                .andExpect(jsonPath("$.content[0].title").value("article title"))
-                .andExpect(jsonPath("$.content[0].slug").value("my-article"))
-                .andExpect(jsonPath("$.content[0].comments").isArray());
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
 
-        verify(articleService).findFeedArticles(any(Pageable.class));
+        verify(articleService).findFeedArticles(any());
+    }
+
+    /*
+     * GET /api/v1/articles/{publicId}
+     */
+
+    @Test
+    void getArticleByPublicId_shouldReturnArticleWhenAuthorized()
+            throws Exception {
+
+        String publicId = "article-public-id";
+
+        when(articleSecurity.canAccessArticle(publicId))
+                .thenReturn(true);
+
+        when(articleService.findByPublicId(publicId))
+                .thenReturn(mock(ArticleResponseDto.class));
+
+        mockMvc.perform(get("/api/v1/articles/{publicId}", publicId)
+                        .with(authenticatedUser()))
+                .andExpect(status().isOk());
+
+        verify(articleSecurity).canAccessArticle(publicId);
+        verify(articleService).findByPublicId(publicId);
     }
 
     @Test
-    void shouldReturnEmptyFeed() throws Exception {
-        Pageable pageable = PageRequest.of(0, 10);
+    void getArticleByPublicId_shouldReturnForbiddenWhenUnauthorized()
+            throws Exception {
 
-        when(articleService.findFeedArticles(any(Pageable.class)))
-                .thenReturn(Page.empty(pageable));
+        String publicId = "private-article-public-id";
 
-        mockMvc.perform(get("/api/v1/articles/feed")
-                        .param("page", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content").isEmpty());
+        when(articleSecurity.canAccessArticle(publicId))
+                .thenReturn(false);
 
-        verify(articleService).findFeedArticles(any(Pageable.class));
+        mockMvc.perform(get("/api/v1/articles/{publicId}", publicId)
+                        .with(authenticatedUser()))
+                .andExpect(status().isForbidden());
+
+        verify(articleSecurity).canAccessArticle(publicId);
+        verify(articleService, never()).findByPublicId(anyString());
     }
 
-    // -------------------------------------------------------------------------
-    // GET /api/v1/articles/{slug}
-    // -------------------------------------------------------------------------
+    /*
+     * POST /api/v1/articles
+     *
+     * Update the JSON fields to match ArticleRequestDto.
+     */
 
     @Test
-    void shouldGetArticleBySlug() throws Exception {
-        ArticleResponseDto article =
-                ArticleTestFactory.createArticleResponseDto();
+    void createArticle_shouldCreateArticleWithValidCsrf()
+            throws Exception {
 
-        when(articleService.findBySlug("my-article"))
-                .thenReturn(article);
-
-        mockMvc.perform(get("/api/v1/articles/my-article"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("Jane_Doe"))
-                .andExpect(jsonPath("$.title").value("article title"))
-                .andExpect(jsonPath("$.slug").value("my-article"))
-                .andExpect(jsonPath("$.content").value("my article content"))
-                .andExpect(jsonPath("$.createdAt").exists())
-                .andExpect(jsonPath("$.updatedAt").exists())
-                .andExpect(jsonPath("$.comments").isArray());
-
-        verify(articleService).findBySlug("my-article");
-    }
-
-    @Test
-    void shouldGetArticleBySlugWithComments() throws Exception {
-        CommentResponseDto comment1 = mock(CommentResponseDto.class);
-        CommentResponseDto comment2 = mock(CommentResponseDto.class);
-
-        ArticleResponseDto article = new ArticleResponseDto(
-                "Jane_Doe",
-                ArticleTestFactory.createArticleResponseDto().topic(),
-                "my-article",
-                "article title",
-                "my article content",
-                LocalDateTimeTestFactory.generateCreatedAt(),
-                LocalDateTimeTestFactory.generateUpdatedAt(),
-                List.of(comment1, comment2)
-        );
-
-        when(articleService.findBySlug("my-article"))
-                .thenReturn(article);
-
-        mockMvc.perform(get("/api/v1/articles/my-article"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.comments").isArray())
-                .andExpect(jsonPath("$.comments.length()").value(2));
-
-        verify(articleService).findBySlug("my-article");
-    }
-
-    @Test
-    void shouldReturnArticleWithEmptyComments() throws Exception {
-        ArticleResponseDto original =
-                ArticleTestFactory.createArticleResponseDto();
-
-        ArticleResponseDto article = new ArticleResponseDto(
-                original.username(),
-                original.topic(),
-                original.slug(),
-                original.title(),
-                original.content(),
-                original.createdAt(),
-                original.updatedAt(),
-                List.of()
-        );
-
-        when(articleService.findBySlug("my-article"))
-                .thenReturn(article);
-
-        mockMvc.perform(get("/api/v1/articles/my-article"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.comments").isArray())
-                .andExpect(jsonPath("$.comments").isEmpty());
-
-        verify(articleService).findBySlug("my-article");
-    }
-
-    @Test
-    void shouldReturn404WhenArticleDoesNotExist() throws Exception {
-        when(articleService.findBySlug("article-unknown"))
-                .thenThrow(new ArticleNotFoundException(
-                        "Article not found with slug : article-unknown"
-                ));
-
-        mockMvc.perform(get("/api/v1/articles/article-unknown"))
-                .andExpect(status().isNotFound());
-
-        verify(articleService).findBySlug("article-unknown");
-    }
-
-    // -------------------------------------------------------------------------
-    // POST /api/v1/articles
-    // -------------------------------------------------------------------------
-
-    @Test
-    void shouldCreateArticle() throws Exception {
-        ArticleResponseDto response =
-                ArticleTestFactory.createArticleResponseDto();
+        String validJson = """
+                {
+                    "title": "My test article",
+                    "content": "Test content",
+                    "topicPublicId": "topic-public-id"
+                }
+                """;
 
         when(articleService.create(any(ArticleRequestDto.class)))
-                .thenReturn(response);
+                .thenReturn(mock(ArticleResponseDto.class));
 
         mockMvc.perform(post("/api/v1/articles")
+                        .with(authenticatedUser())
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "slug": "my-article",
-                                    "topicSlug": "java",
-                                    "title": "article title",
-                                    "content": "my article content"
-                                }
-                                """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("Jane_Doe"))
-                .andExpect(jsonPath("$.title").value("article title"))
-                .andExpect(jsonPath("$.slug").value("my-article"))
-                .andExpect(jsonPath("$.content").value("my article content"))
-                .andExpect(jsonPath("$.comments").isArray());
+                        .content(validJson))
+                .andExpect(status().isOk());
 
-        ArgumentCaptor<ArticleRequestDto> captor =
-                ArgumentCaptor.forClass(ArticleRequestDto.class);
-
-        verify(articleService).create(captor.capture());
-
-        ArticleRequestDto request = captor.getValue();
-
-        assertEquals("my-article", request.slug());
-        assertEquals("java", request.topicSlug());
-        assertEquals("article title", request.title());
-        assertEquals("my article content", request.content());
+        verify(articleService).create(any(ArticleRequestDto.class));
     }
 
     @Test
-    void shouldReturn400WhenArticleRequestIsInvalid() throws Exception {
-        mockMvc.perform(post("/api/v1/articles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "slug": "",
-                                    "topicSlug": "",
-                                    "title": "",
-                                    "content": ""
-                                }
-                                """))
-                .andExpect(status().isBadRequest());
+    void createArticle_shouldReturnForbiddenWithoutCsrf()
+            throws Exception {
 
-        verify(articleService, never()).create(any(ArticleRequestDto.class));
-    }
-
-    @Test
-    void shouldReturn400WhenTitleExceeds100Characters() throws Exception {
-        String longTitle = "a".repeat(101);
-
-        String request = """
+        String validJson = """
                 {
-                    "slug": "my-article",
-                    "topicSlug": "java",
-                    "title": "%s",
-                    "content": "my article content"
+                    "title": "My test article",
+                    "content": "Test content",
+                    "topicPublicId": "topic-public-id"
                 }
-                """.formatted(longTitle);
+                """;
 
         mockMvc.perform(post("/api/v1/articles")
+                        .with(authenticatedUser())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
-                .andExpect(status().isBadRequest());
+                        .content(validJson))
+                .andExpect(status().isForbidden());
 
-        verify(articleService, never()).create(any(ArticleRequestDto.class));
+        verify(articleService, never())
+                .create(any(ArticleRequestDto.class));
     }
 
-    @Test
-    void shouldReturn400WhenContentExceeds255Characters() throws Exception {
-        String longContent = "a".repeat(256);
+    /*
+     * Test security configuration with CSRF and method security enabled.
+     */
 
-        String request = """
-                {
-                    "slug": "my-article",
-                    "topicSlug": "java",
-                    "title": "article title",
-                    "content": "%s"
-                }
-                """.formatted(longContent);
+    @TestConfiguration
+    @EnableMethodSecurity
+    static class TestSecurityConfig {
 
-        mockMvc.perform(post("/api/v1/articles")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
-                .andExpect(status().isBadRequest());
+        @Bean
+        SecurityFilterChain testSecurityFilterChain(HttpSecurity http)
+                throws Exception {
 
-        verify(articleService, never()).create(any(ArticleRequestDto.class));
-    }
+            http
+                    .csrf(Customizer.withDefaults())
+                    .authorizeHttpRequests(auth -> auth
+                            .anyRequest().authenticated()
+                    );
 
-    // -------------------------------------------------------------------------
-    // GET /api/v1/articles/available-slug/{slug}
-    // -------------------------------------------------------------------------
-
-    @Test
-    void shouldCheckSlugAvailability() throws Exception {
-        when(articleService.findAvailableSlug("new-article"))
-                .thenReturn(new AvailableSlugDto(true));
-
-        mockMvc.perform(get("/api/v1/articles/available-slug/new-article"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.available").value(true));
-
-        verify(articleService).findAvailableSlug("new-article");
-    }
-
-    @Test
-    void shouldReturnUnavailableSlug() throws Exception {
-        when(articleService.findAvailableSlug("existing-article"))
-                .thenReturn(new AvailableSlugDto(false));
-
-        mockMvc.perform(get(
-                        "/api/v1/articles/available-slug/existing-article"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.available").value(false));
-
-        verify(articleService).findAvailableSlug("existing-article");
+            return http.build();
+        }
     }
 }

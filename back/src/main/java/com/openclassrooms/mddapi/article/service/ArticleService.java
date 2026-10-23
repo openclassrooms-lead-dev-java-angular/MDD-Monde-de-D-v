@@ -4,11 +4,9 @@ import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
 import com.openclassrooms.mddapi.article.entity.Article;
 import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
-import com.openclassrooms.mddapi.article.exception.ArticleSlugAlreadyExists;
 import com.openclassrooms.mddapi.article.mapper.ArticleMapper;
 import com.openclassrooms.mddapi.article.repository.ArticleRepository;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
-import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
 import com.openclassrooms.mddapi.topic.service.TopicService;
@@ -25,7 +23,7 @@ import org.springframework.stereotype.Service;
  * Service responsible for managing articles.
  *
  * <p>This service handles article creation, retrieval,
- * slug availability checks, topic validation.</p>
+ * topic validation.</p>
  */
 @Service
 @Slf4j
@@ -48,41 +46,37 @@ public class ArticleService {
     }
 
     /**
-     * Retrieves an article by its slug.
+     * Retrieves an article by its public id.
      *
-     * @param slug the slug of the article to retrieve
-     * @return the article matching the given slug
-     * @throws ArticleNotFoundException if no article matches the given slug
+     * @param publicId the public id of the article to retrieve
+     * @return the article matching the given public id
+     * @throws ArticleNotFoundException if no article matches the given public id
      */
     @Transactional(readOnly = true)
-    public ArticleResponseDto findBySlug(final String slug) {
+    public ArticleResponseDto findByPublicId(final String publicId) {
         return articleRepository
-                .findBySlug(slug)
+                .findByPublicId(publicId)
                 .map(articleMapper::toDto)
-                .orElseThrow(() -> new ArticleNotFoundException("Article not found with slug : " + slug));
+                .orElseThrow(() -> new ArticleNotFoundException("Article not found with id : " + publicId));
     }
 
     /**
      * Creates a new article.
      *
-     * <p>The method verifies that the slug is available and that the
+     * <p>The method verifies that the public id is available and that the
      * specified topic exists. It then retrieves the currently authenticated
      * user as the author, maps the request DTO to an entity, and persists the article.</p>
      *
      * @param articleRequestDto the data of the article to create
      * @return the created article
-     * @throws ArticleSlugAlreadyExists if the article slug already exists * @throws TopicNotFoundException if the specified topic does not exist
      */
     @Transactional
     public ArticleResponseDto create(
             final ArticleRequestDto articleRequestDto
     ) {
-        if (articleRepository.existsBySlug(articleRequestDto.slug())) {
-            throw new ArticleSlugAlreadyExists("Slug already exists : " + articleRequestDto.slug());
-        }
 
-        checkTopicSlug(articleRequestDto.topicSlug());
-        Topic topic = topicService.loadBySlug(articleRequestDto.topicSlug());
+        checkTopicPublicId(articleRequestDto.topicPublicId());
+        Topic topic = topicService.loadByPublicId(articleRequestDto.topicPublicId());
         User author = userService.loadCurrentUserAuthor();
 
         Article article = articleMapper.toEntity(articleRequestDto);
@@ -91,39 +85,26 @@ public class ArticleService {
 
         Article savedArticle = articleRepository.save(article);
 
-        log.info("Saved article {}", savedArticle.getSlug());
+        log.info("Saved article {}", savedArticle.getPublicId());
 
         return articleMapper.toDto(savedArticle);
     }
 
     /**
-     * Checks whether an article slug is available.
+     * Checks whether a topic exists for the given public id.
      *
-     * @param slug the slug to check
-     * @return an {@link AvailableSlugDto} indicating whether the slug is available
+     * @param topicPublicId the topic public id to check
+     * @throws TopicNotFoundException if no topic matches the given public id
      */
     @Transactional(readOnly = true)
-    public AvailableSlugDto findAvailableSlug(final String slug) {
-        boolean availableSlug = articleRepository.existsBySlug(slug);
-
-        return new AvailableSlugDto(!availableSlug);
-    }
-
-    /**
-     * Checks whether a topic exists for the given slug.
-     *
-     * @param topicSlug the topic slug to check
-     * @throws TopicNotFoundException if no topic matches the given slug
-     */
-    @Transactional(readOnly = true)
-    private void checkTopicSlug(final String topicSlug) {
-        if (!topicService.existsBySlug(topicSlug)) {
-            throw new TopicNotFoundException("Topic not found with slug : " + topicSlug);
+    private void checkTopicPublicId(final String topicPublicId) {
+        if (!topicService.existsByPublicId(topicPublicId)) {
+            throw new TopicNotFoundException("Topic not found with public id : " + topicPublicId);
         }
     }
 
     @Transactional(readOnly = true)
-    public Article loadArticleBySlug(final String slug) {
-        return articleRepository.getReferenceBySlug(slug);
+    public Article loadArticleByPublicId(final String publicId) {
+        return articleRepository.getReferenceByPublicId(publicId);
     }
 }

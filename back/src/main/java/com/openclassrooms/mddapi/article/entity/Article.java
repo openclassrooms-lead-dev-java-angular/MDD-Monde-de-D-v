@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "articles")
@@ -55,16 +56,19 @@ public class Article extends BaseEntity {
     )
     private String title;
 
-    @Column(
-            nullable = false,
-            unique = true,
-            length = 100
-    )
-    private String slug;
-
     @Column(columnDefinition = "TEXT")
     private String content;
 
     @OneToMany(mappedBy = "article")
     private List<Comment> comments = new ArrayList<>();
+
+    @Builder.Default
+    @Column(
+            name = "public_id",
+            nullable = false,
+            unique = true,
+            updatable = false,
+            length = 36
+    )
+    private String publicId = UUID.randomUUID().toString();
 }

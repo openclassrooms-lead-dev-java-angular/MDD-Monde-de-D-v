@@ -4,11 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record ArticleRequestDto(
-        @NotBlank
-        String slug,
 
         @NotBlank
-        String topicSlug,
+        String topicPublicId,
 
         @NotBlank
         @Size(max = 100)
