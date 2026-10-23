@@ -1,5 +1,6 @@
 package com.openclassrooms.mddapi.comment.service;
 
+
 import com.openclassrooms.mddapi.article.entity.Article;
 import com.openclassrooms.mddapi.article.service.ArticleService;
 import com.openclassrooms.mddapi.comment.dto.CommentRequestDto;
@@ -10,24 +11,17 @@ import com.openclassrooms.mddapi.comment.repository.CommentRepository;
 import com.openclassrooms.mddapi.factory.LocalDateTimeTestFactory;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
-
-    private static final String ARTICLE_SLUG = "test-article";
-    private static final String CONTENT = "Mon commentaire de test";
 
     @Mock
     private CommentRepository commentRepository;
@@ -44,104 +38,103 @@ class CommentServiceTest {
     @InjectMocks
     private CommentService commentService;
 
-    private User author;
-    private Article article;
-    private CommentRequestDto requestDto;
-    private Comment comment;
-    private Comment savedComment;
-    private CommentResponseDto responseDto;
+    @Test
+    void create_shouldSaveCommentAndReturnResponseDto() {
+        String publicId = "article-public-id";
+        CommentRequestDto requestDto =
+                new CommentRequestDto("This is a test comment");
 
-    @BeforeEach
-    void setUp() {
-        author = new User();
-        author.setUsername("john_doe");
+        User author = new User();
+        Article article = new Article();
 
-        article = new Article();
-        article.setSlug(ARTICLE_SLUG);
-
-        requestDto = new CommentRequestDto(CONTENT);
-
-        comment = new Comment();
-        comment.setContent(CONTENT);
-
-        savedComment = new Comment();
+        Comment commentToSave = new Comment();
+        Comment savedComment = new Comment();
         savedComment.setId(1L);
-        savedComment.setContent(CONTENT);
-        savedComment.setAuthor(author);
-        savedComment.setArticle(article);
 
-        responseDto = new CommentResponseDto(
-                "john_doe",
-                CONTENT,
-                LocalDateTimeTestFactory.generateCreatedAt()
+        CommentResponseDto expectedDto =
+                new CommentResponseDto(
+                        "John_Doe",
+                        "This is a test comment",
+                        LocalDateTimeTestFactory.generateCreatedAt()
+                );
+
+        when(userService.loadCurrentUserAuthor()).thenReturn(author);
+        when(articleService.loadArticleByPublicId(publicId))
+                .thenReturn(article);
+        when(commentMapper.toEntity(requestDto)).thenReturn(commentToSave);
+        when(commentRepository.save(commentToSave)).thenReturn(savedComment);
+        when(commentMapper.toDto(savedComment)).thenReturn(expectedDto);
+
+        CommentResponseDto result = commentService.create(publicId, requestDto);
+
+        assertNotNull(result);
+        assertEquals(expectedDto, result);
+
+        assertSame(author, commentToSave.getAuthor());
+        assertSame(article, commentToSave.getArticle());
+
+        verify(userService).loadCurrentUserAuthor();
+        verify(articleService).loadArticleByPublicId(publicId);
+        verify(commentMapper).toEntity(requestDto);
+        verify(commentRepository).save(commentToSave);
+        verify(commentMapper).toDto(savedComment);
+        verifyNoMoreInteractions(
+                commentRepository,
+                commentMapper,
+                userService,
+                articleService
         );
     }
 
     @Test
-    void shouldCreateComment() {
-        when(userService.loadCurrentUserAuthor()).thenReturn(author);
-        when(articleService.loadArticleBySlug(ARTICLE_SLUG)).thenReturn(article);
-        when(commentMapper.toEntity(requestDto)).thenReturn(comment);
-        when(commentRepository.save(comment)).thenReturn(savedComment);
-        when(commentMapper.toDto(savedComment)).thenReturn(responseDto);
+    void create_shouldPropagateExceptionWhenAuthorCannotBeLoaded() {
+        String publicId = "article-public-id";
+        CommentRequestDto requestDto =
+                new CommentRequestDto("This is a test comment");
 
-        CommentResponseDto result = commentService.create(ARTICLE_SLUG, requestDto);
+        RuntimeException exception =
+                new RuntimeException("Author not found");
 
-        assertThat(result).isSameAs(responseDto);
+        when(userService.loadCurrentUserAuthor()).thenThrow(exception);
+
+        RuntimeException thrown = assertThrows(
+                RuntimeException.class,
+                () -> commentService.create(publicId, requestDto)
+        );
+
+        assertSame(exception, thrown);
 
         verify(userService).loadCurrentUserAuthor();
-        verify(articleService).loadArticleBySlug(ARTICLE_SLUG);
-        verify(commentMapper).toEntity(requestDto);
-        verify(commentRepository).save(comment);
-        verify(commentMapper).toDto(savedComment);
+        verifyNoInteractions(
+                articleService,
+                commentMapper,
+                commentRepository
+        );
     }
 
     @Test
-    void shouldAssociateAuthorAndArticleBeforeSaving() {
+    void create_shouldPropagateExceptionWhenArticleCannotBeLoaded() {
+        String publicId = "article-public-id";
+        CommentRequestDto requestDto =
+                new CommentRequestDto("This is a test comment");
+
+        User author = new User();
+        RuntimeException exception =
+                new RuntimeException("Article not found");
+
         when(userService.loadCurrentUserAuthor()).thenReturn(author);
-        when(articleService.loadArticleBySlug(ARTICLE_SLUG)).thenReturn(article);
-        when(commentMapper.toEntity(requestDto)).thenReturn(comment);
-        when(commentRepository.save(any(Comment.class))).thenReturn(savedComment);
-        when(commentMapper.toDto(savedComment)).thenReturn(responseDto);
+        when(articleService.loadArticleByPublicId(publicId))
+                .thenThrow(exception);
 
-        commentService.create(ARTICLE_SLUG, requestDto);
+        RuntimeException thrown = assertThrows(
+                RuntimeException.class,
+                () -> commentService.create(publicId, requestDto)
+        );
 
-        assertThat(comment.getAuthor()).isSameAs(author);
-        assertThat(comment.getArticle()).isSameAs(article);
-    }
+        assertSame(exception, thrown);
 
-    @Test
-    void shouldSaveMappedComment() {
-        when(userService.loadCurrentUserAuthor()).thenReturn(author);
-        when(articleService.loadArticleBySlug(ARTICLE_SLUG)).thenReturn(article);
-        when(commentMapper.toEntity(requestDto)).thenReturn(comment);
-        when(commentRepository.save(any(Comment.class))).thenReturn(savedComment);
-        when(commentMapper.toDto(savedComment)).thenReturn(responseDto);
-
-        commentService.create(ARTICLE_SLUG, requestDto);
-
-        ArgumentCaptor<Comment> captor = ArgumentCaptor.forClass(Comment.class);
-
-        verify(commentRepository).save(captor.capture());
-
-        Comment capturedComment = captor.getValue();
-
-        assertThat(capturedComment.getContent()).isEqualTo(CONTENT);
-        assertThat(capturedComment.getAuthor()).isSameAs(author);
-        assertThat(capturedComment.getArticle()).isSameAs(article);
-    }
-
-    @Test
-    void shouldReturnDtoMappedFromSavedComment() {
-        when(userService.loadCurrentUserAuthor()).thenReturn(author);
-        when(articleService.loadArticleBySlug(ARTICLE_SLUG)).thenReturn(article);
-        when(commentMapper.toEntity(requestDto)).thenReturn(comment);
-        when(commentRepository.save(comment)).thenReturn(savedComment);
-        when(commentMapper.toDto(savedComment)).thenReturn(responseDto);
-
-        CommentResponseDto result = commentService.create(ARTICLE_SLUG, requestDto);
-
-        assertThat(result.username()).isEqualTo("john_doe");
-        assertThat(result.content()).isEqualTo(CONTENT);
+        verify(userService).loadCurrentUserAuthor();
+        verify(articleService).loadArticleByPublicId(publicId);
+        verifyNoInteractions(commentMapper, commentRepository);
     }
 }

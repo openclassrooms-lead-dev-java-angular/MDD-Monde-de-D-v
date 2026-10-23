@@ -1,19 +1,17 @@
 package com.openclassrooms.mddapi.common.exception;
 
 import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
-import com.openclassrooms.mddapi.article.exception.ArticleSlugAlreadyExists;
 import com.openclassrooms.mddapi.auth.exception.InvalidTokenException;
 import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.common.dto.ErrorResponseDto;
 import com.openclassrooms.mddapi.topic.exception.TopicNotFoundException;
-import com.openclassrooms.mddapi.topic.exception.TopicSlugAlreadyExists;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.exceptions.UserAlreadyExistsException;
 import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
 import com.openclassrooms.mddapi.user.exceptions.UsernameAlreadyExistsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -78,18 +76,14 @@ public class GlobalExceptionHanler {
         return buildResponse(HttpStatus.CONFLICT, e.getMessage());
     }
 
-    @ExceptionHandler(value = TopicSlugAlreadyExists.class)
-    @ResponseStatus(value = HttpStatus.CONFLICT)
-    public ErrorResponseDto handleTopicSlugAlreadyExists(TopicSlugAlreadyExists e) {
-        log.warn(e.getMessage(), e);
-        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
-    }
+    // forbiden
 
-    @ExceptionHandler(value = ArticleSlugAlreadyExists.class)
-    @ResponseStatus(value = HttpStatus.CONFLICT)
-    public ErrorResponseDto handleArticleSlugAlreadyExists(ArticleSlugAlreadyExists e) {
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    public ErrorResponseDto handleAuthorizationDenied(
+            AuthorizationDeniedException e) {
         log.warn(e.getMessage(), e);
-        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+        return buildResponse(HttpStatus.FORBIDDEN, e.getMessage());
     }
 
     // unauthorized
