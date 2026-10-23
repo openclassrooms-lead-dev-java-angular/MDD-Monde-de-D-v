@@ -1,8 +1,9 @@
 package com.openclassrooms.mddapi.article.security;
 
+import com.openclassrooms.mddapi.article.exception.ArticleNotFoundException;
 import com.openclassrooms.mddapi.article.repository.ArticleRepository;
-import com.openclassrooms.mddapi.user.entity.User;
-import com.openclassrooms.mddapi.user.service.UserService;
+import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
+import com.openclassrooms.mddapi.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,15 +11,26 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ArticleSecurity {
 
+    private final SubscriptionService subscriptionService;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final ArticleRepository articleRepository;
-    private final UserService userService;
 
-    public boolean isAuthor(final String slug) {
-        User currentUser = userService.loadCurrentUserAuthor();
+    /**
+     * Determines whether the currently authenticated user can access an article
+     * based on their subscription to the article's topic.
+     *
+     * @param publicId the public id identifying the article
+     * @return {@code true} if the current user is subscribed to the article's topic,
+     *         {@code false} otherwise
+     * @throws ArticleNotFoundException if no article is found for the specified public id
+     */
+    public boolean canAccessArticle(final String publicId) {
+        Long currentUserId = userDetailsServiceImpl.getPrincipalUserId();
 
-        return articleRepository.existsBySlugAndAuthor(
-                slug,
-                currentUser
-        );
+        Long topicId = articleRepository
+                .findTopicIdByPublicId(publicId)
+                .orElseThrow(() -> new ArticleNotFoundException(publicId));
+
+        return subscriptionService.existsByUserIdAndTopicId(currentUserId, topicId);
     }
 }
