@@ -4,6 +4,7 @@ import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
 import com.openclassrooms.mddapi.article.security.ArticleSecurity;
 import com.openclassrooms.mddapi.article.service.ArticleService;
+import lombok.Getter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -49,6 +51,7 @@ class ArticleControllerTest {
     /*
      * Creates an authenticated principal for controller tests.
      */
+    @Getter
     static class TestPrincipal {
 
         private final Long id;
@@ -57,9 +60,6 @@ class ArticleControllerTest {
             this.id = id;
         }
 
-        public Long getId() {
-            return id;
-        }
     }
 
     private RequestPostProcessor authenticatedUser() {
@@ -204,7 +204,7 @@ class ArticleControllerTest {
                 throws Exception {
 
             http
-                    .csrf(csrf -> {})
+                    .csrf(Customizer.withDefaults())
                     .authorizeHttpRequests(auth -> auth
                             .anyRequest().authenticated()
                     );
