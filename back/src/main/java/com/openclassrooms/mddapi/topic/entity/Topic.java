@@ -28,7 +28,7 @@ public class Topic extends BaseEntity {
     )
     private String name;
 
-    @Column(length = 255)
+    @Column()
     private String description;
 
     @Column(

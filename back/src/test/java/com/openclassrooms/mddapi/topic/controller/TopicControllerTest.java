@@ -1,6 +1,5 @@
 package com.openclassrooms.mddapi.topic.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mddapi.config.TestSecurityConfig;
 import com.openclassrooms.mddapi.factory.LocalDateTimeTestFactory;
 import com.openclassrooms.mddapi.security.TestAuthentication;
