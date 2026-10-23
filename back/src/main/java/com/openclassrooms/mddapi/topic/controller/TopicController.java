@@ -56,26 +56,26 @@ public class TopicController {
     /**
      * Subscribes the current user to a topic.
      *
-     * @param slug the slug of the topic
+     * @param publicId the public id of the topic
      */
-    @PostMapping("/{slug}/subscribe")
+    @PostMapping("/{publicId}/subscribe")
     @ResponseStatus(HttpStatus.CREATED)
     public void subscribe(
-            @PathVariable("slug") String slug
+            @PathVariable("publicId") String publicId
     ) {
-        topicService.subscribe(slug);
+        topicService.subscribe(publicId);
     }
 
     /**
      * Unsubscribes the current user from a topic.
      *
-     * @param slug the slug of the topic
+     * @param publicId the public id of the topic
      */
-    @DeleteMapping("/{slug}/subscribe")
+    @DeleteMapping("/{publicId}/subscribe")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unsubscribe(
-            @PathVariable("slug") String slug
+            @PathVariable("publicId") String publicId
     ) {
-        topicService.unsubscribe(slug);
+        topicService.unsubscribe(publicId);
     }
 }

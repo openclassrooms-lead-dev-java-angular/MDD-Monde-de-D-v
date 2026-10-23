@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "topics")
 @EntityListeners(AuditingEntityListener.class)
@@ -26,13 +28,15 @@ public class Topic extends BaseEntity {
     )
     private String name;
 
-    @Column(
-            nullable = false,
-            unique = true,
-            length = 90
-    )
-    private String slug;
-
     @Column(length = 255)
     private String description;
+
+    @Column(
+            name = "public_id",
+            nullable = false,
+            unique = true,
+            updatable = false,
+            length = 36
+    )
+    private String publicId = UUID.randomUUID().toString();
 }
