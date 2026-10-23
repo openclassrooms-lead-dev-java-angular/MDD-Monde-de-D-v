@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/articles/{slug}/comments")
+@RequestMapping("/api/v1/articles/{articlePublicId}/comments")
 public class CommentController {
 
     private final CommentService commentService;
@@ -23,18 +23,18 @@ public class CommentController {
     /**
      *  Creates a new comment for an article.
      *
-     *  <p>The comment is associated with the article identified by its slug.
+     *  <p>The comment is associated with the article identified by its public id.
      *  The author is determined from the currently authenticated user.</p>
      *
-     *  @param articleSlug the slug identifying the article to comment on
+     *  @param articlePublicId the slug identifying the article to comment on
      *  @param commentRequestDto the data required to create the comment
      *  @return the created comment
      */
     @PostMapping("")
     public CommentResponseDto createComment(
-            @PathVariable("slug") String articleSlug,
+            @PathVariable("articlePublicId") String articlePublicId,
             @Valid @RequestBody CommentRequestDto commentRequestDto
     ) {
-        return commentService.create(articleSlug, commentRequestDto);
+        return commentService.create(articlePublicId, commentRequestDto);
     }
 }

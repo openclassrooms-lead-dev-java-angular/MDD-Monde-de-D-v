@@ -4,7 +4,7 @@ import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
 import com.openclassrooms.mddapi.article.security.ArticleSecurity;
 import com.openclassrooms.mddapi.article.service.ArticleService;
-import lombok.Getter;
+import com.openclassrooms.mddapi.security.TestAuthentication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -13,19 +13,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
-
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -49,34 +43,6 @@ class ArticleControllerTest {
     private ArticleSecurity articleSecurity;
 
     /*
-     * Creates an authenticated principal for controller tests.
-     */
-    @Getter
-    static class TestPrincipal {
-
-        private final Long id;
-
-        TestPrincipal(Long id) {
-            this.id = id;
-        }
-
-    }
-
-    private RequestPostProcessor authenticatedUser() {
-        var principal = new TestPrincipal(42L);
-
-        var authentication =
-                new UsernamePasswordAuthenticationToken(
-                        principal,
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                );
-
-        return SecurityMockMvcRequestPostProcessors
-                .authentication(authentication);
-    }
-
-    /*
      * GET /api/v1/articles/feed
      */
 
@@ -86,7 +52,7 @@ class ArticleControllerTest {
                 .thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/v1/articles/feed")
-                        .with(authenticatedUser())
+                        .with(TestAuthentication.authenticatedUser())
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -114,7 +80,7 @@ class ArticleControllerTest {
                 .thenReturn(mock(ArticleResponseDto.class));
 
         mockMvc.perform(get("/api/v1/articles/{publicId}", publicId)
-                        .with(authenticatedUser()))
+                        .with(TestAuthentication.authenticatedUser()))
                 .andExpect(status().isOk());
 
         verify(articleSecurity).canAccessArticle(publicId);
@@ -131,7 +97,7 @@ class ArticleControllerTest {
                 .thenReturn(false);
 
         mockMvc.perform(get("/api/v1/articles/{publicId}", publicId)
-                        .with(authenticatedUser()))
+                        .with(TestAuthentication.authenticatedUser()))
                 .andExpect(status().isForbidden());
 
         verify(articleSecurity).canAccessArticle(publicId);
@@ -160,7 +126,7 @@ class ArticleControllerTest {
                 .thenReturn(mock(ArticleResponseDto.class));
 
         mockMvc.perform(post("/api/v1/articles")
-                        .with(authenticatedUser())
+                        .with(TestAuthentication.authenticatedUser())
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validJson))
@@ -182,7 +148,7 @@ class ArticleControllerTest {
                 """;
 
         mockMvc.perform(post("/api/v1/articles")
-                        .with(authenticatedUser())
+                        .with(TestAuthentication.authenticatedUser())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validJson))
                 .andExpect(status().isForbidden());

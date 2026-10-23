@@ -34,19 +34,19 @@ public class CommentService {
      * Creates a new comment for an article.
      *
      * <p>The comment author is automatically assigned to the currently
-     * authenticated user, and the article is identified by its slug.</p>
+     * authenticated user, and the article is identified by its public id.</p>
      *
-     * @param articleSlug the slug identifying the article to comment on
+     * @param publicId the public id identifying the article to comment on
      * @param commentDto  the data required to create the comment
      * @return the created comment as a response DTO
      */
     @Transactional
     public CommentResponseDto create(
-            final String articleSlug,
+            final String publicId,
             final CommentRequestDto commentDto
     ) {
         User author = userService.loadCurrentUserAuthor();
-        Article article = articleService.loadArticleBySlug(articleSlug);
+        Article article = articleService.loadArticleByPublicId(publicId);
 
         Comment comment = commentMapper.toEntity(commentDto);
         comment.setAuthor(author);
