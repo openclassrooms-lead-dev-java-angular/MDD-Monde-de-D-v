@@ -95,4 +95,16 @@ public class SubscriptionService {
                 .map(subscriptionMapper::toDto)
                 .toList();
     }
+
+    /**
+     * Checks whether a subscription exists for the specified user and topic.
+     *
+     * @param userId the ID of the user
+     * @param topicId the ID of the topic
+     * @return {@code true} if a subscription exists for the given user and topic,
+     *         {@code false} otherwise
+     */
+    public boolean existsByUserIdAndTopicId(final Long userId, final Long topicId) {
+        return this.subscriptionRepository.existsByUserIdAndTopicId(userId, topicId);
+    }
 }
