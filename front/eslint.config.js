@@ -44,4 +44,35 @@ module.exports = [
     },
     rules: {},
   },
+
+  {
+    files: ['cypress/e2e/**/*.cy.ts', 'cypress/**/*.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.cypress,
+        cy: 'readonly',
+        Cypress: 'readonly',
+        expect: 'readonly',
+      },
+    },
+  },
+
+  {
+    files: ['cypress/**/*.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.mocha,
+        cy: 'readonly',
+        Cypress: 'readonly',
+      },
+    },
+  },
+
+  {
+    files: ['cypress/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
 ];

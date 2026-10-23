@@ -20,7 +20,6 @@ export const authRefreshInterceptor: HttpInterceptorFn = (req, next) => {
   const userStateService = inject(UserStateService);
   const router = inject(Router);
 
-  // Ne jamais déclencher de refresh sur ces routes.
   const excludedUrl = /\/(login|logout|refresh)(?:[/?#]|$)/i;
 
   if (excludedUrl.test(req.url)) {
@@ -33,7 +32,6 @@ export const authRefreshInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // Partage un éventuel refresh déjà en cours.
       if (!refreshRequest$) {
         refreshRequest$ = authService.refreshToken().pipe(
           finalize(() => {
@@ -47,7 +45,6 @@ export const authRefreshInterceptor: HttpInterceptorFn = (req, next) => {
         switchMap(() => next(req.clone({ withCredentials: true }))),
         catchError((refreshError: unknown) => {
           userStateService.clearUser();
-          void router.navigate(['/login']);
 
           return throwError(() => refreshError);
         }),
