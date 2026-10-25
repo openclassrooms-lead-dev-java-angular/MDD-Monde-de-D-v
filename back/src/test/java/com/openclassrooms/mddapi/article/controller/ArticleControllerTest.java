@@ -4,19 +4,14 @@ import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
 import com.openclassrooms.mddapi.article.security.ArticleSecurity;
 import com.openclassrooms.mddapi.article.service.ArticleService;
+import com.openclassrooms.mddapi.config.TestSecurityConfig;
 import com.openclassrooms.mddapi.security.TestAuthentication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,7 +25,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 @WebMvcTest(ArticleController.class)
 @ActiveProfiles("test")
-@Import(ArticleControllerTest.TestSecurityConfig.class)
+@Import(TestSecurityConfig.class)
 class ArticleControllerTest {
 
     @Autowired
@@ -155,27 +150,5 @@ class ArticleControllerTest {
 
         verify(articleService, never())
                 .create(any(ArticleRequestDto.class));
-    }
-
-    /*
-     * Test security configuration with CSRF and method security enabled.
-     */
-
-    @TestConfiguration
-    @EnableMethodSecurity
-    static class TestSecurityConfig {
-
-        @Bean
-        SecurityFilterChain testSecurityFilterChain(HttpSecurity http)
-                throws Exception {
-
-            http
-                    .csrf(Customizer.withDefaults())
-                    .authorizeHttpRequests(auth -> auth
-                            .anyRequest().authenticated()
-                    );
-
-            return http.build();
-        }
     }
 }
