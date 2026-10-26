@@ -38,7 +38,7 @@ export class TopicComponent implements OnInit {
   private loadPage(pageNumber: number): void {
     this.loading.set(true);
 
-    this.topicService.getTopics(pageNumber, this.pageSize).subscribe({
+    this.topicService.fetchTopics(pageNumber, this.pageSize).subscribe({
       next: (page) => {
         this.topicList.update((topics) => [...topics, ...page.content]);
         this.currentPage = page.number + 1;
@@ -54,11 +54,11 @@ export class TopicComponent implements OnInit {
   }
 
   protected subscribeToTopic(topic: Topic): void {
-    this.topicService.subscribe(topic.slug).subscribe({
+    this.topicService.subscribe(topic.publicId).subscribe({
       next: () => {
         this.topicList.update((topics) =>
           topics.map((t) =>
-            t.slug === topic.slug ? { ...t, subscribed: true } : t,
+            t.publicId === topic.publicId ? { ...t, subscribed: true } : t,
           ),
         );
         topic.subscribed = true;
