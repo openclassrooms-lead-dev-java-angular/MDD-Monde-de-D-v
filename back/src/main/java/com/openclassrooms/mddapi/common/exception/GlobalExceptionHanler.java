@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -51,6 +52,16 @@ public class GlobalExceptionHanler {
     public ErrorResponseDto handleTopicNotFoundException(TopicNotFoundException e) {
         log.warn(e.getMessage(), e);
         return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    // Bad request
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ErrorResponseDto handleMissingServletRequestParameter(
+            MissingServletRequestParameterException e) {
+        log.warn(e.getMessage(), e);
+        return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
     // Conflict exceptions
