@@ -1,6 +1,7 @@
 package com.openclassrooms.mddapi.common.config;
 
 import com.openclassrooms.mddapi.auth.security.cookie.CookieBearerTokenResolver;
+import com.openclassrooms.mddapi.auth.security.csrf.SpaCsrfTokenRequestHandler;
 import com.openclassrooms.mddapi.auth.security.jwt.JwtAccessDeniedHandler;
 import com.openclassrooms.mddapi.auth.security.jwt.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -67,8 +69,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(
-                                org.springframework.security.web.csrf.CookieCsrfTokenRepository
-                                        .withHttpOnlyFalse()
+                                CookieCsrfTokenRepository.withHttpOnlyFalse()
+                        )
+                        .csrfTokenRequestHandler(
+                                new SpaCsrfTokenRequestHandler()
                         )
                 )
                 .sessionManagement(session ->
