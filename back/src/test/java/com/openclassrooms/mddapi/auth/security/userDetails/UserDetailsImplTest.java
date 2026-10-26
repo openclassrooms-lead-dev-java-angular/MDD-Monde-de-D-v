@@ -1,6 +1,9 @@
 package com.openclassrooms.mddapi.auth.security.userDetails;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.GrantedAuthority;
+
+import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,8 +17,7 @@ class UserDetailsImplTest {
         userDetails.setUsername("john.doe@example.com");
         userDetails.setPassword("encoded-password");
 
-        assertThat(userDetails.getId())
-                .isEqualTo(123L);
+        assertThat(userDetails.getId()).isEqualTo(123L);
         assertThat(userDetails.getUsername())
                 .isEqualTo("john.doe@example.com");
         assertThat(userDetails.getPassword())
@@ -23,13 +25,35 @@ class UserDetailsImplTest {
     }
 
     @Test
-    void shouldReturnPassword() {
+    void shouldReturnEmptyAuthorities() {
         UserDetailsImpl userDetails = new UserDetailsImpl();
-        userDetails.setPassword("encoded-password");
 
-        String password = userDetails.getPassword();
+        Collection<? extends GrantedAuthority> authorities =
+                userDetails.getAuthorities();
 
-        assertThat(password)
-                .isEqualTo("encoded-password");
+        assertThat(authorities)
+                .isNotNull()
+                .isEmpty();
+    }
+
+    @Test
+    void shouldReturnNullPasswordWhenPasswordIsNotSet() {
+        UserDetailsImpl userDetails = new UserDetailsImpl();
+
+        assertThat(userDetails.getPassword()).isNull();
+    }
+
+    @Test
+    void shouldReturnNullUsernameWhenUsernameIsNotSet() {
+        UserDetailsImpl userDetails = new UserDetailsImpl();
+
+        assertThat(userDetails.getUsername()).isNull();
+    }
+
+    @Test
+    void shouldReturnNullIdWhenIdIsNotSet() {
+        UserDetailsImpl userDetails = new UserDetailsImpl();
+
+        assertThat(userDetails.getId()).isNull();
     }
 }
