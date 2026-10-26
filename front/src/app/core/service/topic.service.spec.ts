@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 
 import { TopicService } from './topic.service';
 import { environment } from '../../../environments/environment';
@@ -33,7 +33,7 @@ describe('TopicService', () => {
     httpMock.verify();
   });
 
-  describe('getTopics', () => {
+  describe('fetchTopics', () => {
     it('should retrieve a paginated list of topics', () => {
       const page = 0;
       const size = 10;
@@ -42,7 +42,11 @@ describe('TopicService', () => {
         content: [
           {
             name: 'Java',
-            slug: 'java',
+            publicId: 'java',
+            description: '',
+            subscribed: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
         ],
         totalElements: 1,
@@ -55,7 +59,7 @@ describe('TopicService', () => {
         empty: false,
       } as Page<Topic>;
 
-      service.getTopics(page, size).subscribe((response) => {
+      service.fetchTopics(page, size).subscribe((response) => {
         expect(response).toEqual(mockResponse);
       });
 
@@ -69,7 +73,7 @@ describe('TopicService', () => {
     });
 
     it('should send the requested pagination parameters', () => {
-      service.getTopics(2, 5).subscribe();
+      service.fetchTopics(2, 5).subscribe();
 
       const req = httpMock.expectOne((request) => request.url === baseUrl);
 
@@ -90,14 +94,14 @@ describe('TopicService', () => {
     });
   });
 
-  describe('getTopicList', () => {
+  describe('fetchTopicList', () => {
     it('should retrieve the topic options', () => {
       const mockResponse: TopicOption[] = [
-        { name: 'Java', slug: 'java' },
-        { name: 'Angular', slug: 'angular' },
+        { name: 'Java', publicId: 'java' },
+        { name: 'Angular', publicId: 'angular' },
       ];
 
-      service.getTopicList().subscribe((response) => {
+      service.fetchTopicOptions().subscribe((response) => {
         expect(response).toEqual(mockResponse);
       });
 
@@ -111,11 +115,11 @@ describe('TopicService', () => {
 
   describe('subscribe', () => {
     it('should subscribe to a topic', () => {
-      const slug = 'java';
+      const publicId = 'java';
 
-      service.subscribe(slug).subscribe();
+      service.subscribe(publicId).subscribe();
 
-      const req = httpMock.expectOne(`${baseUrl}/${slug}/subscribe`);
+      const req = httpMock.expectOne(`${baseUrl}/${publicId}/subscribe`);
 
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({});
@@ -126,11 +130,11 @@ describe('TopicService', () => {
 
   describe('unsubscribe', () => {
     it('should unsubscribe from a topic', () => {
-      const slug = 'java';
+      const publicId = 'java';
 
-      service.unsubscribe(slug).subscribe();
+      service.unsubscribe(publicId).subscribe();
 
-      const req = httpMock.expectOne(`${baseUrl}/${slug}/subscribe`);
+      const req = httpMock.expectOne(`${baseUrl}/${publicId}/subscribe`);
 
       expect(req.request.method).toBe('DELETE');
 
@@ -138,26 +142,38 @@ describe('TopicService', () => {
     });
   });
 
-  describe('getSubscribed', () => {
+  describe('fetchSubscribed', () => {
     it('should retrieve the subscribed topics', () => {
-      const mockResponse: Page<Topic[]> = {
+      const mockResponse: Page<Topic> = {
         content: [
-          [
-            { name: 'Java', slug: 'java' },
-            { name: 'Angular', slug: 'angular' },
-          ],
+          {
+            name: 'Java',
+            publicId: 'java',
+            description: '',
+            subscribed: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            name: 'Angular',
+            publicId: 'angular',
+            description: '',
+            subscribed: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
         ],
-        totalElements: 1,
         totalPages: 1,
+        totalElements: 1,
         size: 10,
         number: 0,
-        numberOfElements: 1,
         first: true,
         last: true,
         empty: false,
-      } as Page<Topic[]>;
+        numberOfElements: 1,
+      } as Page<Topic>;
 
-      service.getSubscribed().subscribe((response) => {
+      service.fetchSubscribed(0, 10).subscribe((response) => {
         expect(response).toEqual(mockResponse);
         expect(response.content).toEqual(mockResponse.content);
       });
@@ -170,7 +186,7 @@ describe('TopicService', () => {
     });
 
     it('should retrieve an empty page when the user has no subscribed topics', () => {
-      const mockResponse: Page<Topic[]> = {
+      const mockResponse: Page<Topic> = {
         content: [],
         totalElements: 0,
         totalPages: 0,
@@ -180,9 +196,9 @@ describe('TopicService', () => {
         first: true,
         last: true,
         empty: true,
-      } as Page<Topic[]>;
+      } as Page<Topic>;
 
-      service.getSubscribed().subscribe((response) => {
+      service.fetchSubscribed(0, 10).subscribe((response) => {
         expect(response).toEqual(mockResponse);
         expect(response.content).toEqual([]);
         expect(response.empty).toBe(true);
@@ -194,5 +210,25 @@ describe('TopicService', () => {
 
       req.flush(mockResponse);
     });
+  });
+
+  it('should propagate an HTTP error when fetching topics fails', () => {
+    let receivedError: HttpErrorResponse | undefined;
+
+    service.fetchTopics(0, 10).subscribe({
+      error: (error: HttpErrorResponse) => {
+        receivedError = error;
+      },
+    });
+
+    const req = httpMock.expectOne((request) => request.url === baseUrl);
+
+    req.flush(
+      { message: 'Server error' },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+
+    expect(receivedError).toBeDefined();
+    expect(receivedError?.status).toBe(500);
   });
 });

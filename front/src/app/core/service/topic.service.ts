@@ -13,7 +13,7 @@ export class TopicService {
 
   private httpClient = inject(HttpClient);
 
-  public getTopics(page: number, size: number): Observable<Page<Topic>> {
+  public fetchTopics(page: number, size: number): Observable<Page<Topic>> {
     return this.httpClient.get<Page<Topic>>(`${this.pathService}`, {
       params: {
         page,
@@ -22,29 +22,28 @@ export class TopicService {
     });
   }
 
-  public getTopicList(): Observable<TopicOption[]> {
+  public fetchTopicOptions(): Observable<TopicOption[]> {
     return this.httpClient.get<TopicOption[]>(`${this.pathService}/options`);
   }
 
-  public subscribe(slug: string): Observable<void> {
+  public subscribe(publicId: string): Observable<void> {
     return this.httpClient.post<void>(
-      `${this.pathService}/${slug}/subscribe`,
+      `${this.pathService}/${publicId}/subscribe`,
       {},
     );
   }
 
-  public unsubscribe(slug: string): Observable<void> {
+  public unsubscribe(publicId: string): Observable<void> {
     return this.httpClient.delete<void>(
-      `${this.pathService}/${slug}/subscribe`,
+      `${this.pathService}/${publicId}/subscribe`,
     );
   }
 
-  public getSubscribed(page: number, size: number): Observable<Page<Topic>> {
+  public fetchSubscribed(page: number, size: number): Observable<Page<Topic>> {
     const params = new HttpParams().set('page', page).set('size', size);
 
-    return this.httpClient.get<Page<Topic>>(
-      `${this.pathService}/subscribed`,
-      { params },
-    );
+    return this.httpClient.get<Page<Topic>>(`${this.pathService}/subscribed`, {
+      params,
+    });
   }
 }
