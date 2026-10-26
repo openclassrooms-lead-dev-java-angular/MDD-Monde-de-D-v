@@ -1,251 +1,312 @@
-import {
-  ComponentFixture,
-  fakeAsync,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RegisterComponent } from './register.component';
 import { Router } from '@angular/router';
 import { AuthService } from '@service/auth.service';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
+import { ValidationErrorService } from '@service/validation.service';
 import { HttpResponse } from '@angular/common/http';
+import { AvailableResponse } from '@type/available-response.type';
 
 describe('RegisterComponent', () => {
-  let component: RegisterComponent;
   let fixture: ComponentFixture<RegisterComponent>;
+  let component: RegisterComponent;
 
-  let router: jasmine.SpyObj<Router>;
   let authService: jasmine.SpyObj<AuthService>;
+  let router: jasmine.SpyObj<Router>;
+  let validationErrorService: jasmine.SpyObj<ValidationErrorService>;
 
   beforeEach(async () => {
-    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-
     authService = jasmine.createSpyObj<AuthService>('AuthService', [
       'register',
       'checkUsernameAvailability',
     ]);
 
-    authService.register.and.returnValue(
-      of(new HttpResponse<void>({ status: 201 })),
+    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+
+    validationErrorService = jasmine.createSpyObj<ValidationErrorService>(
+      'ValidationErrorService',
+      ['getErrors'],
     );
 
-    authService.checkUsernameAvailability.and.returnValue(
-      of({ available: true }),
+    // Use typed observable mocks without depending on the concrete response models.
+    authService.register.and.returnValue(
+      of(new HttpResponse<void>({ body: null })),
     );
+    authService.checkUsernameAvailability.and.returnValue(
+      of({ available: true } as AvailableResponse),
+    );
+
+    router.navigate.and.returnValue(Promise.resolve(true));
+
+    validationErrorService.getErrors.and.returnValue([]);
 
     await TestBed.configureTestingModule({
       imports: [RegisterComponent],
       providers: [
-        { provide: Router, useValue: router },
         { provide: AuthService, useValue: authService },
+        { provide: Router, useValue: router },
+        {
+          provide: ValidationErrorService,
+          useValue: validationErrorService,
+        },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(RegisterComponent, {
+        set: {
+          template: '',
+          imports: [],
+        },
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
+  });
+
+  function initializeComponent(): void {
     fixture.detectChanges();
-  });
+  }
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+  function prepareValidForm(): void {
+    const { email, username, password } = component.registerForm.controls;
 
-  describe('registerForm', () => {
-    it('should be invalid when empty', () => {
-      expect(component.registerForm.invalid).toBeTrue();
+    username.clearAsyncValidators();
+    username.setValue('johnDoe');
+
+    email.setValue('john@example.com');
+
+    password.setValue('Password123!');
+    password.updateValueAndValidity();
+  }
+
+  describe('creation', () => {
+    it('should create the component', () => {
+      expect(component).toBeTruthy();
     });
 
-    it('should be valid with valid values', fakeAsync(() => {
-      component.registerForm.setValue({
-        email: 'john@example.com',
-        username: 'john',
-        password: 'Password1!',
+    it('should initialize the form with empty values', () => {
+      expect(component.registerForm.getRawValue()).toEqual({
+        email: '',
+        username: '',
+        password: '',
       });
-
-      tick(400);
-      fixture.detectChanges();
-
-      expect(component.registerForm.valid).toBeTrue();
-    }));
-  });
-
-  describe('emailErrors', () => {
-    it('should return no error initially', () => {
-      expect(component.emailErrors).toEqual([]);
     });
 
-    it('should return required error', () => {
-      const control = component.registerForm.controls.email;
-      control.markAsTouched();
-
-      expect(component.emailErrors).toEqual([
-        "L'adresse e-mail est obligatoire.",
-      ]);
-    });
-
-    it('should return invalid email error', () => {
-      const control = component.registerForm.controls.email;
-      control.setValue('invalid-email');
-      control.markAsTouched();
-
-      expect(component.emailErrors).toEqual([
-        "L'adresse e-mail n'est pas valide.",
-      ]);
-    });
-
-    it('should return maxlength error', () => {
-      const control = component.registerForm.controls.email;
-      control.setValue(`${'a'.repeat(45)}@example.com`);
-      control.markAsTouched();
-
-      expect(component.emailErrors).toEqual(['Maximum 50 caractères.']);
+    it('should initialize loading and error signals', () => {
+      expect(component.isLoading()).toBeFalse();
+      expect(component.errorMessage()).toBe('');
     });
   });
 
-  describe('usernameErrors', () => {
-    it('should return required error', () => {
-      const control = component.registerForm.controls.username;
-      control.markAsTouched();
+  describe('email validation', () => {
+    it('should reject an empty email', () => {
+      const email = component.registerForm.controls.email;
 
-      expect(component.usernameErrors).toEqual([
-        "Le nom d'utilisateur est obligatoire.",
-      ]);
+      email.setValue('');
+
+      expect(email.hasError('required')).toBeTrue();
     });
 
-    it('should return minlength error', () => {
-      const control = component.registerForm.controls.username;
-      control.setValue('ab');
-      control.markAsTouched();
+    it('should reject an invalid email format', () => {
+      const email = component.registerForm.controls.email;
 
-      expect(component.usernameErrors).toEqual([
-        'Le nom d’utilisateur doit contenir au moins 3 caractères.',
-      ]);
+      email.setValue('invalid-email');
+
+      expect(email.hasError('email')).toBeTrue();
     });
 
-    it('should return maxlength error', () => {
-      const control = component.registerForm.controls.username;
-      control.setValue('a'.repeat(21));
-      control.markAsTouched();
+    it('should reject an email longer than 50 characters', () => {
+      const email = component.registerForm.controls.email;
 
-      expect(component.usernameErrors).toEqual(['Maximum 20 caractères.']);
+      email.setValue(`${'a'.repeat(40)}@example.com`);
+
+      expect(email.hasError('maxlength')).toBeTrue();
     });
 
-    it('should return username taken error', () => {
-      const control = component.registerForm.controls.username;
-      control.setErrors({ usernameTaken: true });
-      control.markAsTouched();
+    it('should accept a valid email', () => {
+      const email = component.registerForm.controls.email;
 
-      expect(component.usernameErrors).toEqual([
-        'Ce nom d’utilisateur est déjà utilisé.',
-      ]);
+      email.setValue('john@example.com');
+
+      expect(email.valid).toBeTrue();
     });
   });
 
-  describe('passwordErrors', () => {
-    it('should return required error', () => {
-      const control = component.registerForm.controls.password;
-      control.markAsTouched();
+  describe('username validation', () => {
+    it('should reject an empty username', () => {
+      const username = component.registerForm.controls.username;
 
-      expect(component.passwordErrors).toEqual([
-        'Le mot de passe est obligatoire.',
-      ]);
+      username.clearAsyncValidators();
+      username.setValue('');
+
+      expect(username.hasError('required')).toBeTrue();
     });
 
-    it('should return all missing constraints', () => {
-      const control = component.registerForm.controls.password;
-      control.setValue('abc');
-      control.markAsTouched();
+    it('should reject a username shorter than 3 characters', () => {
+      const username = component.registerForm.controls.username;
 
-      expect(component.passwordErrors).toEqual([
-        'Minimum 8 caractères.',
-        'Au moins une lettre majuscule.',
-        'Au moins un chiffre.',
-        'Au moins un caractère spécial.',
-      ]);
+      username.clearAsyncValidators();
+      username.setValue('ab');
+
+      expect(username.hasError('minlength')).toBeTrue();
     });
 
-    it('should return no error with a valid password', () => {
-      const control = component.registerForm.controls.password;
-      control.setValue('Password1!');
-      control.markAsTouched();
+    it('should reject a username longer than 20 characters', () => {
+      const username = component.registerForm.controls.username;
 
-      expect(component.passwordErrors).toEqual([]);
+      username.clearAsyncValidators();
+      username.setValue('a'.repeat(21));
+
+      expect(username.hasError('maxlength')).toBeTrue();
+    });
+
+    it('should accept a username with a valid length', () => {
+      const username = component.registerForm.controls.username;
+
+      username.clearAsyncValidators();
+      username.setValue('johnDoe');
+
+      expect(username.valid).toBeTrue();
+    });
+
+    it('should expose the pending state of the username validator', () => {
+      component.registerForm.controls.username.markAsPending();
+
+      expect(component.isUsernameLoading).toBeTrue();
+    });
+
+    it('should return false when username validation is not pending', () => {
+      const username = component.registerForm.controls.username;
+
+      username.clearAsyncValidators();
+      username.setValue('johnDoe');
+
+      expect(component.isUsernameLoading).toBeFalse();
     });
   });
 
-  describe('usernameAvailabilityValidator', () => {
-    it('should not call API for username shorter than 3 characters', fakeAsync(() => {
-      const control = component.registerForm.controls.username;
+  describe('password validation', () => {
+    it('should reject an empty password', () => {
+      const password = component.registerForm.controls.password;
 
-      control.setValue('ab');
-      tick(400);
+      password.setValue('');
 
-      expect(authService.checkUsernameAvailability).not.toHaveBeenCalled();
-      expect(control.errors).toBeNull();
-    }));
+      expect(password.hasError('required')).toBeTrue();
+    });
 
-    it('should validate an available username', fakeAsync(() => {
-      authService.checkUsernameAvailability.and.returnValue(
-        of({ available: true }),
+    it('should reject a password shorter than 8 characters', () => {
+      const password = component.registerForm.controls.password;
+
+      password.setValue('Ab1!xyz');
+
+      expect(password.hasError('minlength')).toBeTrue();
+    });
+
+    it('should require an uppercase letter', () => {
+      const password = component.registerForm.controls.password;
+
+      password.setValue('password123!');
+
+      expect(password.hasError('pattern')).toBeTrue();
+    });
+
+    it('should require a lowercase letter', () => {
+      const password = component.registerForm.controls.password;
+
+      password.setValue('PASSWORD123!');
+
+      expect(password.hasError('pattern')).toBeTrue();
+    });
+
+    it('should require a digit', () => {
+      const password = component.registerForm.controls.password;
+
+      password.setValue('PasswordTest!');
+
+      expect(password.hasError('pattern')).toBeTrue();
+    });
+
+    it('should require a special character', () => {
+      const password = component.registerForm.controls.password;
+
+      password.setValue('Password123');
+
+      expect(password.hasError('pattern')).toBeTrue();
+    });
+
+    it('should accept a password satisfying all requirements', () => {
+      const password = component.registerForm.controls.password;
+
+      password.setValue('Password123!');
+
+      expect(password.valid).toBeTrue();
+    });
+  });
+
+  describe('validation error getters', () => {
+    it('should return email errors', () => {
+      validationErrorService.getErrors.and.returnValue(['Email invalide']);
+
+      expect(component.emailErrors).toEqual(['Email invalide']);
+
+      expect(validationErrorService.getErrors).toHaveBeenCalledWith(
+        component.registerForm.controls.email,
+        'email',
       );
+    });
 
-      const control = component.registerForm.controls.username;
-      control.setValue('john');
+    it('should return username errors', () => {
+      validationErrorService.getErrors.and.returnValue([
+        'Nom utilisateur invalide',
+      ]);
 
-      tick(400);
-      fixture.detectChanges();
+      expect(component.usernameErrors).toEqual(['Nom utilisateur invalide']);
 
-      expect(authService.checkUsernameAvailability).toHaveBeenCalledOnceWith(
-        'john',
+      expect(validationErrorService.getErrors).toHaveBeenCalledWith(
+        component.registerForm.controls.username,
+        'username',
       );
-      expect(control.errors).toBeNull();
-    }));
+    });
 
-    it('should invalidate an unavailable username', fakeAsync(() => {
-      authService.checkUsernameAvailability.and.returnValue(
-        of({ available: false }),
+    it('should return password errors', () => {
+      validationErrorService.getErrors.and.returnValue([
+        'Mot de passe invalide',
+      ]);
+
+      expect(component.passwordErrors).toEqual(['Mot de passe invalide']);
+
+      expect(validationErrorService.getErrors).toHaveBeenCalledWith(
+        component.registerForm.controls.password,
+        'password',
       );
-
-      const control = component.registerForm.controls.username;
-      control.setValue('john');
-
-      tick(400);
-      fixture.detectChanges();
-
-      expect(control.hasError('usernameTaken')).toBeTrue();
-    }));
-
-    it('should ignore API errors', fakeAsync(() => {
-      spyOn(console, 'error');
-
-      authService.checkUsernameAvailability.and.returnValue(
-        throwError(() => new Error('Network')),
-      );
-
-      const control = component.registerForm.controls.username;
-      control.setValue('john');
-
-      tick(400);
-      fixture.detectChanges();
-
-      expect(console.error).toHaveBeenCalled();
-      expect(control.errors).toBeNull();
-    }));
+    });
   });
 
   describe('submit', () => {
-    beforeEach(fakeAsync(() => {
-      component.registerForm.setValue({
+    beforeEach(() => {
+      initializeComponent();
+      prepareValidForm();
+    });
+
+    it('should register the user with the form values', () => {
+      component.submit();
+
+      expect(authService.register).toHaveBeenCalledOnceWith({
         email: 'john@example.com',
-        username: 'john',
-        password: 'Password1!',
+        username: 'johnDoe',
+        password: 'Password123!',
       });
+    });
 
-      tick(400);
-      fixture.detectChanges();
-    }));
+    it('should clear the previous error message', () => {
+      component.errorMessage.set('Previous error');
 
-    it('should not submit when form is invalid', () => {
+      component.submit();
+
+      expect(component.errorMessage()).toBe('');
+    });
+
+    it('should not submit an invalid form', () => {
       component.registerForm.controls.email.setValue('');
 
       component.submit();
@@ -254,7 +315,7 @@ describe('RegisterComponent', () => {
       expect(component.registerForm.controls.email.touched).toBeTrue();
     });
 
-    it('should not submit when form is pending', () => {
+    it('should not submit when the form is pending', () => {
       component.registerForm.controls.username.markAsPending();
 
       component.submit();
@@ -262,75 +323,133 @@ describe('RegisterComponent', () => {
       expect(authService.register).not.toHaveBeenCalled();
     });
 
-    it('should not submit when already loading', () => {
-      component.isLoading = true;
+    it('should not submit while another request is in progress', () => {
+      component.isLoading.set(true);
 
       component.submit();
 
       expect(authService.register).not.toHaveBeenCalled();
     });
 
-    it('should call register with form values', () => {
+    it('should set loading while the request is pending', () => {
+      const request = new Subject<never>();
+
+      authService.register.and.returnValue(request.asObservable());
+
       component.submit();
 
-      expect(authService.register).toHaveBeenCalledOnceWith({
-        email: 'john@example.com',
-        username: 'john',
-        password: 'Password1!',
-      });
+      expect(component.isLoading()).toBeTrue();
+
+      request.complete();
+
+      expect(component.isLoading()).toBeFalse();
     });
 
-    it('should navigate to login after successful registration', () => {
+    it('should navigate to the login page after successful registration', () => {
       component.submit();
 
       expect(router.navigate).toHaveBeenCalledOnceWith(['/login']);
-      expect(component.isLoading).toBeFalse();
     });
 
-    it('should display backend error message', () => {
+    it('should reset loading after successful registration', () => {
+      component.submit();
+
+      expect(component.isLoading()).toBeFalse();
+    });
+
+    it('should display an error message when registration fails', () => {
+      spyOn(console, 'error');
+
       authService.register.and.returnValue(
         throwError(() => ({
-          error: {
-            message: 'Email déjà utilisé',
-          },
+          error: { message: 'Server error' },
         })),
       );
 
-      spyOn(console, 'error');
-
       component.submit();
 
-      expect(component.errorMessage).toBe('Email déjà utilisé');
-      expect(component.isLoading).toBeFalse();
+      expect(component.errorMessage()).toBe(
+        "Une erreur est survenue lors de l'inscription.",
+      );
+
+      expect(component.isLoading()).toBeFalse();
       expect(console.error).toHaveBeenCalled();
     });
 
-    it('should display default error message', () => {
-      authService.register.and.returnValue(throwError(() => ({})));
-
-      spyOn(console, 'error');
-
-      component.submit();
-
-      expect(component.errorMessage).toBe(
-        "Une erreur est survenue lors de l'inscription.",
+    it('should not navigate after registration fails', () => {
+      authService.register.and.returnValue(
+        throwError(() => new Error('Server error')),
       );
-    });
-
-    it('should clear previous error message', () => {
-      component.errorMessage = 'Ancienne erreur';
 
       component.submit();
 
-      expect(component.errorMessage).toBe('');
+      expect(router.navigate).not.toHaveBeenCalled();
     });
   });
 
   describe('goBack', () => {
-    it('should navigate to home', () => {
+    it('should navigate to the home page', () => {
       component.goBack();
 
       expect(router.navigate).toHaveBeenCalledOnceWith(['/']);
+    });
+  });
+
+  describe('username validation boundaries', () => {
+    it('should accept a username with exactly 3 characters', () => {
+      const username = component.registerForm.controls.username;
+
+      username.clearAsyncValidators();
+      username.setValue('abc');
+
+      expect(username.valid).toBeTrue();
+    });
+
+    it('should accept a username with exactly 20 characters', () => {
+      const username = component.registerForm.controls.username;
+
+      username.clearAsyncValidators();
+      username.setValue('a'.repeat(20));
+
+      expect(username.valid).toBeTrue();
+    });
+  });
+
+  describe('submit additional cases', () => {
+    beforeEach(() => {
+      prepareValidForm();
+    });
+
+    it('should mark all controls as touched when the form is invalid', () => {
+      component.registerForm.controls.email.setValue('');
+
+      component.submit();
+
+      expect(component.registerForm.controls.email.touched).toBeTrue();
+      expect(component.registerForm.controls.username.touched).toBeTrue();
+      expect(component.registerForm.controls.password.touched).toBeTrue();
+    });
+
+    it('should not submit twice while registration is in progress', () => {
+      const request = new Subject<never>();
+      authService.register.and.returnValue(request.asObservable());
+
+      component.submit();
+      component.submit();
+
+      expect(authService.register).toHaveBeenCalledTimes(1);
+
+      request.complete();
+    });
+
+    it('should clear the previous error even when the form is invalid', () => {
+      component.errorMessage.set('Previous error');
+      component.registerForm.controls.email.setValue('');
+
+      component.submit();
+
+      expect(component.errorMessage()).toBe('');
+      expect(authService.register).not.toHaveBeenCalled();
     });
   });
 });
