@@ -4,7 +4,6 @@ import com.openclassrooms.mddapi.auth.exception.UnauthorizedException;
 import com.openclassrooms.mddapi.user.entity.User;
 import com.openclassrooms.mddapi.user.exceptions.UserNotFoundException;
 import com.openclassrooms.mddapi.user.repository.UserRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,8 +17,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
