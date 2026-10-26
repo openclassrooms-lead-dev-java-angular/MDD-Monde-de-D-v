@@ -1,5 +1,5 @@
 export interface Topic {
-  slug: string;
+  publicId: string;
   name: string;
   description: string;
   subscribed: boolean;
