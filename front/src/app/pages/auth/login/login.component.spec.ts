@@ -162,7 +162,7 @@ describe('LoginComponent', () => {
 
       component.submit();
 
-      expect(component.errorMessage).toBeTruthy();
+      expect(component.errorMessage()).toBeTruthy();
       expect(userService.getMe).not.toHaveBeenCalled();
     });
 
@@ -178,7 +178,7 @@ describe('LoginComponent', () => {
 
       component.submit();
 
-      expect(component.errorMessage).toBeTruthy();
+      expect(component.errorMessage()).toBeTruthy();
       expect(userStateService.setUser).not.toHaveBeenCalled();
       expect(router.navigate).not.toHaveBeenCalled();
     });
@@ -199,7 +199,7 @@ describe('LoginComponent', () => {
     });
 
     it('should clear the previous error when submitting again', () => {
-      component.errorMessage = 'Previous error';
+      component.errorMessage.set('Previous error');
 
       component.loginForm.setValue({
         usernameOrEmail: 'jdupont@example.com',
@@ -208,7 +208,7 @@ describe('LoginComponent', () => {
 
       component.submit();
 
-      expect(component.errorMessage).toBe('');
+      expect(component.errorMessage()).toBe('');
     });
 
     it('should not submit when the form is pending', () => {
