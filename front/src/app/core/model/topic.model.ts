@@ -8,6 +8,6 @@ export interface Topic {
 }
 
 export interface TopicOption {
-  slug: string;
+  publicId: string;
   name: string;
 }
