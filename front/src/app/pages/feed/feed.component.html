@@ -26,11 +26,14 @@
     </button>
   </div>
 
-  <div class="article-list__grid" infiniteScroll
-  [infiniteScrollDistance]="2"
-  [infiniteScrollThrottle]="150"
-  (scrolled)="loadMore()">
-    @for (article of articleList(); track article.slug) {
+  <div
+    class="article-list__grid"
+    infiniteScroll
+    [infiniteScrollDistance]="2"
+    [infiniteScrollThrottle]="150"
+    (scrolled)="loadMore()"
+  >
+    @for (article of articleList(); track article.publicId) {
       <app-article-card [article]="article" />
     }
 
