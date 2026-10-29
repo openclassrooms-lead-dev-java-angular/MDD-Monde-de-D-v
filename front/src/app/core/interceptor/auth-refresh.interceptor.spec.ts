@@ -1,6 +1,7 @@
 import {
   HttpClient,
   HttpErrorResponse,
+  HttpResponse,
   provideHttpClient,
   withInterceptors,
 } from '@angular/common/http';
@@ -31,7 +32,7 @@ describe('authRefreshInterceptor', () => {
     );
 
     authService.refreshToken.and.returnValue(
-      of(undefined) as ReturnType<AuthService['refreshToken']>,
+      of(new HttpResponse<void>({ status: 200 })),
     );
 
     TestBed.configureTestingModule({
