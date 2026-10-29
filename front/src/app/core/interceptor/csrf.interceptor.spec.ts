@@ -1,9 +1,10 @@
-
 import {
   HttpClient,
   provideHttpClient,
   withInterceptors,
 } from '@angular/common/http';
+import { HttpRequest, HttpResponse, HttpHandlerFn } from '@angular/common/http';
+import { firstValueFrom, of } from 'rxjs';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -31,9 +32,7 @@ describe('csrfInterceptor', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(
-          withInterceptors([csrfInterceptor]),
-        ),
+        provideHttpClient(withInterceptors([csrfInterceptor])),
         provideHttpClientTesting(),
       ],
     });
@@ -130,28 +129,38 @@ describe('csrfInterceptor', () => {
       request.flush(null);
     });
 
-    it('should not add the CSRF header to OPTIONS requests', () => {
+    it('should not add the CSRF header to OPTIONS requests', async () => {
       setCsrfCookie('test-csrf-token');
 
-      http.options('/api/profile').subscribe();
+      const request = new HttpRequest('OPTIONS', '/api/profile');
 
-      const request = httpMock.expectOne('/api/profile');
+      let interceptedRequest: HttpRequest<unknown> | undefined;
 
-      expect(request.request.headers.has('X-XSRF-TOKEN')).toBeFalse();
+      const next: HttpHandlerFn = (req) => {
+        interceptedRequest = req;
+        return of(new HttpResponse({ status: 200 }));
+      };
 
-      request.flush({});
+      await firstValueFrom(csrfInterceptor(request, next));
+
+      expect(interceptedRequest?.headers.has('X-XSRF-TOKEN')).toBeFalse();
     });
 
-    it('should not add the CSRF header to TRACE requests', () => {
+    it('should not add the CSRF header to TRACE requests', async () => {
       setCsrfCookie('test-csrf-token');
 
-      http.request('TRACE', '/api/profile').subscribe();
+      const request = new HttpRequest('TRACE' as never, '/api/profile');
 
-      const request = httpMock.expectOne('/api/profile');
+      let interceptedRequest: HttpRequest<unknown> | undefined;
 
-      expect(request.request.headers.has('X-XSRF-TOKEN')).toBeFalse();
+      const next: HttpHandlerFn = (req) => {
+        interceptedRequest = req;
+        return of(new HttpResponse({ status: 200 }));
+      };
 
-      request.flush({});
+      await firstValueFrom(csrfInterceptor(request, next));
+
+      expect(interceptedRequest?.headers.has('X-XSRF-TOKEN')).toBeFalse();
     });
   });
 
