@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { ArticleComment } from '@model/article-comment.model';
 

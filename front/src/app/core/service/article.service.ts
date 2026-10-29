@@ -4,7 +4,6 @@ import { environment } from '@env/environment.prod';
 import { Article, ArticleNew } from '@model/article.model';
 import { Page } from '@type/page.type';
 import { Observable } from 'rxjs';
-import { AvailableResponse } from '@type/available-response.type';
 import { SortDirection } from '@type/sort-direction.type';
 
 @Injectable({
@@ -15,8 +14,8 @@ export class ArticleService {
 
   private httpClient = inject(HttpClient);
 
-  public getArticleBySlug(slug: string): Observable<Article> {
-    return this.httpClient.get<Article>(`${this.pathService}/${slug}`);
+  public fetchArticleByPublicId(publicId: string): Observable<Article> {
+    return this.httpClient.get<Article>(`${this.pathService}/${publicId}`);
   }
 
   public getArticlesFeed(
@@ -36,11 +35,5 @@ export class ArticleService {
 
   public postArticle(article: ArticleNew): Observable<Article> {
     return this.httpClient.post<Article>(`${this.pathService}`, article);
-  }
-
-  public availableSlug(slug: String): Observable<AvailableResponse> {
-    return this.httpClient.get<AvailableResponse>(
-      `${this.pathService}/available-slug/${slug}`,
-    );
   }
 }

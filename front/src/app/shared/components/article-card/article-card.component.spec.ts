@@ -1,170 +1,313 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Location } from '@angular/common';
+import { provideLocationMocks } from '@angular/common/testing';
+import { provideRouter, Router } from '@angular/router';
 
 import { ArticleCardComponent } from './article-card.component';
 import { Article } from '@model/article.model';
-import { Topic } from '@model/topic.model';
 
 describe('ArticleCardComponent', () => {
   let component: ArticleCardComponent;
   let fixture: ComponentFixture<ArticleCardComponent>;
+  let router: Router;
+  let location: Location;
 
-  const mockTopic: Topic = {
-    slug: 'angular',
-    name: 'Angular',
-    description: 'Discussions autour d’Angular.',
-    subscribed: false,
-    createdAt: new Date('2025-01-01T00:00:00Z'),
-    updatedAt: new Date('2025-01-02T00:00:00Z'),
-  };
-
-  const mockArticle = {
-    slug: 'mon-premier-article',
-    title: 'Mon premier article',
-    topic: mockTopic,
-    createdAt: new Date('2026-10-15T10:00:00.000Z'),
-    username: 'john.doe',
-    content: 'Voici le contenu de mon premier article.',
-    updatedAt: new Date('2026-10-15T10:00:00.000Z'),
+  const mockArticle: Article = {
+    publicId: 'article-123',
+    title: 'Introduction to Angular',
+    content:
+      'Angular is a framework for building web applications. It provides components, services, dependency injection, routing, and reactive programming features.',
+    username: 'John_Doe',
+    createdAt: new Date('2025-03-15T12:00:00.000Z'),
   } as Article;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ArticleCardComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([
+          { path: 'articles/:id', component: ArticleCardComponent },
+        ]),
+        provideLocationMocks(),
+      ],
     }).compileComponents();
+
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
 
     fixture = TestBed.createComponent(ArticleCardComponent);
     component = fixture.componentInstance;
 
     fixture.componentRef.setInput('article', mockArticle);
+
     fixture.detectChanges();
   });
 
-  it('should create the component', () => {
+  function query<T extends HTMLElement>(selector: string): T | null {
+    return fixture.nativeElement.querySelector(selector) as T | null;
+  }
+
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('article rendering', () => {
+  describe('article input', () => {
     it('should display the article title', () => {
-      const title: HTMLElement = fixture.nativeElement.querySelector(
-        '.article-card__title',
-      );
+      const title = query<HTMLElement>('.article-card__title');
 
       expect(title).not.toBeNull();
-      expect(title.textContent?.trim()).toBe(mockArticle.title);
+      expect(title?.textContent?.trim()).toBe('Introduction to Angular');
     });
 
     it('should display the article author', () => {
-      const author: HTMLElement = fixture.nativeElement.querySelector(
-        '.article-card__author',
-      );
+      const author = query<HTMLElement>('.article-card__author');
 
       expect(author).not.toBeNull();
-      expect(author.textContent?.trim()).toBe(mockArticle.username);
+      expect(author?.textContent?.trim()).toBe('John_Doe');
     });
 
-    it('should display the article content', () => {
-      const content: HTMLElement = fixture.nativeElement.querySelector(
-        '.article-card__content',
-      );
+    it('should update the title when the article input changes', () => {
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        title: 'Updated article title',
+      });
+      fixture.detectChanges();
 
-      expect(content).not.toBeNull();
-      expect(content.textContent?.trim()).toBe(mockArticle.content);
+      expect(
+        query<HTMLElement>('.article-card__title')?.textContent?.trim(),
+      ).toBe('Updated article title');
     });
 
-    it('should display the article date in dd/MM/yyyy format', () => {
-      const date: HTMLElement =
-        fixture.nativeElement.querySelector('.article-date');
+    it('should update the author when the article input changes', () => {
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        username: 'Jane_Doe',
+      });
+      fixture.detectChanges();
 
-      expect(date).not.toBeNull();
-
-      const expectedDate = new Intl.DateTimeFormat('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: 'UTC',
-      }).format(new Date(mockArticle.createdAt));
-
-      expect(date.textContent?.trim()).toBe(expectedDate);
-    });
-  });
-
-  describe('navigation', () => {
-    it('should link to the article details page using its slug', () => {
-      const link: HTMLAnchorElement =
-        fixture.nativeElement.querySelector('.article-link');
-
-      expect(link).not.toBeNull();
-      expect(link.getAttribute('href')).toBe(`/articles/${mockArticle.slug}`);
+      expect(
+        query<HTMLElement>('.article-card__author')?.textContent?.trim(),
+      ).toBe('Jane_Doe');
     });
 
-    it('should contain the article card inside the link', () => {
-      const link: HTMLAnchorElement =
-        fixture.nativeElement.querySelector('.article-link');
+    it('should update the content when the article input changes', () => {
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        content: 'Updated article content.',
+      });
+      fixture.detectChanges();
 
-      const article = link.querySelector('article.article-card');
-
-      expect(article).not.toBeNull();
+      expect(
+        query<HTMLElement>('.article-card__content')?.textContent?.trim(),
+      ).toBe('Updated article content.');
     });
   });
 
-  describe('truncate pipe', () => {
-    it('should render the content through the truncate pipe', () => {
-      const content: HTMLElement = fixture.nativeElement.querySelector(
-        '.article-card__content',
-      );
-
-      expect(content.textContent?.trim()).toBe(mockArticle.content);
+  describe('template structure', () => {
+    it('should render the article link', () => {
+      expect(query<HTMLAnchorElement>('a.article-link')).not.toBeNull();
     });
 
-    it('should truncate content longer than 100 characters', () => {
+    it('should render the article element inside the link', () => {
+      const link = query<HTMLAnchorElement>('a.article-link');
+
+      expect(link?.querySelector('article.article-card')).not.toBeNull();
+    });
+
+    it('should render the title, metadata and content', () => {
+      const article = query<HTMLElement>('.article-card');
+
+      expect(article?.querySelector('.article-card__title')).not.toBeNull();
+      expect(article?.querySelector('.article-card__meta')).not.toBeNull();
+      expect(article?.querySelector('.article-card__content')).not.toBeNull();
+    });
+
+    it('should render the date and author inside the metadata container', () => {
+      const metadata = query<HTMLElement>('.article-card__meta');
+
+      expect(metadata?.querySelector('.article-date')).not.toBeNull();
+      expect(metadata?.querySelector('.article-card__author')).not.toBeNull();
+    });
+  });
+
+  describe('date formatting', () => {
+    it('should display the date in dd/MM/yyyy format', () => {
+      const date = query<HTMLElement>('.article-date');
+
+      expect(date?.textContent?.trim()).toBe('15/03/2025');
+    });
+
+    it('should update the displayed date when the article changes', () => {
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        createdAt: new Date('2024-12-25T12:00:00.000Z'),
+      });
+      fixture.detectChanges();
+
+      expect(query<HTMLElement>('.article-date')?.textContent?.trim()).toBe(
+        '25/12/2024',
+      );
+    });
+  });
+
+  describe('content truncation', () => {
+    it('should display short content without truncating it', () => {
+      const content = 'Short article content.';
+
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        content,
+      });
+      fixture.detectChanges();
+
+      expect(
+        query<HTMLElement>('.article-card__content')?.textContent?.trim(),
+      ).toBe(content);
+    });
+
+    it('should truncate long content to the configured limit', () => {
       const longContent = 'A'.repeat(150);
 
       fixture.componentRef.setInput('article', {
         ...mockArticle,
         content: longContent,
       });
-
       fixture.detectChanges();
 
-      const content: HTMLElement = fixture.nativeElement.querySelector(
+      const displayedContent = query<HTMLElement>(
         '.article-card__content',
-      );
+      )?.textContent?.trim();
 
-      expect(content.textContent?.trim().length).toBeLessThan(150);
+      expect(displayedContent).toBeTruthy();
+      expect(displayedContent!.length).toBeLessThan(longContent.length);
+    });
+
+    it('should render content of exactly 100 characters', () => {
+      const content = 'A'.repeat(100);
+
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        content,
+      });
+      fixture.detectChanges();
+
+      const displayedContent = query<HTMLElement>(
+        '.article-card__content',
+      )?.textContent?.trim();
+
+      expect(displayedContent).toBeTruthy();
+      expect(displayedContent!.length).toBeLessThanOrEqual(103);
+    });
+
+    it('should update the truncated content when the article changes', () => {
+      const firstContent = 'First content.';
+
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        content: firstContent,
+      });
+      fixture.detectChanges();
+
+      expect(
+        query<HTMLElement>('.article-card__content')?.textContent?.trim(),
+      ).toBe(firstContent);
+
+      const secondContent = 'B'.repeat(200);
+
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        content: secondContent,
+      });
+      fixture.detectChanges();
+
+      const displayedContent = query<HTMLElement>(
+        '.article-card__content',
+      )?.textContent?.trim();
+
+      expect(displayedContent!.length).toBeLessThan(secondContent.length);
     });
   });
 
-  describe('input', () => {
-    it('should render updated article data when the input changes', () => {
-      const updatedArticle = {
-        ...mockArticle,
-        slug: 'article-modifie',
-        title: 'Article modifié',
-        username: 'jane.doe',
-      };
+  describe('routerLink', () => {
+    it('should bind the publicId to the article route', () => {
+      const link = query<HTMLAnchorElement>('a.article-link');
 
-      fixture.componentRef.setInput('article', updatedArticle);
+      expect(link?.getAttribute('href')).toBe('/articles/article-123');
+    });
+
+    it('should update the route when the article publicId changes', () => {
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        publicId: 'article-456',
+      });
       fixture.detectChanges();
 
       expect(
-        fixture.nativeElement
-          .querySelector('.article-card__title')
-          .textContent.trim(),
-      ).toBe('Article modifié');
+        query<HTMLAnchorElement>('a.article-link')?.getAttribute('href'),
+      ).toBe('/articles/article-456');
+    });
+
+    it('should navigate to the article route when the link is clicked', async () => {
+      const navigateSpy = spyOn(router, 'navigateByUrl').and.callThrough();
+
+      query<HTMLAnchorElement>('a.article-link')?.click();
+
+      await fixture.whenStable();
+
+      expect(navigateSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('special content', () => {
+    it('should render an empty title', () => {
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        title: '',
+      });
+      fixture.detectChanges();
 
       expect(
-        fixture.nativeElement
-          .querySelector('.article-card__author')
-          .textContent.trim(),
-      ).toBe('jane.doe');
+        query<HTMLElement>('.article-card__title')?.textContent?.trim(),
+      ).toBe('');
+    });
+
+    it('should render an empty username', () => {
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        username: '',
+      });
+      fixture.detectChanges();
 
       expect(
-        fixture.nativeElement
-          .querySelector('.article-link')
-          .getAttribute('href'),
-      ).toBe('/articles/article-modifie');
+        query<HTMLElement>('.article-card__author')?.textContent?.trim(),
+      ).toBe('');
+    });
+
+    it('should render an empty content', () => {
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        content: '',
+      });
+      fixture.detectChanges();
+
+      expect(
+        query<HTMLElement>('.article-card__content')?.textContent?.trim(),
+      ).toBe('');
+    });
+
+    it('should render special characters as text', () => {
+      const specialContent = '<script>alert("test")</script> & Angular';
+
+      fixture.componentRef.setInput('article', {
+        ...mockArticle,
+        content: specialContent,
+      });
+      fixture.detectChanges();
+
+      const content = query<HTMLElement>('.article-card__content');
+
+      expect(content?.querySelector('script')).toBeNull();
+      expect(content?.textContent).toContain('& Angular');
     });
   });
 });

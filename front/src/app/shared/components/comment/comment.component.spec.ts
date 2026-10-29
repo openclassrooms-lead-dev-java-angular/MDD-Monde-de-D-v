@@ -8,8 +8,8 @@ describe('CommentComponent', () => {
   let fixture: ComponentFixture<CommentComponent>;
 
   const mockComment: ArticleComment = {
-    username: 'john_doe',
-    content: 'Mon commentaire de test',
+    username: 'John_Doe',
+    content: 'This is a test comment.',
   } as ArticleComment;
 
   beforeEach(async () => {
@@ -21,6 +21,7 @@ describe('CommentComponent', () => {
     component = fixture.componentInstance;
 
     fixture.componentRef.setInput('comment', mockComment);
+
     fixture.detectChanges();
   });
 
@@ -28,42 +29,167 @@ describe('CommentComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should display the comment username', () => {
-    const usernameElement: HTMLElement =
-      fixture.nativeElement.querySelector('.comment__username');
+  describe('comment input', () => {
+    it('should display the comment username', () => {
+      const username: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__username');
 
-    expect(usernameElement).toBeTruthy();
-    expect(usernameElement.textContent?.trim()).toBe('john_doe');
+      expect(username).not.toBeNull();
+      expect(username.textContent?.trim()).toBe('John_Doe');
+    });
+
+    it('should display the comment content', () => {
+      const content: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__content');
+
+      expect(content).not.toBeNull();
+      expect(content.textContent?.trim()).toBe('This is a test comment.');
+    });
+
+    it('should update the username when the comment input changes', () => {
+      const updatedComment: ArticleComment = {
+        ...mockComment,
+        username: 'Jane_Doe',
+      };
+
+      fixture.componentRef.setInput('comment', updatedComment);
+      fixture.detectChanges();
+
+      const username: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__username');
+
+      expect(username.textContent?.trim()).toBe('Jane_Doe');
+    });
+
+    it('should update the content when the comment input changes', () => {
+      const updatedComment: ArticleComment = {
+        ...mockComment,
+        content: 'Updated comment content.',
+      };
+
+      fixture.componentRef.setInput('comment', updatedComment);
+      fixture.detectChanges();
+
+      const content: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__content');
+
+      expect(content.textContent?.trim()).toBe('Updated comment content.');
+    });
+
+    it('should update both username and content when the comment changes', () => {
+      const updatedComment: ArticleComment = {
+        ...mockComment,
+        username: 'Jane_Doe',
+        content: 'A completely different comment.',
+      };
+
+      fixture.componentRef.setInput('comment', updatedComment);
+      fixture.detectChanges();
+
+      const username: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__username');
+
+      const content: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__content');
+
+      expect(username.textContent?.trim()).toBe('Jane_Doe');
+      expect(content.textContent?.trim()).toBe(
+        'A completely different comment.',
+      );
+    });
   });
 
-  it('should display the comment content', () => {
-    const contentElement: HTMLElement =
-      fixture.nativeElement.querySelector('.comment__content');
+  describe('template structure', () => {
+    it('should render the comment container', () => {
+      const container: HTMLElement =
+        fixture.nativeElement.querySelector('.comment');
 
-    expect(contentElement).toBeTruthy();
-    expect(contentElement.textContent?.trim()).toBe(
-      'Mon commentaire de test',
-    );
+      expect(container).not.toBeNull();
+    });
+
+    it('should render the username and content inside the comment container', () => {
+      const container: HTMLElement =
+        fixture.nativeElement.querySelector('.comment');
+
+      const username = container.querySelector('.comment__username');
+      const content = container.querySelector('.comment__content');
+
+      expect(username).not.toBeNull();
+      expect(content).not.toBeNull();
+    });
+
+    it('should render exactly one username element', () => {
+      const usernames: NodeListOf<HTMLElement> =
+        fixture.nativeElement.querySelectorAll('.comment__username');
+
+      expect(usernames.length).toBe(1);
+    });
+
+    it('should render exactly one content element', () => {
+      const contents: NodeListOf<HTMLElement> =
+        fixture.nativeElement.querySelectorAll('.comment__content');
+
+      expect(contents.length).toBe(1);
+    });
   });
 
-  it('should update the displayed comment when the input changes', () => {
-    const updatedComment: ArticleComment = {
-      username: 'jane_doe',
-      content: 'Un nouveau commentaire',
-    } as ArticleComment;
+  describe('special content', () => {
+    it('should render an empty username', () => {
+      fixture.componentRef.setInput('comment', {
+        ...mockComment,
+        username: '',
+      });
+      fixture.detectChanges();
 
-    fixture.componentRef.setInput('comment', updatedComment);
-    fixture.detectChanges();
+      const username: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__username');
 
-    const usernameElement: HTMLElement =
-      fixture.nativeElement.querySelector('.comment__username');
+      expect(username.textContent?.trim()).toBe('');
+    });
 
-    const contentElement: HTMLElement =
-      fixture.nativeElement.querySelector('.comment__content');
+    it('should render an empty comment content', () => {
+      fixture.componentRef.setInput('comment', {
+        ...mockComment,
+        content: '',
+      });
+      fixture.detectChanges();
 
-    expect(usernameElement.textContent?.trim()).toBe('jane_doe');
-    expect(contentElement.textContent?.trim()).toBe(
-      'Un nouveau commentaire',
-    );
+      const content: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__content');
+
+      expect(content.textContent?.trim()).toBe('');
+    });
+
+    it('should render special characters in the comment content', () => {
+      const specialContent = 'Hello <Angular> & "Jasmine"!';
+
+      fixture.componentRef.setInput('comment', {
+        ...mockComment,
+        content: specialContent,
+      });
+      fixture.detectChanges();
+
+      const content: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__content');
+
+      expect(content.textContent?.trim()).toBe(specialContent);
+    });
+
+    it('should render multiline comment content', () => {
+      const multilineContent = 'First line\nSecond line';
+
+      fixture.componentRef.setInput('comment', {
+        ...mockComment,
+        content: multilineContent,
+      });
+      fixture.detectChanges();
+
+      const content: HTMLElement =
+        fixture.nativeElement.querySelector('.comment__content');
+
+      const actualContent = content.textContent?.replace(/\s+/g, ' ').trim();
+
+      expect(actualContent).toBe('First line Second line');
+    });
   });
-})
+});

@@ -1,27 +1,51 @@
 import { TestBed } from '@angular/core/testing';
 import {
+  provideHttpClient,
+} from '@angular/common/http';
+import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
 
-import { ArticleService } from '@service/article.service';
+import { ArticleService } from './article.service';
 import { environment } from '@env/environment.prod';
 import { Article, ArticleNew } from '@model/article.model';
 import { Page } from '@type/page.type';
-import { AvailableResponse } from '@type/available-response.type';
+import { SortDirection } from '@type/sort-direction.type';
 
 describe('ArticleService', () => {
   let service: ArticleService;
-  let httpMock: HttpTestingController;
+  let httpTestingController: HttpTestingController;
 
-  const baseUrl = `${environment.apiUrl}/${environment.apiRoute.article}`;
+  const apiUrl =
+    `${environment.apiUrl}/${environment.apiRoute.article}`;
 
   const mockArticle = {
-    slug: 'test-article',
+    publicId: 'article-1',
     title: 'Test article',
-    content: 'Test content',
-  } as Article;
+    content: 'This is the article content',
+    username: 'test-user',
+    createdAt: '2026-01-15T10:00:00Z',
+    topic: {
+      publicId: 'topic-1',
+      name: 'Angular',
+    },
+    comments: [],
+  } as unknown as Article;
+
+  const mockArticleNew = {
+    title: 'New article',
+    content: 'This is a new article',
+    topicPublicId: 'topic-1',
+  } as ArticleNew;
+
+  const mockPage: Page<Article> = {
+    content: [mockArticle],
+    totalElements: 1,
+    totalPages: 1,
+    size: 10,
+    number: 0,
+  } as Page<Article>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -33,205 +57,241 @@ describe('ArticleService', () => {
     });
 
     service = TestBed.inject(ArticleService);
-    httpMock = TestBed.inject(HttpTestingController);
+    httpTestingController = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => {
-    httpMock.verify();
+    httpTestingController.verify();
   });
 
-  describe('getArticleBySlug', () => {
-    it('should send a GET request for the article slug', () => {
-      service.getArticleBySlug('test-article').subscribe((article) => {
-        expect(article).toEqual(mockArticle);
-      });
-
-      const req = httpMock.expectOne(`${baseUrl}/test-article`);
-
-      expect(req.request.method).toBe('GET');
-
-      req.flush(mockArticle);
-    });
+  it('should be created', () => {
+    expect(service).toBeTruthy();
   });
 
-  describe('getArticlesFeed', () => {
-    it('should send a GET request with the correct pagination and sort parameters', () => {
-      const mockPage = {
-        content: [mockArticle],
-        number: 0,
-        size: 10,
-        last: true,
-        totalElements: 1,
-        totalPages: 1,
-      } as Page<Article>;
+  // fetchArticleByPublicId
 
-      service.getArticlesFeed(0, 10, 'desc').subscribe((page) => {
-        expect(page).toEqual(mockPage);
-      });
+  describe('fetchArticleByPublicId', () => {
+    it('should send a GET request to the correct URL', () => {
+      service.fetchArticleByPublicId('article-1').subscribe();
 
-      const req = httpMock.expectOne(
-        (request) => request.url === `${baseUrl}/feed`,
+      const req = httpTestingController.expectOne(
+        `${apiUrl}/article-1`,
       );
 
       expect(req.request.method).toBe('GET');
-      expect(req.request.params.get('page')).toBe('0');
-      expect(req.request.params.get('size')).toBe('10');
+      expect(req.request.url).toBe(`${apiUrl}/article-1`);
+
+      req.flush(mockArticle);
+    });
+
+    it('should return the requested article', () => {
+      service.fetchArticleByPublicId('article-1').subscribe((response) => {
+        expect(response).toEqual(mockArticle);
+        expect(response.publicId).toBe('article-1');
+        expect(response.title).toBe('Test article');
+      });
+
+      const req = httpTestingController.expectOne(
+        `${apiUrl}/article-1`,
+      );
+
+      req.flush(mockArticle);
+    });
+
+    it('should use the provided public ID in the URL', () => {
+      const publicId = 'another-article';
+
+      service.fetchArticleByPublicId(publicId).subscribe();
+
+      const req = httpTestingController.expectOne(
+        `${apiUrl}/${publicId}`,
+      );
+
+      expect(req.request.url).toBe(`${apiUrl}/another-article`);
+
+      req.flush(mockArticle);
+    });
+
+    it('should propagate an HTTP error', () => {
+      service.fetchArticleByPublicId('article-1').subscribe({
+        next: () => fail('Expected an HTTP error'),
+        error: (error: { status: number }) => {
+          expect(error.status).toBe(404);
+        },
+      });
+
+      const req = httpTestingController.expectOne(
+        `${apiUrl}/article-1`,
+      );
+
+      req.flush(
+        { message: 'Article not found' },
+        {
+          status: 404,
+          statusText: 'Not Found',
+        },
+      );
+    });
+  });
+
+  // getArticlesFeed
+
+  describe('getArticlesFeed', () => {
+    it('should send a GET request to the feed endpoint', () => {
+      service.getArticlesFeed(0, 10, 'desc' as SortDirection).subscribe();
+
+      const req = httpTestingController.expectOne(
+        (request) => request.url === `${apiUrl}/feed`,
+      );
+
+      expect(req.request.method).toBe('GET');
+
+      req.flush(mockPage);
+    });
+
+    it('should send the page parameter', () => {
+      service.getArticlesFeed(2, 10, 'desc' as SortDirection).subscribe();
+
+      const req = httpTestingController.expectOne(
+        (request) => request.url === `${apiUrl}/feed`,
+      );
+
+      expect(req.request.params.get('page')).toBe('2');
+
+      req.flush(mockPage);
+    });
+
+    it('should send the size parameter', () => {
+      service.getArticlesFeed(0, 20, 'desc' as SortDirection).subscribe();
+
+      const req = httpTestingController.expectOne(
+        (request) => request.url === `${apiUrl}/feed`,
+      );
+
+      expect(req.request.params.get('size')).toBe('20');
+
+      req.flush(mockPage);
+    });
+
+    it('should send the sort parameter using the requested direction', () => {
+      service.getArticlesFeed(0, 10, 'desc' as SortDirection).subscribe();
+
+      const req = httpTestingController.expectOne(
+        (request) => request.url === `${apiUrl}/feed`,
+      );
+
       expect(req.request.params.get('sort')).toBe('createdAt,desc');
 
       req.flush(mockPage);
     });
 
     it('should support ascending sort direction', () => {
-      service.getArticlesFeed(1, 5, 'asc').subscribe();
+      service.getArticlesFeed(0, 10, 'asc' as SortDirection).subscribe();
 
-      const req = httpMock.expectOne(
-        (request) => request.url === `${baseUrl}/feed`,
+      const req = httpTestingController.expectOne(
+        (request) => request.url === `${apiUrl}/feed`,
       );
 
-      expect(req.request.params.get('page')).toBe('1');
-      expect(req.request.params.get('size')).toBe('5');
       expect(req.request.params.get('sort')).toBe('createdAt,asc');
 
-      req.flush({
-        content: [],
-        number: 1,
-        size: 5,
-        last: true,
-        totalElements: 0,
-        totalPages: 0,
-      });
+      req.flush(mockPage);
     });
 
-    it('should return an empty page when the API has no articles', () => {
-      const emptyPage = {
-        content: [],
-        number: 0,
-        size: 10,
-        last: true,
-        totalElements: 0,
-        totalPages: 0,
-        first: true,
-        empty: true,
-        sort: {
-          empty: true,
-          sorted: false,
-          unsorted: true,
+    it('should return the requested page of articles', () => {
+      service.getArticlesFeed(0, 10, 'desc' as SortDirection).subscribe(
+        (response) => {
+          expect(response).toEqual(mockPage);
+          expect(response.content).toEqual([mockArticle]);
+          expect(response.totalElements).toBe(1);
         },
-        numberOfElements: 0,
-      } as Page<Article>;
-
-      service.getArticlesFeed(0, 10, 'desc').subscribe((page) => {
-        expect(page.content).toEqual([]);
-        expect(page.last).toBeTrue();
-      });
-
-      const req = httpMock.expectOne(
-        (request) => request.url === `${baseUrl}/feed`,
       );
 
-      req.flush(emptyPage);
+      const req = httpTestingController.expectOne(
+        (request) =>
+          request.url === `${apiUrl}/feed` &&
+          request.params.get('page') === '0' &&
+          request.params.get('size') === '10' &&
+          request.params.get('sort') === 'createdAt,desc',
+      );
+
+      req.flush(mockPage);
+    });
+
+    it('should propagate an HTTP error', () => {
+      service.getArticlesFeed(0, 10, 'desc' as SortDirection).subscribe({
+        next: () => fail('Expected an HTTP error'),
+        error: (error: { status: number }) => {
+          expect(error.status).toBe(500);
+        },
+      });
+
+      const req = httpTestingController.expectOne(
+        (request) => request.url === `${apiUrl}/feed`,
+      );
+
+      req.flush(
+        { message: 'Server error' },
+        {
+          status: 500,
+          statusText: 'Internal Server Error',
+        },
+      );
     });
   });
+
+  // postArticle
 
   describe('postArticle', () => {
-    it('should send a POST request with the article payload', () => {
-      const newArticle = {
-        title: 'New article',
-        slug: 'new-article',
-        content: 'New article content',
-        topicSlug: 'technology',
-      } as ArticleNew;
+    it('should send a POST request to the article endpoint', () => {
+      service.postArticle(mockArticleNew).subscribe();
 
-      const createdArticle = {
-        ...mockArticle,
-        ...newArticle,
-      } as Article;
-
-      service.postArticle(newArticle).subscribe((article) => {
-        expect(article).toEqual(createdArticle);
-      });
-
-      const req = httpMock.expectOne(baseUrl);
+      const req = httpTestingController.expectOne(apiUrl);
 
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(newArticle);
+      expect(req.request.url).toBe(apiUrl);
 
-      req.flush(createdArticle);
-    });
-  });
-
-  describe('availableSlug', () => {
-    it('should send a GET request to check slug availability', () => {
-      const mockResponse = {
-        available: true,
-      } as AvailableResponse;
-
-      service.availableSlug('new-article').subscribe((response) => {
-        expect(response).toEqual(mockResponse);
-      });
-
-      const req = httpMock.expectOne(`${baseUrl}/available-slug/new-article`);
-
-      expect(req.request.method).toBe('GET');
-
-      req.flush(mockResponse);
+      req.flush(mockArticle);
     });
 
-    it('should return false when the slug is already taken', () => {
-      const mockResponse = {
-        available: false,
-      } as AvailableResponse;
+    it('should send the new article in the request body', () => {
+      service.postArticle(mockArticleNew).subscribe();
 
-      service.availableSlug('existing-article').subscribe((response) => {
-        expect(response.available).toBeFalse();
-      });
+      const req = httpTestingController.expectOne(apiUrl);
 
-      const req = httpMock.expectOne(
-        `${baseUrl}/available-slug/existing-article`,
-      );
+      expect(req.request.body).toEqual(mockArticleNew);
 
-      req.flush(mockResponse);
-    });
-  });
-
-  describe('HTTP errors', () => {
-    it('should propagate an error when fetching an article fails', () => {
-      service.getArticleBySlug('missing-article').subscribe({
-        next: () => fail('Expected the request to fail'),
-        error: (error) => {
-          expect(error.status).toBe(404);
-        },
-      });
-
-      const req = httpMock.expectOne(`${baseUrl}/missing-article`);
-
-      req.flush('Article not found', {
-        status: 404,
-        statusText: 'Not Found',
-      });
+      req.flush(mockArticle);
     });
 
-    it('should propagate an error when creating an article fails', () => {
-      const newArticle = {
-        title: 'New article',
-        slug: 'new-article',
-        content: 'Content',
-        topicSlug: 'technology',
-      } as ArticleNew;
+    it('should return the created article', () => {
+      service.postArticle(mockArticleNew).subscribe((response) => {
+        expect(response).toEqual(mockArticle);
+        expect(response.publicId).toBe('article-1');
+        expect(response.title).toBe('Test article');
+      });
 
-      service.postArticle(newArticle).subscribe({
-        next: () => fail('Expected the request to fail'),
-        error: (error) => {
+      const req = httpTestingController.expectOne(apiUrl);
+
+      req.flush(mockArticle);
+    });
+
+    it('should propagate an HTTP error', () => {
+      service.postArticle(mockArticleNew).subscribe({
+        next: () => fail('Expected an HTTP error'),
+        error: (error: { status: number }) => {
           expect(error.status).toBe(400);
         },
       });
 
-      const req = httpMock.expectOne(baseUrl);
+      const req = httpTestingController.expectOne(apiUrl);
 
-      req.flush('Invalid article', {
-        status: 400,
-        statusText: 'Bad Request',
-      });
+      req.flush(
+        { message: 'Invalid article data' },
+        {
+          status: 400,
+          statusText: 'Bad Request',
+        },
+      );
     });
   });
 });
