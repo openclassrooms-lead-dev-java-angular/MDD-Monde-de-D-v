@@ -1,150 +1,199 @@
-describe('Feed des articles', () => {
-  const feedUrl = '**/articles/feed*';
+describe('Feed page', () => {
+  const feedUrl = '**/api/v1/articles/feed*';
 
   const articles = [
     {
-      id: 1,
+      publicId: 'premier-article',
       title: 'Premier article',
-      slug: 'premier-article',
-      description: 'Description du premier article',
       content: 'Contenu du premier article',
-      author: 'Alice',
-      createdAt: '2026-10-20T10:00:00',
+      createdAt: '2026-10-20T10:00:00.000Z',
+      updatedAt: '2026-10-20T10:00:00.000Z',
+      username: 'Alice',
+      topic: { publicId: 'topic-1', name: 'Angular' },
+      comments: [],
     },
     {
-      id: 2,
+      publicId: 'deuxieme-article',
       title: 'Deuxième article',
-      slug: 'deuxieme-article',
-      description: 'Description du deuxième article',
       content: 'Contenu du deuxième article',
-      author: 'Bob',
-      createdAt: '2026-10-21T10:00:00',
+      createdAt: '2026-10-21T10:00:00.000Z',
+      updatedAt: '2026-10-21T10:00:00.000Z',
+      username: 'Bob',
+      topic: { publicId: 'topic-2', name: 'Java' },
+      comments: [],
     },
   ];
 
-  const pageResponse = (content: typeof articles, number = 0, last = true) => ({
+  const createPage = (
+    content: typeof articles,
+    number: number,
+    last: boolean,
+  ) => ({
     content,
     number,
     size: 10,
     totalElements: content.length,
-    totalPages: 1,
+    totalPages: last ? number + 1 : number + 2,
     first: number === 0,
     last,
     empty: content.length === 0,
   });
 
   beforeEach(() => {
+    cy.login();
+  });
+
+  it('should display the articles returned by the API', () => {
     cy.intercept('GET', feedUrl, {
       statusCode: 200,
-      body: pageResponse(articles),
+      body: createPage(articles, 0, true),
     }).as('getArticles');
 
     cy.visit('/feed');
     cy.wait('@getArticles');
+
+    cy.contains('app-article-card', 'Premier article').should('be.visible');
+    cy.contains('app-article-card', 'Deuxième article').should('be.visible');
   });
 
-  it('devrait afficher la liste des articles', () => {
-    cy.get('.article-list').should('be.visible');
-    cy.get('.article-list__grid').should('be.visible');
+  it('should display the create article button', () => {
+    cy.intercept('GET', feedUrl, {
+      statusCode: 200,
+      body: createPage([], 0, true),
+    }).as('getArticles');
 
-    // À adapter si le composant ArticleCard utilise d'autres sélecteurs.
-    cy.get('app-article-card').should('have.length', 2);
-    cy.contains('app-article-card', 'Premier article').should('exist');
-    cy.contains('app-article-card', 'Deuxième article').should('exist');
-  });
+    cy.visit('/feed');
+    cy.wait('@getArticles');
 
-  it('devrait afficher le bouton pour ajouter un article', () => {
-    cy.get('.btn-create').should('be.visible');
     cy.contains('app-button', 'Ajouter un article').should('be.visible');
   });
 
-  it('devrait naviguer vers la page de création', () => {
-    cy.get('.btn-create').click();
+  it('should navigate to the article creation page', () => {
+    cy.intercept('GET', feedUrl, {
+      statusCode: 200,
+      body: createPage([], 0, true),
+    }).as('getArticles');
+
+    cy.visit('/feed');
+    cy.wait('@getArticles');
+
+    cy.contains('app-button', 'Ajouter un article').click();
+
     cy.url().should('include', '/create-article');
   });
 
-  it('devrait afficher le bouton de tri avec le bon libellé initial', () => {
+  it('should display the default sort direction', () => {
+    cy.intercept('GET', feedUrl, {
+      statusCode: 200,
+      body: createPage([], 0, true),
+    }).as('getArticles');
+
+    cy.visit('/feed');
+    cy.wait('@getArticles');
+
     cy.get('.btn-sort')
-      .should('be.visible')
-      .and('have.attr', 'aria-label', 'Trier par date croissante');
+      .should('have.attr', 'aria-label', 'Trier par date croissante');
 
     cy.get('.sort-icon').should('contain.text', '↓');
   });
 
-  it('devrait afficher le message si aucun article n’est disponible', () => {
+  it('should display an empty state when no articles are available', () => {
     cy.intercept('GET', feedUrl, {
       statusCode: 200,
-      body: pageResponse([]),
-    }).as('getEmptyFeed');
+      body: createPage([], 0, true),
+    }).as('getArticles');
 
     cy.visit('/feed');
-    cy.wait('@getEmptyFeed');
+    cy.wait('@getArticles');
 
-    cy.get('.empty-state')
-      .should('be.visible')
-      .and('contain.text', 'Aucun article disponible.');
-
-    cy.get('app-article-card').should('not.exist');
+    cy.contains('Aucun article disponible.').should('be.visible');
   });
 
-  it('devrait charger la page suivante lors du scroll infini', () => {
-    // On utilise une réponse différente pour chaque page.
-    cy.intercept('GET', '**/articles/feed*', (req) => {
-      const url = new URL(req.url);
-      const page = Number(url.searchParams.get('page') ?? 0);
+  it('should load the next page when scrolling to the bottom', () => {
+    cy.intercept('GET', '**/api/v1/articles/feed?page=0*', {
+      statusCode: 200,
+      body: createPage(articles, 0, false),
+    }).as('getFirstPage');
 
-      if (page === 0) {
-        req.alias = 'firstPage';
-        req.reply({
-          statusCode: 200,
-          body: {
-            ...pageResponse(articles, 0, false),
-            totalElements: 12,
-            totalPages: 2,
+    cy.intercept('GET', '**/api/v1/articles/feed?page=1*', {
+      statusCode: 200,
+      body: createPage(
+        [
+          {
+            ...articles[0],
+            publicId: 'troisieme-article',
+            title: 'Troisième article',
           },
-        });
-      } else {
-        req.alias = 'secondPage';
-        req.reply({
-          statusCode: 200,
-          body: pageResponse(
-            [
-              {
-                ...articles[0],
-                id: 3,
-                title: 'Article de la deuxième page',
-                slug: 'article-deuxieme-page',
-              },
-            ],
-            1,
-            true,
-          ),
-        });
-      }
-    }).as('feedPages');
+        ],
+        1,
+        true,
+      ),
+    }).as('getSecondPage');
 
     cy.visit('/feed');
-    cy.wait('@firstPage');
+    cy.wait('@getFirstPage');
 
-    // Déclenche l'événement de scroll sur le conteneur.
-    cy.get('.article-list__grid').scrollTo('bottom');
-    cy.wait('@secondPage');
+    cy.get('.article-list__grid').then(($grid) => {
+      const element = $grid[0];
 
-    cy.contains('app-article-card', 'Article de la deuxième page').should(
-      'exist',
-    );
+      element.dispatchEvent(
+        new Event('scroll', {
+          bubbles: true,
+        }),
+      );
+    });
+
+    cy.window().then((win) => {
+      win.dispatchEvent(
+        new Event('scroll', {
+          bubbles: true,
+        }),
+      );
+    });
+
+    cy.wait('@getSecondPage');
+    cy.contains('app-article-card', 'Troisième article').should('be.visible');
   });
 
-  it('devrait gérer une erreur du serveur sans rester bloqué en chargement', () => {
+  it('should not load another page when all pages have been loaded', () => {
+    cy.intercept('GET', '**/api/v1/articles/feed?page=0*', {
+      statusCode: 200,
+      body: createPage(articles, 0, true),
+    }).as('getLastPage');
+
+    cy.intercept('GET', '**/api/v1/articles/feed?page=1*').as('getUnexpectedPage');
+
+    cy.visit('/feed');
+    cy.wait('@getLastPage');
+
+    cy.get('.article-list__grid').then(($grid) => {
+      $grid[0].dispatchEvent(
+        new Event('scroll', {
+          bubbles: true,
+        }),
+      );
+    });
+
+    cy.window().then((win) => {
+      win.dispatchEvent(
+        new Event('scroll', {
+          bubbles: true,
+        }),
+      );
+    });
+
+    cy.get('@getUnexpectedPage.all').should('have.length', 0);
+  });
+
+  it('should stop loading when the API returns an error', () => {
     cy.intercept('GET', feedUrl, {
       statusCode: 500,
-      body: { message: 'Erreur serveur' },
+      body: { message: 'Internal server error' },
     }).as('getArticlesError');
 
     cy.visit('/feed');
     cy.wait('@getArticlesError');
 
-    cy.get('.article-list').should('be.visible');
     cy.get('.btn-sort').should('not.be.disabled');
   });
 });

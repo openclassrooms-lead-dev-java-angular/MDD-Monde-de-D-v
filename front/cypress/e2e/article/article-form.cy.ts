@@ -5,15 +5,10 @@ describe('Article creation form', () => {
     cy.intercept('GET', '**/api/v1/topics/options', {
       statusCode: 200,
       body: [
-        { slug: 'angular', name: 'Angular' },
-        { slug: 'java', name: 'Java' },
+        { publicId: 'topic-1', name: 'Angular' },
+        { publicId: 'topic-2', name: 'Java' },
       ],
     }).as('getTopics');
-
-    cy.intercept('GET', '**/api/v1/articles/available-slug/*', {
-      statusCode: 200,
-      body: { available: true },
-    }).as('checkSlug');
 
     cy.visit('/create-article');
     cy.wait('@getTopics');
@@ -21,10 +16,10 @@ describe('Article creation form', () => {
 
   it('should display the article creation form', () => {
     cy.get('.article-form').should('be.visible');
+
     cy.contains('h1', 'Créer un nouvel article').should('be.visible');
 
     cy.get('#article-title').should('be.visible');
-    cy.get('#article-slug').should('be.visible');
     cy.get('#article-content').should('be.visible');
     cy.get('mat-select').should('be.visible');
 
@@ -41,6 +36,13 @@ describe('Article creation form', () => {
     cy.contains('mat-option', 'Java').should('be.visible');
   });
 
+  it('should select a topic', () => {
+    cy.get('mat-select').click();
+    cy.contains('mat-option', 'Angular').click();
+
+    cy.get('mat-select').should('contain.text', 'Angular');
+  });
+
   it('should navigate back to the feed when clicking the back link', () => {
     cy.get('a.article-form__back').should('have.attr', 'href', '/feed').click();
 
@@ -50,66 +52,58 @@ describe('Article creation form', () => {
   it('should display validation errors when submitting an empty form', () => {
     cy.get('app-button button[type="submit"]').click();
 
-    cy.contains('Veuillez sélectionner un thème.').should('be.visible');
-    cy.contains('Le titre est obligatoire.').should('be.visible');
-    cy.contains('L’adresse est obligatoire.').should('be.visible');
-    cy.contains('Le contenu est obligatoire.').should('be.visible');
-  });
-
-  it('should generate a slug from the title when the slug is empty', () => {
-    cy.get('#article-title').type('Mon Premier Article');
-    cy.get('#article-title').blur();
-
-    cy.get('#article-slug').should('have.value', 'Mon-Premier-Article');
-  });
-
-  it('should display an error when the slug is already taken', () => {
-    cy.intercept('GET', '**/api/v1/articles/available-slug/mon-article', {
-      statusCode: 200,
-      body: { available: false },
-    }).as('takenSlug');
-
-    cy.get('#article-slug').clear().type('mon-article');
-
-    cy.wait('@takenSlug')
-      .its('response.body')
-      .should('deep.equal', { available: false });
-
-    // Blur the field so that the validation state and error message are updated.
-    cy.get('#article-title').click();
-
-    cy.contains('mat-error', 'Cette adresse est déjà utilisée.').should(
+    cy.contains('mat-error', 'Veuillez sélectionner un thème.').should(
       'be.visible',
     );
+
+    cy.contains('mat-error', 'Le titre est obligatoire.').should('be.visible');
+
+    cy.contains('mat-error', 'Le contenu est obligatoire.').should(
+      'be.visible',
+    );
+  });
+
+  it('should display an error when the title exceeds 150 characters', () => {
+    cy.get('#article-title').type('a'.repeat(151));
+    cy.get('#article-title').blur();
+
+    cy.contains(
+      'mat-error',
+      'Le titre ne doit pas dépasser 150 caractères.',
+    ).should('be.visible');
+  });
+
+  it('should display an error when the content exceeds 10000 characters', () => {
+    cy.get('#article-content').type('a'.repeat(10001), {
+      delay: 0,
+      parseSpecialCharSequences: false,
+    });
+
+    cy.get('#article-content').blur();
+
+    cy.contains(
+      'mat-error',
+      'Le contenu ne doit pas dépasser 10 000 caractères.',
+    ).should('be.visible');
   });
 
   it('should create an article and navigate to its detail page', () => {
     cy.intercept('POST', '**/api/v1/articles', {
       statusCode: 201,
       body: {
-        id: 1,
+        publicId: 'article-123',
         title: 'Mon article de test',
-        slug: 'mon-article-de-test',
         content: 'Contenu de test pour cet article.',
-        topicSlug: 'angular',
-        createdAt: '2026-01-01T10:00:00.000Z',
-        updatedAt: '2026-01-01T10:00:00.000Z',
+        topicPublicId: 'topic-1',
       },
     }).as('createArticle');
 
     cy.get('mat-select').click();
     cy.contains('mat-option', 'Angular').click();
 
-    cy.get('#article-title').clear().type('Mon article de test');
+    cy.get('#article-title').type('Mon article de test');
 
-    cy.get('#article-slug')
-      .clear()
-      .type('mon-article-de-test')
-      .should('have.value', 'mon-article-de-test');
-
-    cy.get('#article-content')
-      .clear()
-      .type('Contenu de test pour cet article.');
+    cy.get('#article-content').type('Contenu de test pour cet article.');
 
     cy.get('app-button button[type="submit"]')
       .should('be.visible')
@@ -117,15 +111,14 @@ describe('Article creation form', () => {
       .click();
 
     cy.wait('@createArticle').then(({ request }) => {
-      expect(request.body).to.include({
-        topicSlug: 'angular',
+      expect(request.body).to.deep.equal({
+        topicPublicId: 'topic-1',
         title: 'Mon article de test',
-        slug: 'mon-article-de-test',
         content: 'Contenu de test pour cet article.',
       });
     });
 
-    cy.url().should('include', '/articles/mon-article-de-test');
+    cy.url().should('include', '/articles/article-123');
   });
 
   it('should display an error when article creation fails', () => {
@@ -140,10 +133,12 @@ describe('Article creation form', () => {
     cy.contains('mat-option', 'Angular').click();
 
     cy.get('#article-title').type('Mon article de test');
-    cy.get('#article-slug').type('mon-article-de-test');
+
     cy.get('#article-content').type('Contenu de test pour cet article.');
 
-    cy.get('app-button button[type="submit"]').click();
+    cy.get('app-button button[type="submit"]')
+      .should('not.be.disabled')
+      .click();
 
     cy.wait('@createArticleError');
 
