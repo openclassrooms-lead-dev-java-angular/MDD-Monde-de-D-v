@@ -26,7 +26,7 @@ export class ArticleDetailComponent implements OnInit {
   private readonly location = inject(Location);
   private readonly fb = inject(NonNullableFormBuilder);
 
-  protected readonly commentForm = this.fb.group({
+  public readonly commentForm = this.fb.group({
     comment: this.fb.control('', [Validators.required]),
   });
 
@@ -36,11 +36,11 @@ export class ArticleDetailComponent implements OnInit {
   protected readonly isLoadingForm = signal(false);
 
   ngOnInit(): void {
-    const slug: string = this.route.snapshot.paramMap.get('slug')!;
+    const publicId: string = this.route.snapshot.paramMap.get('publicId')!;
 
     this.isLoading.set(true);
 
-    this.articleService.getArticleBySlug(slug).subscribe({
+    this.articleService.fetchArticleByPublicId(publicId).subscribe({
       next: (article) => {
         this.article.set(article);
         this.isLoading.set(false);
@@ -53,7 +53,7 @@ export class ArticleDetailComponent implements OnInit {
     });
   }
 
-  protected submitForm() {
+  public submitForm() {
     if (
       this.commentForm.invalid ||
       this.commentForm.pending ||
@@ -66,25 +66,27 @@ export class ArticleDetailComponent implements OnInit {
 
     const { comment } = this.commentForm.getRawValue();
 
-    this.commentService.postComment(this.article()!.slug, comment).subscribe({
-      next: (newComment) => {
-        this.isLoadingForm.set(false);
-        this.commentForm.reset();
+    this.commentService
+      .postComment(this.article()!.publicId, comment)
+      .subscribe({
+        next: (newComment) => {
+          this.isLoadingForm.set(false);
+          this.commentForm.reset();
 
-        this.article.update((article) => {
-          if (!article) return article;
+          this.article.update((article) => {
+            if (!article) return article;
 
-          return {
-            ...article,
-            comments: [...(article.comments ?? []), newComment],
-          };
-        });
-      },
-      error: (error) => {
-        console.error(error);
-        this.isLoadingForm.set(false);
-      },
-    });
+            return {
+              ...article,
+              comments: [...(article.comments ?? []), newComment],
+            };
+          });
+        },
+        error: (error) => {
+          console.error(error);
+          this.isLoadingForm.set(false);
+        },
+      });
   }
 
   goBack(): void {

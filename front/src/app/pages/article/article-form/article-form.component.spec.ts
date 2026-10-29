@@ -1,363 +1,477 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { MatSelectHarness } from '@angular/material/select/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 
 import { ArticleFormComponent } from './article-form.component';
 import { ArticleService } from '@service/article.service';
 import { TopicService } from '@service/topic.service';
-import { Router } from '@angular/router';
+import { Article, ArticleNew } from '@model/article.model';
+import { Topic, TopicOption } from '@model/topic.model';
 
 describe('ArticleFormComponent', () => {
-  let fixture: ComponentFixture<ArticleFormComponent>;
   let component: ArticleFormComponent;
+  let fixture: ComponentFixture<ArticleFormComponent>;
+  let articleServiceSpy: jasmine.SpyObj<ArticleService>;
+  let topicServiceSpy: jasmine.SpyObj<TopicService>;
+  let navigateSpy: jasmine.Spy;
 
-  let articleService: jasmine.SpyObj<ArticleService>;
-  let topicService: jasmine.SpyObj<TopicService>;
-  let router: jasmine.SpyObj<Router>;
-
-  const mockTopics = [
-    { slug: 'tech', name: 'Technology' },
-    { slug: 'news', name: 'News' },
+  const mockTopics: TopicOption[] = [
+    { publicId: 'topic-1', name: 'JavaScript' },
+    { publicId: 'topic-2', name: 'Angular' },
   ];
 
+  const mockTopic: Topic = {
+    publicId: '1235-qsfd-12345',
+    name: 'Angular',
+    description: 'Learn Angular development.',
+    subscribed: false,
+    createdAt: new Date('2026-01-01T10:00:00Z'),
+    updatedAt: new Date('2026-01-01T10:00:00Z'),
+  };
+
+  const mockArticle: Article = {
+    publicId: 'article-123',
+    title: 'Test article',
+    content: 'Article content',
+    username: 'testuser',
+    topic: mockTopic,
+    createdAt: new Date('2026-01-01T10:00:00Z'),
+    updatedAt: new Date('2026-01-01T10:00:00Z'),
+  };
+
+  const validArticle: ArticleNew = {
+    topicPublicId: 'topic-1',
+    title: 'Test article',
+    content: 'Test content',
+  };
+
   beforeEach(async () => {
-    articleService = jasmine.createSpyObj<ArticleService>('ArticleService', [
-      'postArticle',
-      'availableSlug',
-    ]);
-
-    topicService = jasmine.createSpyObj<TopicService>('TopicService', [
-      'getTopicList',
-    ]);
-
-    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-
-    topicService.getTopicList.and.returnValue(of(mockTopics));
-    articleService.availableSlug.and.returnValue(of({ available: true }));
-
-    articleService.postArticle.and.returnValue(
-      of({ slug: 'my-article' }) as ReturnType<ArticleService['postArticle']>,
+    articleServiceSpy = jasmine.createSpyObj<ArticleService>(
+      'ArticleService',
+      ['postArticle'],
     );
 
-    router.navigate.and.returnValue(Promise.resolve(true));
+    topicServiceSpy = jasmine.createSpyObj<TopicService>(
+      'TopicService',
+      ['fetchTopicOptions'],
+    );
+
+    topicServiceSpy.fetchTopicOptions.and.returnValue(of(mockTopics));
+    articleServiceSpy.postArticle.and.returnValue(of(mockArticle));
 
     await TestBed.configureTestingModule({
       imports: [ArticleFormComponent],
       providers: [
-        { provide: ArticleService, useValue: articleService },
-        { provide: TopicService, useValue: topicService },
-        { provide: Router, useValue: router },
+        provideRouter([]),
+        { provide: ArticleService, useValue: articleServiceSpy },
+        { provide: TopicService, useValue: topicServiceSpy },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ArticleFormComponent);
     component = fixture.componentInstance;
 
-    fixture.detectChanges();
+    navigateSpy = spyOn(TestBed.inject(Router), 'navigate')
+      .and.returnValue(Promise.resolve(true));
   });
 
-  function fillValidForm(): void {
-    const form = (component as any).articleForm;
+  function setValidForm(): void {
+    component['articleForm'].setValue(validArticle);
+    fixture.detectChanges();
+  }
 
-    form.controls.topicSlug.setValue('tech');
-    form.controls.title.setValue('My article');
-    form.controls.slug.setValue('my-article');
-    form.controls.content.setValue('My article content');
+  function submitForm(): void {
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+
+    form.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+
+    fixture.detectChanges();
+  }
+
+  function initializeComponent(): void {
+    fixture.detectChanges();
+    expect(component.isLoading()).toBeFalse();
   }
 
   describe('initialization', () => {
-    it('should create the component', () => {
+    it('should create', () => {
+      initializeComponent();
       expect(component).toBeTruthy();
     });
 
-    it('should load the topic list', () => {
-      expect(topicService.getTopicList).toHaveBeenCalled();
+    it('should initialize with default values', () => {
+      expect(component.topics()).toEqual([]);
+      expect(component.isLoading()).toBeFalse();
+      expect(component.errorMessage()).toBe('');
+      expect(component.submitting()).toBeFalse();
+    });
+
+    it('should load topic options on init', () => {
+      initializeComponent();
+
+      expect(topicServiceSpy.fetchTopicOptions).toHaveBeenCalledTimes(1);
       expect(component.topics()).toEqual(mockTopics);
+    });
+
+    it('should stop loading after topics are fetched', () => {
+      initializeComponent();
       expect(component.isLoading()).toBeFalse();
     });
 
-    it('should display the form title', () => {
-      const title: HTMLElement = fixture.nativeElement.querySelector(
-        '.article-form__title',
+    it('should stop loading when fetching topics fails', () => {
+      const consoleErrorSpy = spyOn(console, 'error');
+
+      topicServiceSpy.fetchTopicOptions.and.returnValue(
+        throwError(() => new Error('Topic loading failed')),
       );
 
-      expect(title.textContent).toContain('Créer un nouvel article');
+      fixture.detectChanges();
+
+      expect(component.isLoading()).toBeFalse();
+      expect(component.topics()).toEqual([]);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    it('should display the loaded topics', async () => {
+      initializeComponent();
+
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const select = await loader.getHarness(MatSelectHarness);
+
+      await select.open();
+
+      const options = await select.getOptions();
+      const texts = await Promise.all(
+        options.map((option) => option.getText()),
+      );
+
+      expect(texts).toContain('JavaScript');
+      expect(texts).toContain('Angular');
+    });
+
+    it('should render the title and back link', () => {
+      initializeComponent();
+
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector('h1')?.textContent).toContain(
+        'Créer un nouvel article',
+      );
+
+      const backLink = element.querySelector(
+        'a[aria-label="Retour aux articles"]',
+      );
+
+      expect(backLink).toBeTruthy();
+      expect(backLink?.getAttribute('routerLink')).toBe('/feed');
     });
   });
 
   describe('form validation', () => {
-    it('should invalidate the form when all fields are empty', () => {
-      const form = (component as any).articleForm;
+    beforeEach(() => initializeComponent());
 
-      expect(form.invalid).toBeTrue();
-      expect(form.controls.topicSlug.hasError('required')).toBeTrue();
-      expect(form.controls.title.hasError('required')).toBeTrue();
-      expect(form.controls.slug.hasError('required')).toBeTrue();
-      expect(form.controls.content.hasError('required')).toBeTrue();
+    it('should have an invalid form initially', () => {
+      expect(component['articleForm'].invalid).toBeTrue();
     });
 
-    it('should display an error when the title exceeds 150 characters', () => {
-      const form = (component as any).articleForm;
-      const control = form.controls.title;
+    it('should require a topic', () => {
+      expect(
+        component['articleForm'].controls.topicPublicId.hasError('required'),
+      ).toBeTrue();
+    });
 
+    it('should require a title', () => {
+      expect(
+        component['articleForm'].controls.title.hasError('required'),
+      ).toBeTrue();
+    });
+
+    it('should require content', () => {
+      expect(
+        component['articleForm'].controls.content.hasError('required'),
+      ).toBeTrue();
+    });
+
+    it('should reject a title longer than 150 characters', () => {
+      const control = component['articleForm'].controls.title;
       control.setValue('a'.repeat(151));
-      control.markAsTouched();
 
       expect(control.hasError('maxlength')).toBeTrue();
-      expect((component as any).titleErrors).toContain(
-        'The title must not exceed 150 characters.',
-      );
     });
 
-    it('should not display title errors before user interaction', () => {
-      const form = (component as any).articleForm;
+    it('should accept a title of exactly 150 characters', () => {
+      const control = component['articleForm'].controls.title;
+      control.setValue('a'.repeat(150));
 
-      form.controls.title.setValue('');
-
-      expect((component as any).titleErrors).toEqual([]);
+      expect(control.valid).toBeTrue();
     });
 
-    it('should display an error when the content is empty after interaction', () => {
-      const form = (component as any).articleForm;
-      const control = form.controls.content;
+    it('should reject content longer than 10000 characters', () => {
+      const control = component['articleForm'].controls.content;
+      control.setValue('a'.repeat(10001));
 
-      control.setValue('');
-      control.markAsTouched();
+      expect(control.hasError('maxlength')).toBeTrue();
+    });
 
-      expect((component as any).contentErrors).toContain(
+    it('should accept content of exactly 10000 characters', () => {
+      const control = component['articleForm'].controls.content;
+      control.setValue('a'.repeat(10000));
+
+      expect(control.valid).toBeTrue();
+    });
+
+    it('should be valid when all fields are valid', () => {
+      setValidForm();
+      expect(component['articleForm'].valid).toBeTrue();
+    });
+  });
+
+  describe('validation messages', () => {
+    beforeEach(() => initializeComponent());
+
+    it('should not show title errors when untouched and pristine', () => {
+      expect(component['titleErrors']).toEqual([]);
+    });
+
+    it('should show the required title error when touched', () => {
+      component['articleForm'].controls.title.markAsTouched();
+
+      expect(component['titleErrors']).toContain('Le titre est obligatoire.');
+    });
+
+    it('should show the required content error when touched', () => {
+      component['articleForm'].controls.content.markAsTouched();
+
+      expect(component['contentErrors']).toContain(
         'Le contenu est obligatoire.',
       );
     });
 
-    it('should display an error when the content exceeds 10,000 characters', () => {
-      const form = (component as any).articleForm;
-      const control = form.controls.content;
+    it('should show the topic required error when touched', () => {
+      component['articleForm'].controls.topicPublicId.markAsTouched();
 
+      expect(component['topicErrors']).toContain(
+        'Veuillez sélectionner un thème.',
+      );
+    });
+
+    it('should not show the topic error before the control is touched', () => {
+      expect(component['topicErrors']).toEqual([]);
+    });
+
+    it('should show the title maxlength error', () => {
+      const control = component['articleForm'].controls.title;
+      control.setValue('a'.repeat(151));
+      control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component['titleErrors']).toContain(
+        'Le titre ne doit pas dépasser 150 caractères.',
+      );
+    });
+
+    it('should show the content maxlength error', () => {
+      const control = component['articleForm'].controls.content;
       control.setValue('a'.repeat(10001));
       control.markAsTouched();
+      fixture.detectChanges();
 
-      expect(control.hasError('maxlength')).toBeTrue();
-      expect((component as any).contentErrors).toContain(
+      expect(component['contentErrors']).toContain(
         'Le contenu ne doit pas dépasser 10 000 caractères.',
       );
     });
-
-    it('should reject a slug containing invalid characters', () => {
-      const form = (component as any).articleForm;
-      const control = form.controls.slug;
-
-      control.setValue('invalid slug !');
-      control.markAsTouched();
-
-      expect(control.hasError('pattern')).toBeTrue();
-      expect((component as any).slugErrors).toContain(
-        'Utilisez uniquement des lettres, chiffres, tirets et underscores.',
-      );
-    });
-
-    it('should reject a slug that is already taken', fakeAsync(() => {
-      articleService.availableSlug.and.returnValue(of({ available: false }));
-
-      const form = (component as any).articleForm;
-      const control = form.controls.slug;
-
-      control.setValue('taken-slug');
-      tick(300);
-      control.markAsTouched();
-
-      expect(control.hasError('slugTaken')).toBeTrue();
-      expect((component as any).slugErrors).toContain(
-        'Cette adresse est déjà utilisée.',
-      );
-    }));
-
-    it('should display an error when the slug availability check fails', fakeAsync(() => {
-      spyOn(console, 'error');
-
-      articleService.availableSlug.and.returnValue(
-        throwError(() => new Error('Network error')),
-      );
-
-      const form = (component as any).articleForm;
-      const control = form.controls.slug;
-
-      control.setValue('my-slug');
-      tick(300);
-      control.markAsTouched();
-
-      expect(control.hasError('slugCheckFailed')).toBeTrue();
-      expect((component as any).slugErrors).toContain(
-        'Impossible de vérifier la disponibilité.',
-      );
-    }));
   });
 
-  describe('form submission', () => {
-    it('should mark all fields as touched when the form is invalid', () => {
-      const form = (component as any).articleForm;
+  describe('submitForm', () => {
+    beforeEach(() => initializeComponent());
 
-      (component as any).submitForm();
+    it('should not submit when the form is invalid', () => {
+      submitForm();
 
-      expect(form.controls.topicSlug.touched).toBeTrue();
-      expect(form.controls.title.touched).toBeTrue();
-      expect(form.controls.slug.touched).toBeTrue();
-      expect(form.controls.content.touched).toBeTrue();
-
-      expect(articleService.postArticle).not.toHaveBeenCalled();
+      expect(articleServiceSpy.postArticle).not.toHaveBeenCalled();
+      expect(component['articleForm'].controls.title.touched).toBeTrue();
+      expect(component['articleForm'].controls.content.touched).toBeTrue();
+      expect(
+        component['articleForm'].controls.topicPublicId.touched,
+      ).toBeTrue();
     });
 
-    it('should create an article when the form is valid', fakeAsync(() => {
-      fillValidForm();
-      tick(300);
-
-      (component as any).submitForm();
-
-      expect(articleService.postArticle).toHaveBeenCalledWith({
-        topicSlug: 'tech',
-        title: 'My article',
-        slug: 'my-article',
-        content: 'My article content',
-      });
-
-      expect(router.navigate).toHaveBeenCalledWith(['/articles', 'my-article']);
-
-      expect(component.isLoading()).toBeFalse();
-    }));
-
-    it('should not create an article when submission is already in progress', fakeAsync(() => {
-      fillValidForm();
-      tick(300);
-
+    it('should not submit while submitting is true', () => {
       fixture.componentRef.setInput('submitting', true);
+      setValidForm();
 
-      (component as any).submitForm();
+      submitForm();
 
-      expect(articleService.postArticle).not.toHaveBeenCalled();
-    }));
+      expect(articleServiceSpy.postArticle).not.toHaveBeenCalled();
+    });
 
-    it('should display the server error message when article creation fails', fakeAsync(() => {
-      spyOn(console, 'error');
+    it('should not submit while loading', () => {
+      setValidForm();
+      component.isLoading.set(true);
 
-      articleService.postArticle.and.returnValue(
-        throwError(() => ({
-          error: { message: 'Unable to create this article.' },
-        })),
+      submitForm();
+
+      expect(articleServiceSpy.postArticle).not.toHaveBeenCalled();
+    });
+
+    it('should clear the previous error before submitting', () => {
+      component.errorMessage.set('Previous error');
+
+      submitForm();
+
+      expect(component.errorMessage()).toBe('');
+    });
+
+    it('should send the form data to ArticleService', () => {
+      setValidForm();
+      submitForm();
+
+      expect(articleServiceSpy.postArticle).toHaveBeenCalledOnceWith(
+        validArticle,
+      );
+    });
+
+    it('should navigate to the created article', () => {
+      setValidForm();
+      submitForm();
+
+      expect(articleServiceSpy.postArticle).toHaveBeenCalledOnceWith(
+        validArticle,
       );
 
-      fillValidForm();
-      tick(300);
+      expect(navigateSpy).toHaveBeenCalledOnceWith([
+        '/articles',
+        mockArticle.publicId,
+      ]);
+    });
 
-      (component as any).submitForm();
+    it('should stop loading after successful creation', () => {
+      setValidForm();
+      submitForm();
 
-      expect(component.errorMessage()).toBe('Unable to create this article.');
       expect(component.isLoading()).toBeFalse();
-    }));
+    });
 
-    it('should display a generic error when the server provides no message', fakeAsync(() => {
-      spyOn(console, 'error');
+    it('should display the server error message when creation fails', () => {
+      const consoleErrorSpy = spyOn(console, 'error');
 
-      articleService.postArticle.and.returnValue(
-        throwError(() => new Error('Network error')),
+      articleServiceSpy.postArticle.and.returnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              error: { message: 'Article creation failed' },
+              status: 400,
+            }),
+        ),
       );
 
-      fillValidForm();
-      tick(300);
+      setValidForm();
+      submitForm();
 
-      (component as any).submitForm();
+      expect(component.errorMessage()).toBe('Article creation failed');
+      expect(navigateSpy).not.toHaveBeenCalled();
+      expect(component.isLoading()).toBeFalse();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    it('should display a fallback error when the server message is missing', () => {
+      spyOn(console, 'error');
+
+      articleServiceSpy.postArticle.and.returnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              error: {},
+              status: 500,
+            }),
+        ),
+      );
+
+      setValidForm();
+      submitForm();
 
       expect(component.errorMessage()).toBe(
-        'An error occurred while creating the article.',
+        'Une erreur est survenue lors de la création de l’article.',
       );
-    }));
-  });
-
-  describe('slug autocomplete', () => {
-    it('should generate a slug from the title when the slug is empty', () => {
-      const form = (component as any).articleForm;
-
-      form.controls.title.setValue('My First Article');
-      form.controls.slug.setValue('');
-
-      (component as any).autocompleteSlug();
-
-      expect(form.controls.slug.value).toBe('My-First-Article');
     });
 
-    it('should not replace an existing custom slug', () => {
-      const form = (component as any).articleForm;
-
-      form.controls.title.setValue('Another title');
-      form.controls.slug.setValue('custom-slug');
-
-      (component as any).autocompleteSlug();
-
-      expect(form.controls.slug.value).toBe('custom-slug');
-    });
-
-    it('should remove accents when generating a slug', () => {
-      const form = (component as any).articleForm;
-
-      form.controls.title.setValue('Été à Noël');
-      form.controls.slug.setValue('');
-
-      (component as any).autocompleteSlug();
-
-      expect(form.controls.slug.value).toBe('Ete-a-Noel');
-    });
-  });
-
-  describe('template', () => {
-    it('should render the title, slug and content inputs', () => {
-      const element: HTMLElement = fixture.nativeElement;
-
-      expect(element.querySelector('#article-title')).not.toBeNull();
-      expect(element.querySelector('#article-slug')).not.toBeNull();
-      expect(element.querySelector('#article-content')).not.toBeNull();
-    });
-
-    it('should render the topic selector', () => {
-      const selector = fixture.nativeElement.querySelector('mat-select');
-
-      expect(selector).not.toBeNull();
-    });
-
-    it('should render the back link', () => {
-      const backLink: HTMLAnchorElement = fixture.nativeElement.querySelector(
-        '.article-form__back',
-      );
-
-      expect(backLink).not.toBeNull();
-      expect(backLink.getAttribute('aria-label')).toBe('Retour aux articles');
-    });
-
-    it('should render the create button', () => {
-      const button = fixture.nativeElement.querySelector('app-button');
-
-      expect(button).not.toBeNull();
-    });
-
-    it('should display the server error message', fakeAsync(() => {
+    it('should not navigate when creation fails', () => {
       spyOn(console, 'error');
 
-      articleService.postArticle.and.returnValue(
-        throwError(() => ({
-          error: { message: 'Erreur serveur' },
-        })),
+      articleServiceSpy.postArticle.and.returnValue(
+        throwError(() => new Error('Unexpected error')),
       );
 
-      fillValidForm();
-      tick(300);
-      (component as any).submitForm();
+      setValidForm();
+      submitForm();
+
+      expect(navigateSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('template integration', () => {
+    beforeEach(() => initializeComponent());
+
+    it('should render title and content fields', () => {
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector('#article-title')).toBeTruthy();
+      expect(element.querySelector('#article-content')).toBeTruthy();
+    });
+
+    it('should update the title control when typing', () => {
+      const input = fixture.nativeElement.querySelector(
+        '#article-title',
+      ) as HTMLInputElement;
+
+      input.value = 'A new article';
+      input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
-      const error = fixture.nativeElement.querySelector('[role="alert"]');
+      expect(component['articleForm'].controls.title.value).toBe(
+        'A new article',
+      );
+    });
 
-      expect(error).not.toBeNull();
-      expect(error.textContent).toContain('Erreur serveur');
-    }));
+    it('should update the content control when typing', () => {
+      const textarea = fixture.nativeElement.querySelector(
+        '#article-content',
+      ) as HTMLTextAreaElement;
+
+      textarea.value = 'Article body';
+      textarea.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      expect(component['articleForm'].controls.content.value).toBe(
+        'Article body',
+      );
+    });
+
+    it('should display the error message', () => {
+      component.errorMessage.set('Unable to create article');
+      fixture.detectChanges();
+
+      const alert = fixture.nativeElement.querySelector(
+        '[role="alert"]',
+      ) as HTMLElement;
+
+      expect(alert).toBeTruthy();
+      expect(alert.textContent).toContain('Unable to create article');
+    });
+
+    it('should hide the error message when empty', () => {
+      component.errorMessage.set('');
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[role="alert"]'),
+      ).toBeNull();
+    });
   });
 });
