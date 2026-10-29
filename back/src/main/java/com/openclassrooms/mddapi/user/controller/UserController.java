@@ -1,5 +1,6 @@
 package com.openclassrooms.mddapi.user.controller;
 
+import com.openclassrooms.mddapi.auth.dto.UsernameAvailableDto;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
 import com.openclassrooms.mddapi.user.service.UserService;
@@ -43,6 +44,13 @@ public class UserController {
             @Valid @RequestBody() UpdateUserDto userDto
     ) {
         return userService.updateUser(userDto);
+    }
+
+    @GetMapping("/username-available")
+    public UsernameAvailableDto usernameAvailable(
+            @RequestParam String username
+    ) {
+        return userService.usernameAvailableForUpdateUser(username);
     }
 
 }

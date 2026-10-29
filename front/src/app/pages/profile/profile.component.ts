@@ -40,12 +40,12 @@ export class ProfileComponent implements OnInit {
   private readonly validationErrorService = inject(ValidationErrorService);
   private readonly userStateService = inject(UserStateService);
 
-  protected readonly subscribedTopicList = signal<Topic[]>([]);
+  public readonly subscribedTopicList = signal<Topic[]>([]);
 
   private currentPage = 0;
   private readonly pageSize = 10;
-  protected readonly hasMore = signal<boolean>(true);
-  protected readonly isLoadingTopics = signal<boolean>(false);
+  public readonly isLoadingTopics = signal<boolean>(false);
+  public readonly hasMore = signal<boolean>(true);
   topicErrorMessage = '';
 
   public userForm = this.fb.group({
@@ -105,7 +105,7 @@ export class ProfileComponent implements OnInit {
 
   submit(): void {
     this.errorMessage.set('');
-    console.log(this.isLoadingForm());
+    
     if (
       this.userForm.invalid ||
       this.userForm.pending ||
@@ -128,8 +128,7 @@ export class ProfileComponent implements OnInit {
       )
       .subscribe({
         next: (res: User) => {
-          console.log(res);
-          // Todo: update user state
+          this.userStateService.setUser(res);
         },
         error: (error: { error?: { message?: string } }) => {
           console.error('Erreur lors de l’inscription :', error);
