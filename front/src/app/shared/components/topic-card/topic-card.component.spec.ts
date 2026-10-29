@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { TopicCardComponent } from './topic-card.component';
 import { Topic } from '@model/topic.model';
 
@@ -7,14 +6,12 @@ describe('TopicCardComponent', () => {
   let component: TopicCardComponent;
   let fixture: ComponentFixture<TopicCardComponent>;
 
-  const mockTopic: Topic = {
-    slug: 'angular',
+  const mockTopic = {
+    publicId: '1235-qsfd-12345',
     name: 'Angular',
-    description: 'Discussions autour d’Angular.',
+    description: 'Learn Angular development.',
     subscribed: false,
-    createdAt: new Date('2025-01-01T00:00:00Z'),
-    updatedAt: new Date('2025-01-02T00:00:00Z'),
-  };
+  } as Topic;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -24,41 +21,21 @@ describe('TopicCardComponent', () => {
     fixture = TestBed.createComponent(TopicCardComponent);
     component = fixture.componentInstance;
 
-    fixture.componentRef.setInput('topic', mockTopic);
+    fixture.componentRef.setInput('topic', { ...mockTopic });
+
     fixture.detectChanges();
   });
 
-  function getButton(): HTMLButtonElement {
-    return fixture.nativeElement.querySelector('.topic-card__button');
-  }
-
-  describe('initialization', () => {
-    it('should create the component', () => {
-      expect(component).toBeTruthy();
-    });
-
-    it('should initialize showUnsubscribe to false', () => {
-      expect(component.showUnsubscribe()).toBeFalse();
-    });
-
-    it('should receive the required topic input', () => {
-      expect(component.topic()).toEqual(mockTopic);
-    });
+  it('should create', () => {
+    expect(component).toBeTruthy();
   });
 
-  describe('template rendering', () => {
-    it('should render the topic card', () => {
-      const card = fixture.nativeElement.querySelector('.topic-card');
-
-      expect(card).not.toBeNull();
-    });
-
+  describe('topic input', () => {
     it('should display the topic name', () => {
       const title: HTMLElement =
         fixture.nativeElement.querySelector('.topic-card__title');
 
-      expect(title).not.toBeNull();
-      expect(title.textContent?.trim()).toBe(mockTopic.name);
+      expect(title.textContent?.trim()).toBe('Angular');
     });
 
     it('should display the topic description', () => {
@@ -66,179 +43,16 @@ describe('TopicCardComponent', () => {
         '.topic-card__description',
       );
 
-      expect(description).not.toBeNull();
-      expect(description.textContent?.trim()).toBe(mockTopic.description);
+      expect(description.textContent?.trim()).toBe(
+        'Learn Angular development.',
+      );
     });
 
-    it('should render the subscription button', () => {
-      expect(getButton()).not.toBeNull();
-      expect(getButton().type).toBe('button');
-    });
-  });
-
-  describe('subscription state', () => {
-    it('should display "S’abonner" when the topic is not subscribed', () => {
-      expect(getButton().textContent?.trim()).toBe('S’abonner');
-    });
-
-    it('should display "Déjà abonné" when the topic is subscribed', () => {
-      fixture.componentRef.setInput('topic', {
-        ...mockTopic,
-        subscribed: true,
-      });
-
-      fixture.detectChanges();
-
-      expect(getButton().textContent?.trim()).toBe('Déjà abonné');
-    });
-
-    it('should not apply the subscribed class when the topic is not subscribed', () => {
-      expect(
-        getButton().classList.contains('topic-card__button--subscribed'),
-      ).toBeFalse();
-    });
-
-    it('should apply the subscribed class when the topic is subscribed', () => {
-      fixture.componentRef.setInput('topic', {
-        ...mockTopic,
-        subscribed: true,
-      });
-
-      fixture.detectChanges();
-
-      expect(
-        getButton().classList.contains('topic-card__button--subscribed'),
-      ).toBeTrue();
-    });
-  });
-
-  describe('showUnsubscribe input', () => {
-    it('should display "S’abonner" when showUnsubscribe is false and the topic is not subscribed', () => {
-      fixture.componentRef.setInput('showUnsubscribe', false);
-      fixture.componentRef.setInput('topic', {
-        ...mockTopic,
-        subscribed: false,
-      });
-
-      fixture.detectChanges();
-
-      expect(getButton().textContent?.trim()).toBe('S’abonner');
-    });
-
-    it('should display "Déjà abonné" when showUnsubscribe is false and the topic is subscribed', () => {
-      fixture.componentRef.setInput('showUnsubscribe', false);
-      fixture.componentRef.setInput('topic', {
-        ...mockTopic,
-        subscribed: true,
-      });
-
-      fixture.detectChanges();
-
-      expect(getButton().textContent?.trim()).toBe('Déjà abonné');
-    });
-
-    it('should display "Se désabonner" when showUnsubscribe is true', () => {
-      fixture.componentRef.setInput('showUnsubscribe', true);
-      fixture.detectChanges();
-
-      expect(getButton().textContent?.trim()).toBe('Se désabonner');
-    });
-
-    it('should update the button when showUnsubscribe changes', () => {
-      fixture.componentRef.setInput('showUnsubscribe', true);
-      fixture.detectChanges();
-
-      expect(getButton().textContent?.trim()).toBe('Se désabonner');
-
-      fixture.componentRef.setInput('showUnsubscribe', false);
-      fixture.detectChanges();
-
-      expect(getButton().textContent?.trim()).toBe('S’abonner');
-    });
-
-    it('should preserve the subscribed CSS class when showUnsubscribe is true', () => {
-      fixture.componentRef.setInput('topic', {
-        ...mockTopic,
-        subscribed: true,
-      });
-      fixture.componentRef.setInput('showUnsubscribe', true);
-
-      fixture.detectChanges();
-
-      expect(
-        getButton().classList.contains('topic-card__button--subscribed'),
-      ).toBeTrue();
-    });
-  });
-
-  describe('subscribe output', () => {
-    it('should emit the topic when the subscription button is clicked', () => {
-      const emitSpy = spyOn(component.subscribe, 'emit');
-
-      getButton().click();
-
-      expect(emitSpy).toHaveBeenCalledOnceWith(mockTopic);
-    });
-
-    it('should emit the updated topic when the topic input changes', () => {
-      const updatedTopic: Topic = {
-        ...mockTopic,
-        name: 'Angular avancé',
-        subscribed: true,
-      };
-
-      fixture.componentRef.setInput('topic', updatedTopic);
-      fixture.detectChanges();
-
-      const emitSpy = spyOn(component.subscribe, 'emit');
-
-      getButton().click();
-
-      expect(emitSpy).toHaveBeenCalledOnceWith(updatedTopic);
-    });
-
-    it('should emit the topic when showUnsubscribe is true', () => {
-      fixture.componentRef.setInput('showUnsubscribe', true);
-      fixture.detectChanges();
-
-      const emitSpy = spyOn(component.subscribe, 'emit');
-
-      getButton().click();
-
-      expect(emitSpy).toHaveBeenCalledOnceWith(mockTopic);
-    });
-
-    it('should emit only once per click', () => {
-      const emitSpy = spyOn(component.subscribe, 'emit');
-
-      getButton().click();
-
-      expect(emitSpy).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('unsubscribe output', () => {
-    it('should expose the unsubscribe output', () => {
-      expect(component.unsubscribe).toBeDefined();
-    });
-
-    it('should not emit unsubscribe when the button is clicked', () => {
-      const emitSpy = spyOn(component.unsubscribe, 'emit');
-
-      fixture.componentRef.setInput('showUnsubscribe', true);
-      fixture.detectChanges();
-
-      getButton().click();
-
-      expect(emitSpy).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('input updates', () => {
-    it('should update the displayed name when the topic changes', () => {
+    it('should update the displayed content when the topic changes', () => {
       const updatedTopic: Topic = {
         ...mockTopic,
         name: 'TypeScript',
+        description: 'Learn TypeScript development.',
       };
 
       fixture.componentRef.setInput('topic', updatedTopic);
@@ -247,43 +61,185 @@ describe('TopicCardComponent', () => {
       const title: HTMLElement =
         fixture.nativeElement.querySelector('.topic-card__title');
 
-      expect(title.textContent?.trim()).toBe('TypeScript');
-    });
-
-    it('should update the displayed description when the topic changes', () => {
-      const updatedTopic: Topic = {
-        ...mockTopic,
-        description: 'Un langage pour JavaScript.',
-      };
-
-      fixture.componentRef.setInput('topic', updatedTopic);
-      fixture.detectChanges();
-
       const description: HTMLElement = fixture.nativeElement.querySelector(
         '.topic-card__description',
       );
 
+      expect(title.textContent?.trim()).toBe('TypeScript');
       expect(description.textContent?.trim()).toBe(
-        'Un langage pour JavaScript.',
+        'Learn TypeScript development.',
       );
     });
+  });
 
-    it('should update the button state when subscribed changes', () => {
+  describe('subscribe mode', () => {
+    it('should display the subscribe button when showUnsubscribe is false', () => {
+      fixture.componentRef.setInput('showUnsubscribe', false);
+      fixture.detectChanges();
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      expect(button).toBeTruthy();
+      expect(button.textContent?.trim()).toBe('S’abonner');
+    });
+
+    it('should emit the topic when the subscribe button is clicked', () => {
+      const subscribeSpy = spyOn(component.subscribe, 'emit');
+
+      fixture.componentRef.setInput('showUnsubscribe', false);
+      fixture.detectChanges();
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      button.click();
+
+      expect(subscribeSpy).toHaveBeenCalledOnceWith(component.topic());
+    });
+
+    it('should display "Déjà abonné" when the topic is subscribed', () => {
+      fixture.componentRef.setInput('topic', {
+        ...mockTopic,
+        subscribed: true,
+      });
+      fixture.componentRef.setInput('showUnsubscribe', false);
+      fixture.detectChanges();
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      expect(button.textContent?.trim()).toBe('Déjà abonné');
+    });
+
+    it('should add the subscribed CSS class when the topic is subscribed', () => {
+      fixture.componentRef.setInput('topic', {
+        ...mockTopic,
+        subscribed: true,
+      });
+      fixture.componentRef.setInput('showUnsubscribe', false);
+      fixture.detectChanges();
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      expect(button.classList).toContain('topic-card__button--subscribed');
+    });
+
+    it('should not add the subscribed CSS class when the topic is not subscribed', () => {
       fixture.componentRef.setInput('topic', {
         ...mockTopic,
         subscribed: false,
       });
+      fixture.componentRef.setInput('showUnsubscribe', false);
       fixture.detectChanges();
 
-      expect(getButton().textContent?.trim()).toBe('S’abonner');
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
 
+      expect(button.classList).not.toContain('topic-card__button--subscribed');
+    });
+  });
+
+  describe('unsubscribe mode', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('showUnsubscribe', true);
+      fixture.detectChanges();
+    });
+
+    it('should display the unsubscribe button', () => {
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      expect(button).toBeTruthy();
+      expect(button.textContent?.trim()).toBe('Se désabonner');
+    });
+
+    it('should emit the topic when the unsubscribe button is clicked', () => {
+      const unsubscribeSpy = spyOn(component.unsubscribe, 'emit');
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      button.click();
+
+      expect(unsubscribeSpy).toHaveBeenCalledOnceWith(component.topic());
+    });
+
+    it('should not display the subscribe button text', () => {
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      expect(button.textContent?.trim()).not.toBe('S’abonner');
+      expect(button.textContent?.trim()).not.toBe('Déjà abonné');
+    });
+
+    it('should add the subscribed CSS class when the topic is subscribed', () => {
       fixture.componentRef.setInput('topic', {
         ...mockTopic,
         subscribed: true,
       });
       fixture.detectChanges();
 
-      expect(getButton().textContent?.trim()).toBe('Déjà abonné');
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      expect(button.classList).toContain('topic-card__button--subscribed');
+    });
+
+    it('should not add the subscribed CSS class when the topic is not subscribed', () => {
+      fixture.componentRef.setInput('topic', {
+        ...mockTopic,
+        subscribed: false,
+      });
+      fixture.detectChanges();
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      expect(button.classList).not.toContain('topic-card__button--subscribed');
+    });
+  });
+
+  describe('outputs', () => {
+    it('should not emit subscribe when the unsubscribe button is clicked', () => {
+      const subscribeSpy = spyOn(component.subscribe, 'emit');
+
+      fixture.componentRef.setInput('showUnsubscribe', true);
+      fixture.detectChanges();
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      button.click();
+
+      expect(subscribeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not emit unsubscribe when the subscribe button is clicked', () => {
+      const unsubscribeSpy = spyOn(component.unsubscribe, 'emit');
+
+      fixture.componentRef.setInput('showUnsubscribe', false);
+      fixture.detectChanges();
+
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.topic-card__button',
+      );
+
+      button.click();
+
+      expect(unsubscribeSpy).not.toHaveBeenCalled();
     });
   });
 });

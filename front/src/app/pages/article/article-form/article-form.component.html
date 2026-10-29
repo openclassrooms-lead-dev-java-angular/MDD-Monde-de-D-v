@@ -19,9 +19,9 @@
       <mat-label>Sélectionner un thème</mat-label>
 
       <mat-form-field appearance="outline" class="article-form__field">
-        <mat-select formControlName="topicSlug">
-          @for (topic of topics(); track topic.slug) {
-            <mat-option [value]="topic.slug">
+        <mat-select formControlName="topicPublicId">
+          @for (topic of topics(); track topic.publicId) {
+            <mat-option [value]="topic.publicId">
               {{ topic.name }}
             </mat-option>
           }
@@ -44,7 +44,6 @@
           class="form-input__input"
           type="text"
           formControlName="title"
-          (focusout)="autocompleteSlug()"
         />
 
         @for (error of titleErrors; track error) {
@@ -52,34 +51,6 @@
         }
       </mat-form-field>
     </div>
-
-    <!-- Slug -->
-    <div class="form-input">
-      <mat-label for="article-slug">Adresse (slug)</mat-label>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <input
-          id="article-slug"
-          matInput
-          class="form-input__input"
-          type="text"
-          formControlName="slug"
-          (focusout)="autocompleteSlug()"
-        />
-
-        @for (error of slugErrors; track error) {
-          <mat-error>{{ error }}</mat-error>
-        }
-
-        @if (isLoading()) {
-          <mat-spinner matSuffix diameter="20" />
-        }
-      </mat-form-field>
-    </div>
-
-    @if (articleForm.controls.slug.pending) {
-      <p class="form-hint" role="status">Vérification de la disponibilité...</p>
-    }
 
     <!-- Content -->
     <div class="form-input">

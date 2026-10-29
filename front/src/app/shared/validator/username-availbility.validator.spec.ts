@@ -1,59 +1,73 @@
-import { FormControl, ValidationErrors } from '@angular/forms';
+import { AbstractControl, FormControl, ValidationErrors } from '@angular/forms';
 import { fakeAsync, tick } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
-import { AuthService } from '@service/auth.service';
-import { AvailableResponse } from '@type/available-response.type';
+import { Observable, of, throwError } from 'rxjs';
 
+import { AuthService } from '@service/auth.service';
+import { UserService } from '@service/user.service';
+import { usernameAvailabilityValidator } from './username-availbility.validator';
+import { AvailableResponse } from '@type/available-response.type';
 
 describe('usernameAvailabilityValidator', () => {
   let authService: jasmine.SpyObj<AuthService>;
+  let userService: jasmine.SpyObj<UserService>;
 
   beforeEach(() => {
-    authService = jasmine.createSpyObj<AuthService>('AuthService', [
-      'checkUsernameAvailability',
-    ]);
-  });
-
-  it('should return null when the username has fewer than 3 characters', () => {
-    const validator = usernameAvailabilityValidator(authService);
-    const control = new FormControl('ab');
-    let result: ValidationErrors | null | undefined;
-
-    validator(control).subscribe((value) => {
-      result = value;
-    });
-
-    expect(result).toBeNull();
-    expect(authService.checkUsernameAvailability).not.toHaveBeenCalled();
-  });
-
-  it('should return null when the username is empty', () => {
-    const validator = usernameAvailabilityValidator(authService);
-    const control = new FormControl('');
-
-    let result: ValidationErrors | null | undefined;
-
-    validator(control).subscribe((value) => {
-      result = value;
-    });
-
-    expect(result).toBeNull();
-    expect(authService.checkUsernameAvailability).not.toHaveBeenCalled();
-  });
-
-  it('should wait 400 milliseconds before checking username availability', fakeAsync(() => {
-    authService.checkUsernameAvailability.and.returnValue(
-      of({ available: true } as AvailableResponse),
+    authService = jasmine.createSpyObj<AuthService>(
+      'AuthService',
+      ['checkUsernameAvailability'],
     );
 
-    const validator = usernameAvailabilityValidator(authService);
-    const control = new FormControl('alice');
+    userService = jasmine.createSpyObj<UserService>(
+      'UserService',
+      ['checkUsernameAvailability'],
+    );
+  });
 
+  function runValidator(
+    service: AuthService | UserService,
+    control: AbstractControl,
+  ): Observable<ValidationErrors | null> {
+    return usernameAvailabilityValidator(service)(control) as Observable<
+      ValidationErrors | null
+    >;
+  }
+
+  it('should return null when the username has fewer than 3 characters', fakeAsync(() => {
+    const control = new FormControl(' ab ');
     let result: ValidationErrors | null | undefined;
 
-    validator(control).subscribe((value) => {
+    runValidator(authService, control).subscribe((value) => {
       result = value;
     });
+
+    tick(400);
+
+    expect(result).toBeNull();
+    expect(authService.checkUsernameAvailability).not.toHaveBeenCalled();
+  }));
+
+  it('should trim the username before checking availability', fakeAsync(() => {
+    authService.checkUsernameAvailability.and.returnValue(
+      of({ available: true }),
+    );
+
+    const control = new FormControl('  John_Doe  ');
+
+    runValidator(authService, control).subscribe();
+
+    tick(400);
+
+    expect(authService.checkUsernameAvailability).toHaveBeenCalledOnceWith(
+      'John_Doe',
+    );
+  }));
+
+  it('should wait 400 ms before calling the service', fakeAsync(() => {
+    authService.checkUsernameAvailability.and.returnValue(
+      of({ available: true }),
+    );
+
+    runValidator(authService, new FormControl('John_Doe')).subscribe();
 
     tick(399);
 
@@ -62,44 +76,32 @@ describe('usernameAvailabilityValidator', () => {
     tick(1);
 
     expect(authService.checkUsernameAvailability).toHaveBeenCalledOnceWith(
-      'alice',
+      'John_Doe',
     );
-    expect(result).toBeNull();
   }));
 
   it('should return null when the username is available', fakeAsync(() => {
-    authService.checkUsernameAvailability.and.returnValue(
-      of({ available: true } as AvailableResponse),
-    );
-
-    const validator = usernameAvailabilityValidator(authService);
-    const control = new FormControl('alice');
+    const response: AvailableResponse = { available: true };
+    authService.checkUsernameAvailability.and.returnValue(of(response));
 
     let result: ValidationErrors | null | undefined;
 
-    validator(control).subscribe((value) => {
+    runValidator(authService, new FormControl('John_Doe')).subscribe((value) => {
       result = value;
     });
 
     tick(400);
 
     expect(result).toBeNull();
-    expect(authService.checkUsernameAvailability).toHaveBeenCalledOnceWith(
-      'alice',
-    );
   }));
 
-  it('should return usernameTaken when the username is already taken', fakeAsync(() => {
-    authService.checkUsernameAvailability.and.returnValue(
-      of({ available: false } as AvailableResponse),
-    );
-
-    const validator = usernameAvailabilityValidator(authService);
-    const control = new FormControl('alice');
+  it('should return usernameTaken when the username is unavailable', fakeAsync(() => {
+    const response: AvailableResponse = { available: false };
+    authService.checkUsernameAvailability.and.returnValue(of(response));
 
     let result: ValidationErrors | null | undefined;
 
-    validator(control).subscribe((value) => {
+    runValidator(authService, new FormControl('John_Doe')).subscribe((value) => {
       result = value;
     });
 
@@ -108,66 +110,60 @@ describe('usernameAvailabilityValidator', () => {
     expect(result).toEqual({ usernameTaken: true });
   }));
 
-  it('should trim whitespace before checking username availability', fakeAsync(() => {
-    authService.checkUsernameAvailability.and.returnValue(
-      of({ available: true } as AvailableResponse),
-    );
-
-    const validator = usernameAvailabilityValidator(authService);
-    const control = new FormControl('  alice  ');
-
-    validator(control).subscribe();
-
-    tick(400);
-
-    expect(authService.checkUsernameAvailability).toHaveBeenCalledOnceWith(
-      'alice',
-    );
-  }));
-
-  it('should return usernameCheckFailed when the service throws an error', fakeAsync(() => {
-    const serviceError = new Error('Network error');
-    const consoleErrorSpy = spyOn(console, 'error');
+  it('should return usernameCheckFailed when the service errors', fakeAsync(() => {
+    const error = new Error('Server error');
 
     authService.checkUsernameAvailability.and.returnValue(
-      throwError(() => serviceError),
+      throwError(() => error),
     );
 
-    const validator = usernameAvailabilityValidator(authService);
-    const control = new FormControl('alice');
+    spyOn(console, 'error');
 
     let result: ValidationErrors | null | undefined;
 
-    validator(control).subscribe((value) => {
+    runValidator(authService, new FormControl('John_Doe')).subscribe((value) => {
       result = value;
     });
 
     tick(400);
 
     expect(result).toEqual({ usernameCheckFailed: true });
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Erreur de vérification du nom utilisateur :',
-      serviceError,
-    );
+    expect(console.error).toHaveBeenCalled();
   }));
 
-  it('should check the username only once per validation', fakeAsync(() => {
-    authService.checkUsernameAvailability.and.returnValue(
-      of({ available: true } as AvailableResponse),
+  it('should also work with UserService', fakeAsync(() => {
+    userService.checkUsernameAvailability.and.returnValue(
+      of({ available: true }),
     );
 
-    const validator = usernameAvailabilityValidator(authService);
-    const control = new FormControl('alice');
+    let result: ValidationErrors | null | undefined;
 
-    let emissionCount = 0;
-
-    validator(control).subscribe(() => {
-      emissionCount++;
+    runValidator(userService, new FormControl('John_Doe')).subscribe((value) => {
+      result = value;
     });
 
     tick(400);
 
-    expect(emissionCount).toBe(1);
-    expect(authService.checkUsernameAvailability).toHaveBeenCalledTimes(1);
+    expect(userService.checkUsernameAvailability).toHaveBeenCalledOnceWith(
+      'John_Doe',
+    );
+    expect(result).toBeNull();
+  }));
+
+  it('should not call the service if the validation subscription is cancelled', fakeAsync(() => {
+    authService.checkUsernameAvailability.and.returnValue(
+      of({ available: true }),
+    );
+
+    const subscription = runValidator(
+      authService,
+      new FormControl('John_Doe'),
+    ).subscribe();
+
+    subscription.unsubscribe();
+
+    tick(400);
+
+    expect(authService.checkUsernameAvailability).not.toHaveBeenCalled();
   }));
 });

@@ -4,11 +4,12 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { AuthService } from '@service/auth.service';
+import { UserService } from '@service/user.service';
 import { AvailableResponse } from '@type/available-response.type';
 import { catchError, map, Observable, of, switchMap, take, timer } from 'rxjs';
 
 export const usernameAvailabilityValidator = (
-  authService: AuthService,
+  service: AuthService | UserService,
 ): AsyncValidatorFn => {
   return (control: AbstractControl): Observable<ValidationErrors | null> => {
     const username = (control.value as string).trim();
@@ -18,7 +19,7 @@ export const usernameAvailabilityValidator = (
     }
 
     return timer(400).pipe(
-      switchMap(() => authService.checkUsernameAvailability(username)),
+      switchMap(() => service.checkUsernameAvailability(username)),
       map((response: AvailableResponse) =>
         response.available ? null : { usernameTaken: true },
       ),

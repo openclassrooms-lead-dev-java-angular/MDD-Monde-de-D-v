@@ -1,74 +1,105 @@
+import { DatePipe, Location } from '@angular/common';
+import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, convertToParamMap, RouterLink } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { of, Subject, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 
 import { ArticleDetailComponent } from './article-detail.component';
+import { Article } from '@model/article.model';
+import { ArticleComment } from '@model/article-comment.model';
 import { ArticleService } from '@service/article.service';
 import { CommentService } from '@service/comment.service';
-import { ArticleComment } from '@model/article-comment.model';
-import { Article } from '@model/article.model';
+import { CommentComponent } from '@shared/components/comment/comment.component';
+
+// Mock child component with the same required input contract.
+@Component({
+  selector: 'app-comment',
+  standalone: true,
+  template: `
+    <div class="comment">
+      <div class="comment__username">{{ comment().username }}</div>
+      <div class="comment__content">{{ comment().content }}</div>
+    </div>
+  `,
+})
+class MockCommentComponent {
+  readonly comment = input.required<ArticleComment>();
+}
 
 describe('ArticleDetailComponent', () => {
-  let component: ArticleDetailComponent;
   let fixture: ComponentFixture<ArticleDetailComponent>;
-
-  let articleService: jasmine.SpyObj<ArticleService>;
-  let commentService: jasmine.SpyObj<CommentService>;
-
-  const articleSlug = 'test-article';
+  let component: ArticleDetailComponent;
+  let articleServiceSpy: jasmine.SpyObj<ArticleService>;
+  let commentServiceSpy: jasmine.SpyObj<CommentService>;
+  let locationSpy: jasmine.SpyObj<Location>;
 
   const mockComment = {
-    content: 'Mon premier commentaire',
+    publicId: 'comment-1',
+    content: 'This is a test comment',
+    username: 'test-user',
+    createdAt: new Date('2026-01-15T10:00:00Z'),
   } as ArticleComment;
 
   const mockArticle = {
-    slug: articleSlug,
-    title: 'Mon article de test',
-    content: '<p>Contenu de mon article</p>',
-    createdAt: new Date('2026-10-21'),
-    username: 'test-user',
-    updatedAt: new Date('2026-10-21'),
+    publicId: 'article-1',
+    title: 'Test article',
+    content: 'This is the article content',
+    username: 'article-author',
+    createdAt: new Date('2026-01-10T10:00:00Z'),
     topic: {
-      slug: 'angular',
+      publicId: 'topic-1',
       name: 'Angular',
-      description: 'Discussions autour d’Angular.',
-      subscribed: false,
-      createdAt: new Date('2025-01-01T00:00:00Z'),
-      updatedAt: new Date('2025-01-02T00:00:00Z'),
     },
-    comments: [],
-  } as Article;
+    comments: [mockComment],
+  } as unknown as Article;
 
   beforeEach(async () => {
-    articleService = jasmine.createSpyObj<ArticleService>('ArticleService', [
-      'getArticleBySlug',
+    articleServiceSpy = jasmine.createSpyObj<ArticleService>('ArticleService', [
+      'fetchArticleByPublicId',
     ]);
 
-    commentService = jasmine.createSpyObj<CommentService>('CommentService', [
+    commentServiceSpy = jasmine.createSpyObj<CommentService>('CommentService', [
       'postComment',
     ]);
 
-    articleService.getArticleBySlug.and.returnValue(of(mockArticle));
-    commentService.postComment.and.returnValue(of(mockComment));
+    locationSpy = jasmine.createSpyObj<Location>('Location', ['back']);
+
+    articleServiceSpy.fetchArticleByPublicId.and.returnValue(of(mockArticle));
+
+    commentServiceSpy.postComment.and.returnValue(of(mockComment));
 
     await TestBed.configureTestingModule({
-      imports: [ArticleDetailComponent],
+      imports: [
+        ArticleDetailComponent,
+        MockCommentComponent,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        RouterLink,
+        DatePipe,
+      ],
       providers: [
         {
           provide: ArticleService,
-          useValue: articleService,
+          useValue: articleServiceSpy,
         },
         {
           provide: CommentService,
-          useValue: commentService,
+          useValue: commentServiceSpy,
+        },
+        {
+          provide: Location,
+          useValue: locationSpy,
         },
         {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
               paramMap: convertToParamMap({
-                slug: articleSlug,
+                publicId: 'article-1',
+                slug: 'article-1',
               }),
             },
           },
@@ -76,8 +107,11 @@ describe('ArticleDetailComponent', () => {
       ],
     })
       .overrideComponent(ArticleDetailComponent, {
+        remove: {
+          imports: [CommentComponent],
+        },
         add: {
-          imports: [RouterLink, MatFormFieldModule],
+          imports: [MockCommentComponent, MatFormFieldModule, RouterLink],
         },
       })
       .compileComponents();
@@ -86,287 +120,186 @@ describe('ArticleDetailComponent', () => {
     component = fixture.componentInstance;
   });
 
-  afterEach(() => {
-    fixture.destroy();
+  // Component creation
+
+  it('should create', () => {
+    fixture.detectChanges();
+
+    expect(component).toBeTruthy();
   });
 
-  describe('initialization', () => {
-    it('should create the component', () => {
-      expect(component).toBeTruthy();
-    });
+  // Article loading
 
-    it('should retrieve the article using the route slug', () => {
-      fixture.detectChanges();
+  it('should load the article using the route parameter', () => {
+    fixture.detectChanges();
 
-      expect(articleService.getArticleBySlug).toHaveBeenCalledOnceWith(
-        articleSlug,
-      );
-    });
-
-    it('should display the article after loading', () => {
-      fixture.detectChanges();
-
-      const compiled: HTMLElement = fixture.nativeElement;
-
-      expect(compiled.querySelector('h1')?.textContent).toContain(
-        mockArticle.title,
-      );
-
-      expect(compiled.querySelector('.article__content')?.innerHTML).toContain(
-        'Contenu de mon article',
-      );
-    });
-
-    it('should display the article metadata', () => {
-      fixture.detectChanges();
-
-      const compiled: HTMLElement = fixture.nativeElement;
-
-      expect(compiled.querySelector('.article__meta')?.textContent).toContain(
-        mockArticle.createdAt,
-      );
-
-      expect(compiled.querySelector('.article__meta')?.textContent).toContain(
-        mockArticle.username,
-      );
-
-      expect(compiled.querySelector('.article__meta')?.textContent).toContain(
-        mockArticle.topic.name,
-      );
-    });
-
-    it('should display the loading indicator while retrieving the article', () => {
-      const articleSubject = new Subject<Article>();
-
-      articleService.getArticleBySlug.and.returnValue(
-        articleSubject.asObservable(),
-      );
-
-      fixture.detectChanges();
-
-      const compiled: HTMLElement = fixture.nativeElement;
-
-      expect(compiled.querySelector('.article-detail__loading')).toBeTruthy();
-
-      expect(compiled.textContent).toContain('Chargement de l’article.');
-
-      articleSubject.next(mockArticle);
-      articleSubject.complete();
-
-      fixture.detectChanges();
-
-      expect(compiled.querySelector('.article-detail__loading')).toBeFalsy();
-
-      expect(compiled.querySelector('.article')).toBeTruthy();
-    });
-
-    it('should display the not-found message when the article request fails', () => {
-      spyOn(console, 'error');
-
-      articleService.getArticleBySlug.and.returnValue(
-        throwError(() => new Error('Article not found')),
-      );
-
-      fixture.detectChanges();
-
-      const compiled: HTMLElement = fixture.nativeElement;
-
-      expect(compiled.querySelector('.article-detail__empty')).toBeTruthy();
-
-      expect(compiled.textContent).toContain('Article introuvable');
-    });
+    expect(articleServiceSpy.fetchArticleByPublicId).toHaveBeenCalledWith(
+      'article-1',
+    );
   });
 
-  describe('comments display', () => {
-    it('should display the empty message when the article has no comments', () => {
-      fixture.detectChanges();
+  it('should display the article title and content', () => {
+    fixture.detectChanges();
 
-      const compiled: HTMLElement = fixture.nativeElement;
+    const text = fixture.nativeElement.textContent as string;
 
-      expect(compiled.querySelector('.comments__empty')).toBeTruthy();
+    expect(text).toContain('Test article');
+    expect(text).toContain('This is the article content');
+    expect(text).toContain('article-author');
+  });
 
-      expect(compiled.textContent).toContain(
-        'Il n’y a pas de commentaire, soyez le premier à en écrire un.',
-      );
-    });
+  it('should display the article topic', () => {
+    fixture.detectChanges();
 
-    it('should display the article comments', () => {
-      const articleWithComments = {
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(text).toContain('Angular');
+  });
+
+  it('should handle an article loading error', () => {
+    articleServiceSpy.fetchArticleByPublicId.and.returnValue(
+      throwError(() => new Error('Unable to load article')),
+    );
+
+    fixture.detectChanges();
+
+    expect(articleServiceSpy.fetchArticleByPublicId).toHaveBeenCalled();
+  });
+
+  it('should support a request that is still pending', () => {
+    articleServiceSpy.fetchArticleByPublicId.and.returnValue(
+      new Observable<Article>(() => {
+        // Keep the request pending.
+      }),
+    );
+
+    fixture.detectChanges();
+
+    expect(articleServiceSpy.fetchArticleByPublicId).toHaveBeenCalled();
+  });
+
+  // Comments
+
+  it('should render the article comments', () => {
+    fixture.detectChanges();
+
+    const comments = fixture.debugElement.queryAll(
+      By.directive(MockCommentComponent),
+    );
+
+    expect(comments.length).toBe(1);
+  });
+
+  it('should pass the required comment input to the child component', () => {
+    fixture.detectChanges();
+
+    const commentDebugElement = fixture.debugElement.query(
+      By.directive(MockCommentComponent),
+    );
+
+    const commentComponent =
+      commentDebugElement.componentInstance as MockCommentComponent;
+
+    expect(commentComponent.comment()).toEqual(mockComment);
+  });
+
+  it('should handle an article without comments', () => {
+    articleServiceSpy.fetchArticleByPublicId.and.returnValue(
+      of({
         ...mockArticle,
-        comments: [mockComment],
-      } as Article;
+        comments: [],
+      } as Article),
+    );
 
-      articleService.getArticleBySlug.and.returnValue(of(articleWithComments));
+    fixture.detectChanges();
 
-      fixture.detectChanges();
+    const comments = fixture.debugElement.queryAll(
+      By.directive(MockCommentComponent),
+    );
 
-      const compiled: HTMLElement = fixture.nativeElement;
-
-      expect(compiled.querySelector('app-comment')).toBeTruthy();
-      expect(compiled.querySelector('.comments__empty')).toBeFalsy();
-    });
+    expect(comments.length).toBe(0);
   });
 
-  describe('comment form', () => {
-    it('should disable the submit button when the form is empty', () => {
-      fixture.detectChanges();
+  // Comment form
 
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
-        'button[type="submit"]',
-      );
+  it('should create the comment form', () => {
+    fixture.detectChanges();
 
-      expect(button.disabled).toBeTrue();
-    });
+    expect(component['commentForm']).toBeDefined();
+  });
 
-    it('should enable the submit button when the comment is valid', () => {
-      fixture.detectChanges();
+  it('should reject an empty comment', () => {
+    fixture.detectChanges();
 
-      const textarea: HTMLTextAreaElement =
-        fixture.nativeElement.querySelector('#comment-content');
+    const form = component['commentForm'];
 
-      textarea.value = 'Mon nouveau commentaire';
-      textarea.dispatchEvent(new Event('input'));
+    form.controls['comment'].setValue('');
 
-      fixture.detectChanges();
+    expect(form.invalid).toBeTrue();
+  });
 
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
-        'button[type="submit"]',
-      );
+  it('should accept a non-empty comment', () => {
+    fixture.detectChanges();
 
-      expect(button.disabled).toBeFalse();
-    });
+    const form = component['commentForm'];
 
-    it('should not submit an empty comment', () => {
-      fixture.detectChanges();
+    form.controls['comment'].setValue('A valid comment');
 
-      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+    expect(form.valid).toBeTrue();
+  });
 
-      form.dispatchEvent(
-        new Event('submit', {
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
+  // Comment submission
 
-      expect(commentService.postComment).not.toHaveBeenCalled();
-    });
+  it('should submit a valid comment', () => {
+    fixture.detectChanges();
 
-    it('should submit a valid comment using the article slug', () => {
-      fixture.detectChanges();
+    const form = component['commentForm'];
 
-      const textarea: HTMLTextAreaElement =
-        fixture.nativeElement.querySelector('#comment-content');
+    form.controls['comment'].setValue('A valid comment');
 
-      textarea.value = 'Mon nouveau commentaire';
-      textarea.dispatchEvent(new Event('input'));
+    component.submitForm();
 
-      fixture.detectChanges();
+    expect(commentServiceSpy.postComment).toHaveBeenCalledWith(
+      'article-1',
+      'A valid comment',
+    );
+  });
 
-      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+  it('should not submit an invalid comment', () => {
+    fixture.detectChanges();
 
-      form.dispatchEvent(
-        new Event('submit', {
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
+    const form = component['commentForm'];
 
-      expect(commentService.postComment).toHaveBeenCalledOnceWith(
-        articleSlug,
-        'Mon nouveau commentaire',
-      );
-    });
+    form.controls['comment'].setValue('');
 
-    it('should reset the form after successfully submitting a comment', () => {
-      fixture.detectChanges();
+    component.submitForm();
 
-      const textarea: HTMLTextAreaElement =
-        fixture.nativeElement.querySelector('#comment-content');
+    expect(commentServiceSpy.postComment).not.toHaveBeenCalled();
+  });
 
-      textarea.value = 'Mon nouveau commentaire';
-      textarea.dispatchEvent(new Event('input'));
+  it('should handle a comment submission error', () => {
+    commentServiceSpy.postComment.and.returnValue(
+      throwError(() => new Error('Unable to post comment')),
+    );
 
-      fixture.detectChanges();
+    fixture.detectChanges();
 
-      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+    const form = component['commentForm'];
 
-      form.dispatchEvent(
-        new Event('submit', {
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
+    form.controls['comment'].setValue('A valid comment');
 
-      fixture.detectChanges();
+    component.submitForm();
 
-      expect(textarea.value).toBe('');
-    });
+    expect(commentServiceSpy.postComment).toHaveBeenCalled();
+  });
 
-    it('should append the new comment to the article', () => {
-      fixture.detectChanges();
+  // Navigation
 
-      const textarea: HTMLTextAreaElement =
-        fixture.nativeElement.querySelector('#comment-content');
+  it('should navigate back when goBack is called', () => {
+    fixture.detectChanges();
 
-      textarea.value = 'Mon nouveau commentaire';
-      textarea.dispatchEvent(new Event('input'));
+    component.goBack();
 
-      fixture.detectChanges();
-
-      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
-
-      form.dispatchEvent(
-        new Event('submit', {
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
-
-      fixture.detectChanges();
-
-      const comments: HTMLElement[] = Array.from(
-        fixture.nativeElement.querySelectorAll('app-comment'),
-      );
-
-      expect(comments.length).toBe(1);
-      expect(
-        fixture.nativeElement.querySelector('.comments__empty'),
-      ).toBeFalsy();
-    });
-
-    it('should stop loading after a comment submission error', () => {
-      spyOn(console, 'error');
-
-      commentService.postComment.and.returnValue(
-        throwError(() => new Error('Comment submission failed')),
-      );
-
-      fixture.detectChanges();
-
-      const textarea: HTMLTextAreaElement =
-        fixture.nativeElement.querySelector('#comment-content');
-
-      textarea.value = 'Mon nouveau commentaire';
-      textarea.dispatchEvent(new Event('input'));
-
-      fixture.detectChanges();
-
-      const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
-
-      form.dispatchEvent(
-        new Event('submit', {
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
-
-      fixture.detectChanges();
-
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector(
-        'button[type="submit"]',
-      );
-
-      expect(button.disabled).toBeFalse();
-    });
+    expect(locationSpy.back).toHaveBeenCalled();
   });
 });

@@ -1,90 +1,90 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RegisterComponent } from './register.component';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { AuthService } from '@service/auth.service';
-import { of, Subject, throwError } from 'rxjs';
-import { ValidationErrorService } from '@service/validation.service';
 import { HttpResponse } from '@angular/common/http';
+import { of, Subject, throwError } from 'rxjs';
+
+import { RegisterComponent } from './register.component';
+import { AuthService } from '@service/auth.service';
+import { ValidationErrorService } from '@service/validation.service';
+import { ButtonComponent } from 'src/app/shared/components/button/button.component';
 import { AvailableResponse } from '@type/available-response.type';
 
 describe('RegisterComponent', () => {
-  let fixture: ComponentFixture<RegisterComponent>;
   let component: RegisterComponent;
+  let fixture: ComponentFixture<RegisterComponent>;
 
-  let authService: jasmine.SpyObj<AuthService>;
-  let router: jasmine.SpyObj<Router>;
-  let validationErrorService: jasmine.SpyObj<ValidationErrorService>;
+  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let validationErrorServiceSpy: jasmine.SpyObj<ValidationErrorService>;
+  let routerSpy: jasmine.SpyObj<Router>;
+
+  const validEmail = 'test@example.com';
+  const validUsername = 'newuser';
+  const validPassword = 'StrongPass1!';
 
   beforeEach(async () => {
-    authService = jasmine.createSpyObj<AuthService>('AuthService', [
+    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', [
       'register',
       'checkUsernameAvailability',
     ]);
 
-    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-
-    validationErrorService = jasmine.createSpyObj<ValidationErrorService>(
+    validationErrorServiceSpy = jasmine.createSpyObj<ValidationErrorService>(
       'ValidationErrorService',
       ['getErrors'],
     );
 
-    // Use typed observable mocks without depending on the concrete response models.
-    authService.register.and.returnValue(
-      of(new HttpResponse<void>({ body: null })),
+    routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
+
+    authServiceSpy.register.and.returnValue(
+      of(new HttpResponse<void>({ status: 200 })),
     );
-    authService.checkUsernameAvailability.and.returnValue(
-      of({ available: true } as AvailableResponse),
+    authServiceSpy.checkUsernameAvailability.and.returnValue(
+      of({ available: true }),
     );
 
-    router.navigate.and.returnValue(Promise.resolve(true));
+    validationErrorServiceSpy.getErrors.and.returnValue([]);
 
-    validationErrorService.getErrors.and.returnValue([]);
+    routerSpy.navigate.and.returnValue(Promise.resolve(true));
 
     await TestBed.configureTestingModule({
       imports: [RegisterComponent],
       providers: [
-        { provide: AuthService, useValue: authService },
-        { provide: Router, useValue: router },
+        { provide: AuthService, useValue: authServiceSpy },
         {
           provide: ValidationErrorService,
-          useValue: validationErrorService,
+          useValue: validationErrorServiceSpy,
         },
+        { provide: Router, useValue: routerSpy },
       ],
-    })
-      .overrideComponent(RegisterComponent, {
-        set: {
-          template: '',
-          imports: [],
-        },
-      })
-      .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
-  function initializeComponent(): void {
+  function setValidForm(): void {
+    component.registerForm.controls.email.setValue(validEmail);
+    component.registerForm.controls.username.setValue(validUsername);
+    component.registerForm.controls.password.setValue(validPassword);
+  }
+
+  function settleUsernameValidator(): void {
+    tick(400);
     fixture.detectChanges();
   }
 
-  function prepareValidForm(): void {
-    const { email, username, password } = component.registerForm.controls;
-
-    username.clearAsyncValidators();
-    username.setValue('johnDoe');
-
-    email.setValue('john@example.com');
-
-    password.setValue('Password123!');
-    password.updateValueAndValidity();
-  }
-
-  describe('creation', () => {
+  describe('Initialization', () => {
     it('should create the component', () => {
       expect(component).toBeTruthy();
     });
 
-    it('should initialize the form with empty values', () => {
+    it('should initialize the registration form with empty values', () => {
       expect(component.registerForm.getRawValue()).toEqual({
         email: '',
         username: '',
@@ -96,209 +96,271 @@ describe('RegisterComponent', () => {
       expect(component.isLoading()).toBeFalse();
       expect(component.errorMessage()).toBe('');
     });
+
+    it('should initialize all form controls', () => {
+      expect(component.registerForm.controls.email).toBeTruthy();
+      expect(component.registerForm.controls.username).toBeTruthy();
+      expect(component.registerForm.controls.password).toBeTruthy();
+    });
+
+    it('should render the registration title', () => {
+      const title: HTMLElement = fixture.nativeElement.querySelector('h1');
+
+      expect(title.textContent?.trim()).toBe('Inscription');
+    });
+
+    it('should render the three input fields', () => {
+      const inputs: NodeListOf<HTMLInputElement> =
+        fixture.nativeElement.querySelectorAll('input');
+
+      expect(inputs.length).toBe(3);
+      expect(inputs[0].type).toBe('email');
+      expect(inputs[1].type).toBe('text');
+      expect(inputs[2].type).toBe('password');
+    });
+
+    it('should render the registration button', () => {
+      const buttonDebugElement = fixture.debugElement.query(
+        By.directive(ButtonComponent),
+      );
+
+      expect(buttonDebugElement).toBeTruthy();
+      expect(buttonDebugElement.componentInstance.label()).toBe('S’inscrire');
+      expect(buttonDebugElement.componentInstance.type()).toBe('submit');
+    });
+
+    it('should disable the registration button when the form is invalid', () => {
+      const buttonDebugElement = fixture.debugElement.query(
+        By.directive(ButtonComponent),
+      );
+
+      expect(buttonDebugElement.componentInstance.disabled()).toBeTrue();
+    });
   });
 
-  describe('email validation', () => {
-    it('should reject an empty email', () => {
-      const email = component.registerForm.controls.email;
+  describe('Email validation', () => {
+    const emailControl = () => component.registerForm.controls.email;
 
-      email.setValue('');
+    it('should require an email', () => {
+      emailControl().setValue('');
 
-      expect(email.hasError('required')).toBeTrue();
+      expect(emailControl().hasError('required')).toBeTrue();
     });
 
-    it('should reject an invalid email format', () => {
-      const email = component.registerForm.controls.email;
+    it('should reject an invalid email', () => {
+      emailControl().setValue('invalid-email');
 
-      email.setValue('invalid-email');
-
-      expect(email.hasError('email')).toBeTrue();
-    });
-
-    it('should reject an email longer than 50 characters', () => {
-      const email = component.registerForm.controls.email;
-
-      email.setValue(`${'a'.repeat(40)}@example.com`);
-
-      expect(email.hasError('maxlength')).toBeTrue();
+      expect(emailControl().hasError('email')).toBeTrue();
     });
 
     it('should accept a valid email', () => {
-      const email = component.registerForm.controls.email;
+      emailControl().setValue(validEmail);
 
-      email.setValue('john@example.com');
-
-      expect(email.valid).toBeTrue();
-    });
-  });
-
-  describe('username validation', () => {
-    it('should reject an empty username', () => {
-      const username = component.registerForm.controls.username;
-
-      username.clearAsyncValidators();
-      username.setValue('');
-
-      expect(username.hasError('required')).toBeTrue();
+      expect(emailControl().hasError('email')).toBeFalse();
+      expect(emailControl().hasError('required')).toBeFalse();
     });
 
-    it('should reject a username shorter than 3 characters', () => {
-      const username = component.registerForm.controls.username;
+    it('should reject an email longer than 50 characters', () => {
+      emailControl().setValue(`${'a'.repeat(40)}@example.com`);
 
-      username.clearAsyncValidators();
-      username.setValue('ab');
-
-      expect(username.hasError('minlength')).toBeTrue();
+      expect(emailControl().hasError('maxlength')).toBeTrue();
     });
 
-    it('should reject a username longer than 20 characters', () => {
-      const username = component.registerForm.controls.username;
+    it('should accept an email of at most 50 characters', () => {
+      emailControl().setValue('a'.repeat(38) + '@example.com');
 
-      username.clearAsyncValidators();
-      username.setValue('a'.repeat(21));
-
-      expect(username.hasError('maxlength')).toBeTrue();
+      expect(emailControl().hasError('maxlength')).toBeFalse();
     });
 
-    it('should accept a username with a valid length', () => {
-      const username = component.registerForm.controls.username;
+    it('should expose email validation errors through ValidationErrorService', () => {
+      const expectedErrors = ['Adresse e-mail obligatoire'];
 
-      username.clearAsyncValidators();
-      username.setValue('johnDoe');
+      validationErrorServiceSpy.getErrors.and.returnValue(expectedErrors);
 
-      expect(username.valid).toBeTrue();
-    });
-
-    it('should expose the pending state of the username validator', () => {
-      component.registerForm.controls.username.markAsPending();
-
-      expect(component.isUsernameLoading).toBeTrue();
-    });
-
-    it('should return false when username validation is not pending', () => {
-      const username = component.registerForm.controls.username;
-
-      username.clearAsyncValidators();
-      username.setValue('johnDoe');
-
-      expect(component.isUsernameLoading).toBeFalse();
-    });
-  });
-
-  describe('password validation', () => {
-    it('should reject an empty password', () => {
-      const password = component.registerForm.controls.password;
-
-      password.setValue('');
-
-      expect(password.hasError('required')).toBeTrue();
-    });
-
-    it('should reject a password shorter than 8 characters', () => {
-      const password = component.registerForm.controls.password;
-
-      password.setValue('Ab1!xyz');
-
-      expect(password.hasError('minlength')).toBeTrue();
-    });
-
-    it('should require an uppercase letter', () => {
-      const password = component.registerForm.controls.password;
-
-      password.setValue('password123!');
-
-      expect(password.hasError('pattern')).toBeTrue();
-    });
-
-    it('should require a lowercase letter', () => {
-      const password = component.registerForm.controls.password;
-
-      password.setValue('PASSWORD123!');
-
-      expect(password.hasError('pattern')).toBeTrue();
-    });
-
-    it('should require a digit', () => {
-      const password = component.registerForm.controls.password;
-
-      password.setValue('PasswordTest!');
-
-      expect(password.hasError('pattern')).toBeTrue();
-    });
-
-    it('should require a special character', () => {
-      const password = component.registerForm.controls.password;
-
-      password.setValue('Password123');
-
-      expect(password.hasError('pattern')).toBeTrue();
-    });
-
-    it('should accept a password satisfying all requirements', () => {
-      const password = component.registerForm.controls.password;
-
-      password.setValue('Password123!');
-
-      expect(password.valid).toBeTrue();
-    });
-  });
-
-  describe('validation error getters', () => {
-    it('should return email errors', () => {
-      validationErrorService.getErrors.and.returnValue(['Email invalide']);
-
-      expect(component.emailErrors).toEqual(['Email invalide']);
-
-      expect(validationErrorService.getErrors).toHaveBeenCalledWith(
-        component.registerForm.controls.email,
+      expect(component.emailErrors).toEqual(expectedErrors);
+      expect(validationErrorServiceSpy.getErrors).toHaveBeenCalledWith(
+        emailControl(),
         'email',
       );
     });
+  });
 
-    it('should return username errors', () => {
-      validationErrorService.getErrors.and.returnValue([
-        'Nom utilisateur invalide',
-      ]);
+  describe('Username validation', () => {
+    const usernameControl = () => component.registerForm.controls.username;
 
-      expect(component.usernameErrors).toEqual(['Nom utilisateur invalide']);
+    it('should require a username', () => {
+      usernameControl().setValue('');
 
-      expect(validationErrorService.getErrors).toHaveBeenCalledWith(
-        component.registerForm.controls.username,
+      expect(usernameControl().hasError('required')).toBeTrue();
+    });
+
+    it('should reject a username shorter than 3 characters', () => {
+      usernameControl().setValue('ab');
+
+      expect(usernameControl().hasError('minlength')).toBeTrue();
+    });
+
+    it('should accept a username with 3 characters', fakeAsync(() => {
+      usernameControl().setValue('abc');
+      settleUsernameValidator();
+
+      expect(usernameControl().hasError('minlength')).toBeFalse();
+    }));
+
+    it('should reject a username longer than 20 characters', () => {
+      usernameControl().setValue('a'.repeat(21));
+
+      expect(usernameControl().hasError('maxlength')).toBeTrue();
+    });
+
+    it('should accept a username with 20 characters', fakeAsync(() => {
+      usernameControl().setValue('a'.repeat(20));
+      settleUsernameValidator();
+
+      expect(usernameControl().hasError('maxlength')).toBeFalse();
+    }));
+
+    it('should check username availability asynchronously', fakeAsync(() => {
+      usernameControl().setValue(validUsername);
+
+      settleUsernameValidator();
+
+      expect(authServiceSpy.checkUsernameAvailability).toHaveBeenCalledWith(
+        validUsername,
+      );
+    }));
+
+    it('should expose username validation errors through ValidationErrorService', () => {
+      const expectedErrors = ['Nom d’utilisateur indisponible'];
+
+      validationErrorServiceSpy.getErrors.and.returnValue(expectedErrors);
+
+      expect(component.usernameErrors).toEqual(expectedErrors);
+      expect(validationErrorServiceSpy.getErrors).toHaveBeenCalledWith(
+        usernameControl(),
         'username',
       );
     });
 
-    it('should return password errors', () => {
-      validationErrorService.getErrors.and.returnValue([
-        'Mot de passe invalide',
-      ]);
+    it('should report whether the username control is pending', fakeAsync(() => {
+      const availabilitySubject = new Subject<AvailableResponse>();
 
-      expect(component.passwordErrors).toEqual(['Mot de passe invalide']);
+      authServiceSpy.checkUsernameAvailability.and.returnValue(
+        availabilitySubject.asObservable(),
+      );
 
-      expect(validationErrorService.getErrors).toHaveBeenCalledWith(
-        component.registerForm.controls.password,
+      usernameControl().setValue(validUsername);
+
+      // Advance past the validator debounce period.
+      tick(400);
+      fixture.detectChanges();
+
+      expect(component.isUsernameLoading).toBeTrue();
+
+      availabilitySubject.next({ available: true });
+      availabilitySubject.complete();
+      tick();
+      fixture.detectChanges();
+
+      expect(component.isUsernameLoading).toBeFalse();
+    }));
+
+    it('should display the username loading spinner while validation is pending', fakeAsync(() => {
+      const availabilitySubject = new Subject<AvailableResponse>();
+
+      authServiceSpy.checkUsernameAvailability.and.returnValue(
+        availabilitySubject.asObservable(),
+      );
+
+      usernameControl().setValue(validUsername);
+
+      tick(400);
+      fixture.detectChanges();
+
+      expect(component.isUsernameLoading).toBeTrue();
+
+      const spinner: HTMLElement | null =
+        fixture.nativeElement.querySelector('mat-spinner');
+
+      expect(spinner).not.toBeNull();
+
+      availabilitySubject.next({ available: true });
+      availabilitySubject.complete();
+      tick();
+      fixture.detectChanges();
+    }));
+  });
+
+  describe('Password validation', () => {
+    const passwordControl = () => component.registerForm.controls.password;
+
+    it('should require a password', () => {
+      passwordControl().setValue('');
+
+      expect(passwordControl().hasError('required')).toBeTrue();
+    });
+
+    it('should reject a password shorter than 8 characters', () => {
+      passwordControl().setValue('Ab1!xyz');
+
+      expect(passwordControl().hasError('minlength')).toBeTrue();
+    });
+
+    it('should require an uppercase letter', () => {
+      passwordControl().setValue('strongpass1!');
+
+      expect(passwordControl().hasError('pattern')).toBeTrue();
+    });
+
+    it('should require a lowercase letter', () => {
+      passwordControl().setValue('STRONGPASS1!');
+
+      expect(passwordControl().hasError('pattern')).toBeTrue();
+    });
+
+    it('should require a digit', () => {
+      passwordControl().setValue('StrongPass!');
+
+      expect(passwordControl().hasError('pattern')).toBeTrue();
+    });
+
+    it('should require a special character', () => {
+      passwordControl().setValue('StrongPass1');
+
+      expect(passwordControl().hasError('pattern')).toBeTrue();
+    });
+
+    it('should accept a password satisfying all requirements', () => {
+      passwordControl().setValue(validPassword);
+
+      expect(passwordControl().valid).toBeTrue();
+    });
+
+    it('should expose password validation errors through ValidationErrorService', () => {
+      const expectedErrors = ['Mot de passe invalide'];
+
+      validationErrorServiceSpy.getErrors.and.returnValue(expectedErrors);
+
+      expect(component.passwordErrors).toEqual(expectedErrors);
+      expect(validationErrorServiceSpy.getErrors).toHaveBeenCalledWith(
+        passwordControl(),
         'password',
       );
     });
   });
 
-  describe('submit', () => {
-    beforeEach(() => {
-      initializeComponent();
-      prepareValidForm();
-    });
+  describe('submit()', () => {
+    it('should mark all controls as touched when the form is invalid', () => {
+      spyOn(component.registerForm, 'markAllAsTouched');
 
-    it('should register the user with the form values', () => {
       component.submit();
 
-      expect(authService.register).toHaveBeenCalledOnceWith({
-        email: 'john@example.com',
-        username: 'johnDoe',
-        password: 'Password123!',
-      });
+      expect(component.registerForm.markAllAsTouched).toHaveBeenCalled();
+      expect(authServiceSpy.register).not.toHaveBeenCalled();
+      expect(component.isLoading()).toBeFalse();
     });
 
-    it('should clear the previous error message', () => {
+    it('should clear the existing error message before submitting', () => {
       component.errorMessage.set('Previous error');
 
       component.submit();
@@ -306,150 +368,285 @@ describe('RegisterComponent', () => {
       expect(component.errorMessage()).toBe('');
     });
 
-    it('should not submit an invalid form', () => {
-      component.registerForm.controls.email.setValue('');
+    it('should not submit while the form is pending', fakeAsync(() => {
+      const availabilitySubject = new Subject<AvailableResponse>();
+
+      authServiceSpy.checkUsernameAvailability.and.returnValue(
+        availabilitySubject.asObservable(),
+      );
+
+      setValidForm();
+
+      tick(400);
+      fixture.detectChanges();
+
+      expect(component.registerForm.pending).toBeTrue();
 
       component.submit();
 
-      expect(authService.register).not.toHaveBeenCalled();
-      expect(component.registerForm.controls.email.touched).toBeTrue();
-    });
+      expect(authServiceSpy.register).not.toHaveBeenCalled();
+      expect(component.isLoading()).toBeFalse();
 
-    it('should not submit when the form is pending', () => {
-      component.registerForm.controls.username.markAsPending();
+      availabilitySubject.next({ available: true });
+      availabilitySubject.complete();
+      tick();
+    }));
 
-      component.submit();
+    it('should not submit while a registration is already in progress', fakeAsync(() => {
+      const registrationSubject = new Subject<never>();
 
-      expect(authService.register).not.toHaveBeenCalled();
-    });
+      authServiceSpy.register.and.returnValue(
+        registrationSubject.asObservable(),
+      );
 
-    it('should not submit while another request is in progress', () => {
-      component.isLoading.set(true);
+      setValidForm();
+      settleUsernameValidator();
 
-      component.submit();
-
-      expect(authService.register).not.toHaveBeenCalled();
-    });
-
-    it('should set loading while the request is pending', () => {
-      const request = new Subject<never>();
-
-      authService.register.and.returnValue(request.asObservable());
+      expect(component.registerForm.valid).toBeTrue();
 
       component.submit();
 
       expect(component.isLoading()).toBeTrue();
 
-      request.complete();
-
-      expect(component.isLoading()).toBeFalse();
-    });
-
-    it('should navigate to the login page after successful registration', () => {
       component.submit();
 
-      expect(router.navigate).toHaveBeenCalledOnceWith(['/login']);
-    });
+      expect(authServiceSpy.register).toHaveBeenCalledTimes(1);
 
-    it('should reset loading after successful registration', () => {
-      component.submit();
+      registrationSubject.complete();
+      tick();
 
       expect(component.isLoading()).toBeFalse();
-    });
+    }));
 
-    it('should display an error message when registration fails', () => {
-      spyOn(console, 'error');
+    it('should call register with the form values when the form is valid', fakeAsync(() => {
+      setValidForm();
+      settleUsernameValidator();
 
-      authService.register.and.returnValue(
-        throwError(() => ({
-          error: { message: 'Server error' },
-        })),
+      expect(component.registerForm.valid).toBeTrue();
+
+      component.submit();
+
+      expect(authServiceSpy.register).toHaveBeenCalledWith({
+        email: validEmail,
+        username: validUsername,
+        password: validPassword,
+      });
+    }));
+
+    it('should set loading to true while the registration request is pending', fakeAsync(() => {
+      const registrationSubject = new Subject<never>();
+
+      authServiceSpy.register.and.returnValue(
+        registrationSubject.asObservable(),
       );
 
+      setValidForm();
+      settleUsernameValidator();
+
       component.submit();
+
+      expect(component.isLoading()).toBeTrue();
+
+      registrationSubject.complete();
+      tick();
+
+      expect(component.isLoading()).toBeFalse();
+    }));
+
+    it('should navigate to the login page after successful registration', fakeAsync(() => {
+      authServiceSpy.register.and.returnValue(
+        of(new HttpResponse<void>({ status: 200 })),
+      );
+
+      setValidForm();
+      settleUsernameValidator();
+
+      component.submit();
+      tick();
+
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+      expect(component.isLoading()).toBeFalse();
+    }));
+
+    it('should display an error message if registration fails', fakeAsync(() => {
+      const registrationError = {
+        error: { message: 'Registration failed' },
+      };
+
+      spyOn(console, 'error');
+
+      authServiceSpy.register.and.returnValue(
+        throwError(() => registrationError),
+      );
+
+      setValidForm();
+      settleUsernameValidator();
+
+      component.submit();
+      tick();
+      fixture.detectChanges();
 
       expect(component.errorMessage()).toBe(
         "Une erreur est survenue lors de l'inscription.",
       );
-
       expect(component.isLoading()).toBeFalse();
-      expect(console.error).toHaveBeenCalled();
-    });
+      expect(console.error).toHaveBeenCalledWith(
+        'Erreur lors de l’inscription :',
+        registrationError,
+      );
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
+    }));
 
-    it('should not navigate after registration fails', () => {
-      authService.register.and.returnValue(
-        throwError(() => new Error('Server error')),
+    it('should display the error message in the template', fakeAsync(() => {
+      authServiceSpy.register.and.returnValue(
+        throwError(() => new Error('Registration failed')),
       );
 
-      component.submit();
+      setValidForm();
+      settleUsernameValidator();
 
-      expect(router.navigate).not.toHaveBeenCalled();
-    });
+      component.submit();
+      tick();
+      fixture.detectChanges();
+
+      const alert: HTMLElement | null =
+        fixture.nativeElement.querySelector('[role="alert"]');
+
+      expect(alert).not.toBeNull();
+      expect(alert?.textContent).toContain(
+        "Une erreur est survenue lors de l'inscription.",
+      );
+    }));
+
+    it('should update the submit button label while loading', fakeAsync(() => {
+      const registrationSubject = new Subject<never>();
+
+      authServiceSpy.register.and.returnValue(
+        registrationSubject.asObservable(),
+      );
+
+      setValidForm();
+      settleUsernameValidator();
+
+      component.submit();
+      fixture.detectChanges();
+
+      const buttonDebugElement = fixture.debugElement.query(
+        By.directive(ButtonComponent),
+      );
+
+      expect(buttonDebugElement.componentInstance.label()).toBe('Création...');
+
+      registrationSubject.complete();
+      tick();
+      fixture.detectChanges();
+
+      expect(buttonDebugElement.componentInstance.label()).toBe('S’inscrire');
+    }));
   });
 
-  describe('goBack', () => {
+  describe('goBack()', () => {
     it('should navigate to the home page', () => {
       component.goBack();
 
-      expect(router.navigate).toHaveBeenCalledOnceWith(['/']);
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
+    });
+
+    it('should navigate home when the back button is clicked', () => {
+      const backButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '.register__back-button',
+      );
+
+      backButton.click();
+
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
     });
   });
 
-  describe('username validation boundaries', () => {
-    it('should accept a username with exactly 3 characters', () => {
-      const username = component.registerForm.controls.username;
+  describe('Template interactions', () => {
+    it('should render the email, username and password labels', () => {
+      const labels: string[] = Array.from(
+        fixture.nativeElement.querySelectorAll(
+          'label',
+        ) as NodeListOf<HTMLLabelElement>,
+      ).map((label) => label.textContent?.trim() ?? '');
 
-      username.clearAsyncValidators();
-      username.setValue('abc');
-
-      expect(username.valid).toBeTrue();
+      expect(labels).toContain('Adresse e-mail');
+      expect(labels).toContain("Nom d'utilisateur");
+      expect(labels).toContain('Mot de passe');
     });
 
-    it('should accept a username with exactly 20 characters', () => {
-      const username = component.registerForm.controls.username;
+    it('should set aria-busy while the username is being checked', fakeAsync(() => {
+      const availabilitySubject = new Subject<AvailableResponse>();
 
-      username.clearAsyncValidators();
-      username.setValue('a'.repeat(20));
+      authServiceSpy.checkUsernameAvailability.and.returnValue(
+        availabilitySubject.asObservable(),
+      );
 
-      expect(username.valid).toBeTrue();
+      component.registerForm.controls.username.setValue(validUsername);
+
+      tick(400);
+      fixture.detectChanges();
+
+      const usernameInput: HTMLInputElement =
+        fixture.nativeElement.querySelector('#registerUsername');
+
+      expect(usernameInput.getAttribute('aria-busy')).toBe('true');
+
+      availabilitySubject.next({ available: true });
+      availabilitySubject.complete();
+      tick();
+      fixture.detectChanges();
+
+      expect(usernameInput.getAttribute('aria-busy')).toBe('false');
+    }));
+
+    it('should disable the submit button while the form is invalid', () => {
+      fixture.detectChanges();
+
+      const buttonDebugElement = fixture.debugElement.query(
+        By.directive(ButtonComponent),
+      );
+
+      expect(buttonDebugElement.componentInstance.disabled()).toBeTrue();
     });
-  });
 
-  describe('submit additional cases', () => {
-    beforeEach(() => {
-      prepareValidForm();
-    });
+    it('should enable the submit button when the form is valid', fakeAsync(() => {
+      setValidForm();
+      settleUsernameValidator();
 
-    it('should mark all controls as touched when the form is invalid', () => {
-      component.registerForm.controls.email.setValue('');
+      fixture.detectChanges();
+
+      const buttonDebugElement = fixture.debugElement.query(
+        By.directive(ButtonComponent),
+      );
+
+      expect(component.registerForm.valid).toBeTrue();
+      expect(buttonDebugElement.componentInstance.disabled()).toBeFalse();
+    }));
+
+    it('should disable the submit button while registration is in progress', fakeAsync(() => {
+      const registrationSubject = new Subject<never>();
+
+      authServiceSpy.register.and.returnValue(
+        registrationSubject.asObservable(),
+      );
+
+      setValidForm();
+      settleUsernameValidator();
 
       component.submit();
+      fixture.detectChanges();
 
-      expect(component.registerForm.controls.email.touched).toBeTrue();
-      expect(component.registerForm.controls.username.touched).toBeTrue();
-      expect(component.registerForm.controls.password.touched).toBeTrue();
-    });
+      const buttonDebugElement = fixture.debugElement.query(
+        By.directive(ButtonComponent),
+      );
 
-    it('should not submit twice while registration is in progress', () => {
-      const request = new Subject<never>();
-      authService.register.and.returnValue(request.asObservable());
+      expect(buttonDebugElement.componentInstance.disabled()).toBeTrue();
 
-      component.submit();
-      component.submit();
-
-      expect(authService.register).toHaveBeenCalledTimes(1);
-
-      request.complete();
-    });
-
-    it('should clear the previous error even when the form is invalid', () => {
-      component.errorMessage.set('Previous error');
-      component.registerForm.controls.email.setValue('');
-
-      component.submit();
-
-      expect(component.errorMessage()).toBe('');
-      expect(authService.register).not.toHaveBeenCalled();
-    });
+      registrationSubject.complete();
+      tick();
+      fixture.detectChanges();
+    }));
   });
 });

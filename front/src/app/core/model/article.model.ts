@@ -4,7 +4,7 @@ import { Topic } from './topic.model';
 export interface Article {
   username: string;
   topic: Topic;
-  slug: string;
+  publicId: string;
   title: string;
   content: string;
   createdAt: Date;
@@ -13,8 +13,7 @@ export interface Article {
 }
 
 export interface ArticleNew {
-  topicSlug: string;
+  topicPublicId: string;
   title: string;
-  slug: string;
   content: string;
 }
