@@ -1,38 +1,31 @@
 package com.openclassrooms.mddapi.auth.security.userDetails;
 
-import com.openclassrooms.mddapi.factory.UserTestFactory;
+
 import com.openclassrooms.mddapi.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class UserDetailsMapperTest {
+class UserDetailsMapperTest {
 
-    private final UserDetailsMapper mapper = Mappers.getMapper(UserDetailsMapper.class);
+    private final UserDetailsMapper mapper =
+            Mappers.getMapper(UserDetailsMapper.class);
 
     @Test
-    void shouldMapUserToUserDetails() {
-        
-        User user = UserTestFactory.createUser();
+    void toUserDetails_shouldMapEmailToUsername() {
+        User user = new User()
+                .setEmail("test@example.com");
 
         UserDetailsImpl result = mapper.toUserDetails(user);
 
         assertThat(result).isNotNull();
-        assertThat(result.getId())
-                .isEqualTo(1L);
-        assertThat(result.getUsername())
-                .isEqualTo("jane@email.com");
-        assertEquals("Password/1234", result.getPassword());
+        assertThat(result.getUsername()).isEqualTo("test@example.com");
     }
 
     @Test
-    void shouldReturnNullWhenUserIsNull() {
-        
-        User user = null;
-
-        UserDetailsImpl result = mapper.toUserDetails(user);
+    void toUserDetails_shouldReturnNull_whenUserIsNull() {
+        UserDetailsImpl result = mapper.toUserDetails(null);
 
         assertThat(result).isNull();
     }

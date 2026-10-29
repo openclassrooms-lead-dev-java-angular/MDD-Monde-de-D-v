@@ -8,7 +8,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Topic } from '@model/topic.model';
 import { User } from '@model/user.model';
-import { AuthService } from '@service/auth.service';
 import { TopicService } from '@service/topic.service';
 import { UserStateService } from '@service/user-state.service';
 import { UserService } from '@service/user.service';
@@ -39,7 +38,6 @@ export class ProfileComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly validationErrorService = inject(ValidationErrorService);
-  private readonly authService = inject(AuthService);
   private readonly userStateService = inject(UserStateService);
 
   protected readonly subscribedTopicList = signal<Topic[]>([]);
@@ -50,7 +48,7 @@ export class ProfileComponent implements OnInit {
   protected readonly isLoadingTopics = signal<boolean>(false);
   topicErrorMessage = '';
 
-  protected readonly userForm = this.fb.group({
+  public userForm = this.fb.group({
     email: this.fb.control('', [
       Validators.required,
       Validators.email,
@@ -59,7 +57,7 @@ export class ProfileComponent implements OnInit {
     username: this.fb.control(
       '',
       [Validators.required, Validators.minLength(3), Validators.maxLength(20)],
-      [usernameAvailabilityValidator(this.authService)],
+      [usernameAvailabilityValidator(this.userService)],
     ),
     password: this.fb.control('', [Validators.required, passwordValidator()]),
   });
@@ -107,7 +105,7 @@ export class ProfileComponent implements OnInit {
 
   submit(): void {
     this.errorMessage.set('');
-
+    console.log(this.isLoadingForm());
     if (
       this.userForm.invalid ||
       this.userForm.pending ||
@@ -131,6 +129,7 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: (res: User) => {
           console.log(res);
+          // Todo: update user state
         },
         error: (error: { error?: { message?: string } }) => {
           console.error('Erreur lors de l’inscription :', error);
@@ -143,15 +142,14 @@ export class ProfileComponent implements OnInit {
   }
 
   protected unsubscribeToTopic(topic: Topic): void {
-    console.log(topic);
     this.subscribedTopicList.update((topics: Topic[]) =>
-      topics.filter((t: Topic) => t.slug !== topic.slug),
+      topics.filter((t: Topic) => t.publicId !== topic.publicId),
     );
-    console.log(this.subscribedTopicList());
-    this.topicService.unsubscribe(topic.slug).subscribe({
+
+    this.topicService.unsubscribe(topic.publicId).subscribe({
       next: () => {
         this.subscribedTopicList.update((topics: Topic[]) =>
-          topics.filter((t: Topic) => t.slug !== topic.slug),
+          topics.filter((t: Topic) => t.publicId !== topic.publicId),
         );
       },
       error: (error) => {
@@ -173,7 +171,7 @@ export class ProfileComponent implements OnInit {
   private loadMoreSubscribed(pageNumber: number): void {
     this.isLoadingTopics.set(true);
 
-    this.topicService.getSubscribed(pageNumber, this.pageSize).subscribe({
+    this.topicService.fetchSubscribed(pageNumber, this.pageSize).subscribe({
       next: (page: Page<Topic>) => {
         this.subscribedTopicList.update((topics) => [
           ...topics,

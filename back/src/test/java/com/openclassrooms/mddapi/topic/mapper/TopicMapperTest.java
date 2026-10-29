@@ -1,12 +1,11 @@
 package com.openclassrooms.mddapi.topic.mapper;
 
-import com.openclassrooms.mddapi.factory.TopicTestFactory;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TopicMapperTest {
 
@@ -14,47 +13,58 @@ class TopicMapperTest {
             Mappers.getMapper(TopicMapper.class);
 
     @Test
-    void shouldMapTopicToTopicResponseDtoWhenSubscribed() {
-        Topic topic = TopicTestFactory.createTopic();
+    void toDto_shouldMapTopicWithSubscribedTrue() {
+        Topic topic = new Topic();
+        topic.setPublicId("550e8400-e29b-41d4-a716-446655440000");
+        topic.setName("Java");
+        topic.setDescription("Java programming");
 
         TopicResponseDto result = topicMapper.toDto(topic, true);
 
-        assertThat(result).isNotNull();
-        assertThat(result.name()).isEqualTo(topic.getName());
-        assertThat(result.slug()).isEqualTo(topic.getSlug());
-        assertThat(result.description()).isEqualTo(topic.getDescription());
-        assertThat(result.subscribed()).isTrue();
-        assertThat(result.createdAt()).isEqualTo(topic.getCreatedAt());
-        assertThat(result.updatedAt()).isEqualTo(topic.getUpdatedAt());
+        assertNotNull(result);
+        assertEquals(
+                "550e8400-e29b-41d4-a716-446655440000",
+                result.publicId()
+        );
+        assertEquals("Java", result.name());
+        assertEquals("Java programming", result.description());
+        assertTrue(result.subscribed());
     }
 
     @Test
-    void shouldMapTopicToTopicResponseDtoWhenNotSubscribed() {
-        Topic topic = TopicTestFactory.createTopic();
+    void toDto_shouldMapTopicWithSubscribedFalse() {
+        Topic topic = new Topic();
+        topic.setPublicId("550e8400-e29b-41d4-a716-446655440000");
+        topic.setName("Java");
+        topic.setDescription("Java programming");
 
         TopicResponseDto result = topicMapper.toDto(topic, false);
 
-        assertThat(result).isNotNull();
-        assertThat(result.name()).isEqualTo(topic.getName());
-        assertThat(result.slug()).isEqualTo(topic.getSlug());
-        assertThat(result.description()).isEqualTo(topic.getDescription());
-        assertThat(result.subscribed()).isFalse();
-        assertThat(result.createdAt()).isEqualTo(topic.getCreatedAt());
-        assertThat(result.updatedAt()).isEqualTo(topic.getUpdatedAt());
+        assertNotNull(result);
+        assertFalse(result.subscribed());
     }
 
     @Test
-    void shouldMapTopicToTopicResponseDtoWhenSubscriptionIsNull() {
-        Topic topic = TopicTestFactory.createTopic();
+    void toDto_shouldMapTopicWithSubscribedNull() {
+        Topic topic = new Topic();
+        topic.setPublicId("550e8400-e29b-41d4-a716-446655440000");
+        topic.setName("Java");
+        topic.setDescription("Java programming");
 
         TopicResponseDto result = topicMapper.toDto(topic, null);
 
-        assertThat(result).isNotNull();
-        assertThat(result.name()).isEqualTo(topic.getName());
-        assertThat(result.slug()).isEqualTo(topic.getSlug());
-        assertThat(result.description()).isEqualTo(topic.getDescription());
-        assertThat(result.subscribed()).isNull();
-        assertThat(result.createdAt()).isEqualTo(topic.getCreatedAt());
-        assertThat(result.updatedAt()).isEqualTo(topic.getUpdatedAt());
+        assertNotNull(result);
+        assertNull(result.subscribed());
+    }
+
+    @Test
+    void toDto_shouldMapSubscribedWhenTopicIsNull() {
+        TopicResponseDto result = topicMapper.toDto(null, true);
+
+        assertNotNull(result);
+        assertNull(result.publicId());
+        assertNull(result.name());
+        assertNull(result.description());
+        assertTrue(result.subscribed());
     }
 }

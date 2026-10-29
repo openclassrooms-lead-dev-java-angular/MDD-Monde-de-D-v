@@ -1,5 +1,5 @@
 export interface Topic {
-  slug: string;
+  publicId: string;
   name: string;
   description: string;
   subscribed: boolean;
@@ -8,6 +8,6 @@ export interface Topic {
 }
 
 export interface TopicOption {
-  slug: string;
+  publicId: string;
   name: string;
 }

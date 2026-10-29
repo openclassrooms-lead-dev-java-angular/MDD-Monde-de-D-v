@@ -1,6 +1,7 @@
 package com.openclassrooms.mddapi.common.config;
 
 import com.openclassrooms.mddapi.auth.security.cookie.CookieBearerTokenResolver;
+import com.openclassrooms.mddapi.auth.security.csrf.SpaCsrfTokenRequestHandler;
 import com.openclassrooms.mddapi.auth.security.jwt.JwtAccessDeniedHandler;
 import com.openclassrooms.mddapi.auth.security.jwt.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -12,16 +13,11 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -71,7 +67,14 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(
+                                CookieCsrfTokenRepository.withHttpOnlyFalse()
+                        )
+                        .csrfTokenRequestHandler(
+                                new SpaCsrfTokenRequestHandler()
+                        )
+                )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )

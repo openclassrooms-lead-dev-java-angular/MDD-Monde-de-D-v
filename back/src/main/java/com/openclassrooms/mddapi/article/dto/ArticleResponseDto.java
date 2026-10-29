@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ArticleResponseDto(
+        String publicId,
         String username,
         TopicResponseDto topic,
-        String slug,
         String title,
         String content,
         LocalDateTime createdAt,

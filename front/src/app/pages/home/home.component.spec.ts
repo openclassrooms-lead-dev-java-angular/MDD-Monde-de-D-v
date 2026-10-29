@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { HomeComponent } from './home.component';
+import { ButtonComponent } from '../../shared/components/button/button.component';
+import { provideRouter } from '@angular/router';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
@@ -9,14 +12,8 @@ describe('HomeComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-    })
-      .overrideComponent(HomeComponent, {
-        set: {
-          imports: [],
-          schemas: [CUSTOM_ELEMENTS_SCHEMA],
-        },
-      })
-      .compileComponents();
+      providers: [provideRouter([])],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);
     component = fixture.componentInstance;
@@ -52,32 +49,38 @@ describe('HomeComponent', () => {
     });
 
     it('should display the login button', () => {
-      const buttons =
-        fixture.nativeElement.querySelectorAll('app-button');
+      const buttons = fixture.debugElement.queryAll(
+        By.directive(ButtonComponent),
+      );
 
       expect(buttons.length).toBe(2);
-      expect(buttons[0].getAttribute('label')).toBe('Se connecter');
-      expect(buttons[0].getAttribute('routerLink')).toBe('/login');
+      expect(buttons[0].componentInstance.label()).toBe('Se connecter');
+      expect(buttons[0].componentInstance.routerLink()).toBe('/login');
     });
 
     it('should display the register button', () => {
-      const buttons =
-        fixture.nativeElement.querySelectorAll('app-button');
+      const buttons = fixture.debugElement.queryAll(
+        By.directive(ButtonComponent),
+      );
 
-      expect(buttons[1].getAttribute('label')).toBe("S'inscrire");
-      expect(buttons[1].getAttribute('routerLink')).toBe('/register');
+      expect(buttons.length).toBe(2);
+      expect(buttons[1].componentInstance.label()).toBe("S'inscrire");
+      expect(buttons[1].componentInstance.routerLink()).toBe('/register');
     });
 
     it('should configure both buttons as outlined links', () => {
-      const buttons =
-        fixture.nativeElement.querySelectorAll('app-button');
+      const buttons = fixture.debugElement.queryAll(
+        By.directive(ButtonComponent),
+      );
 
       expect(buttons.length).toBe(2);
 
-      buttons.forEach((button: HTMLElement) => {
-        expect(button.getAttribute('type')).toBe('link');
-        expect(button.getAttribute('backgroundColor')).toBe('#fff');
-        expect(button.getAttribute('outlined')).toBe('true');
+      buttons.forEach((button) => {
+        const instance = button.componentInstance;
+
+        expect(instance.type()).toBe('link');
+        expect(instance.outlined()).toBeTrue();
+        expect(instance.fontWeight()).toBe(600);
       });
     });
   });

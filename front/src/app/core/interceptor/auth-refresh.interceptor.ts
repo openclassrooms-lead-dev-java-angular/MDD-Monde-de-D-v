@@ -1,6 +1,5 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import {
   catchError,
   finalize,
@@ -18,7 +17,6 @@ let refreshRequest$: Observable<unknown> | null = null;
 export const authRefreshInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const userStateService = inject(UserStateService);
-  const router = inject(Router);
 
   const excludedUrl = /\/(login|logout|refresh)(?:[/?#]|$)/i;
 

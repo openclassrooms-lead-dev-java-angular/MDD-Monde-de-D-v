@@ -3,19 +3,14 @@ package com.openclassrooms.mddapi.article.controller;
 import com.openclassrooms.mddapi.article.dto.ArticleRequestDto;
 import com.openclassrooms.mddapi.article.dto.ArticleResponseDto;
 import com.openclassrooms.mddapi.article.service.ArticleService;
-import com.openclassrooms.mddapi.common.dto.AvailableSlugDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing articles.
- * <p> Exposes endpoints to retrieve the article feed, fetch an article by its slug,
- * create a new article, and check slug availability. </p>
- */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/articles")
@@ -36,21 +31,23 @@ public class ArticleController {
     }
 
     /**
-     * Retrieves an article by its slug.
+     * Retrieves an article by its public id.
      *
-     * @param slug the slug of the article to retrieve
-     * @return the article matching the specified slug
+     * @param publicId the public id of the article to retrieve
+     * @return the article matching the specified public id
      */
-    @GetMapping("/{slug}")
-    public ArticleResponseDto getArticleBySlug(
-            @PathVariable String slug
+    @GetMapping("/{publicId}")
+    @PreAuthorize(
+            "@articleSecurity.canAccessArticle(#publicId)"
+    )
+    public ArticleResponseDto getArticleByPublicId(
+            @PathVariable String publicId
     ) {
-        return articleService.findBySlug(slug);
+        return articleService.findByPublicId(publicId);
     }
 
     /**
      * Creates a new article using the provided data.
-     *
      * @param articleRequestDto the data required to create the article
      * @return the newly created article
      */
@@ -59,18 +56,5 @@ public class ArticleController {
             @Valid @RequestBody() ArticleRequestDto articleRequestDto
     ) {
         return articleService.create(articleRequestDto);
-    }
-
-    /**
-     * Checks whether a slug is available for an article.
-     *
-     * @param slug the slug to check
-     * @return the result indicating whether the slug is available
-     */
-    @GetMapping("/available-slug/{slug}")
-    public AvailableSlugDto getAvailableSlug(
-            @PathVariable String slug
-    ) {
-        return articleService.findAvailableSlug(slug);
     }
 }

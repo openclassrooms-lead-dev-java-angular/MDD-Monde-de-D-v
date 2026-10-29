@@ -1,14 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
-
 import { ProfileComponent } from './profile.component';
-import { Topic } from '@model/topic.model';
-import { User } from '@model/user.model';
-import { AuthService } from '@service/auth.service';
 import { TopicService } from '@service/topic.service';
-import { UserStateService } from '@service/user-state.service';
 import { UserService } from '@service/user.service';
+import { UserStateService } from '@service/user-state.service';
 import { ValidationErrorService } from '@service/validation.service';
+import { User } from '@model/user.model';
+import { Topic } from '@model/topic.model';
+import { Page } from '@type/page.type';
+import { AuthService } from '@service/auth.service';
+import { of, Subject, throwError } from 'rxjs';
+import { Validators } from '@angular/forms';
 
 describe('ProfileComponent', () => {
   let fixture: ComponentFixture<ProfileComponent>;
@@ -19,69 +20,71 @@ describe('ProfileComponent', () => {
   let userStateService: jasmine.SpyObj<UserStateService>;
   let validationErrorService: jasmine.SpyObj<ValidationErrorService>;
 
-  const currentUser = {
-    email: 'john.doe@example.com',
-    username: 'John_Doe',
+  const mockUser = {
+    email: 'john@example.com',
+    username: 'johnDoe',
   } as User;
 
-  const createTopic = (slug: string): Topic =>
-    ({ slug }) as Topic;
+  const mockTopic = {
+    publicId: 'angular',
+    name: 'Angular',
+  } as Topic;
+
+  const mockTopic2 = {
+    publicId: 'typescript',
+    name: 'TypeScript',
+  } as Topic;
 
   const createPage = (
     content: Topic[],
-    number: number,
-    last: boolean,
-  ) => ({
-    content,
-    number,
-    last,
-  });
+    number = 0,
+    last = false,
+  ): Page<Topic> =>
+    ({
+      content,
+      number,
+      last,
+    }) as Page<Topic>;
 
   beforeEach(async () => {
-    topicService = jasmine.createSpyObj<TopicService>(
-      'TopicService',
-      ['getSubscribed', 'unsubscribe'],
-    );
+    topicService = jasmine.createSpyObj<TopicService>('TopicService', [
+      'getSubscribed',
+      'unsubscribe',
+    ]);
 
-    userService = jasmine.createSpyObj<UserService>(
-      'UserService',
-      ['updateUser'],
-    );
+    userService = jasmine.createSpyObj<UserService>('UserService', [
+      'updateUser',
+    ]);
 
     userStateService = jasmine.createSpyObj<UserStateService>(
       'UserStateService',
       ['getUser'],
     );
 
-    validationErrorService =
-      jasmine.createSpyObj<ValidationErrorService>(
-        'ValidationErrorService',
-        ['getErrors'],
-      );
+    validationErrorService = jasmine.createSpyObj<ValidationErrorService>(
+      'ValidationErrorService',
+      ['getErrors'],
+    );
 
-    userStateService.getUser.and.returnValue(currentUser);
-    topicService.getSubscribed.and.returnValue(
-      of(createPage([], 0, true)) as ReturnType<
-        TopicService['getSubscribed']
-      >,
-    );
+    userStateService.getUser.and.returnValue(mockUser);
+
+    topicService.fetchSubscribed.and.returnValue(of(createPage([mockTopic])));
+
     topicService.unsubscribe.and.returnValue(of(void 0));
-    userService.updateUser.and.returnValue(
-      of(currentUser) as ReturnType<UserService['updateUser']>,
-    );
+
+    userService.updateUser.and.returnValue(of(mockUser));
+
     validationErrorService.getErrors.and.returnValue([]);
 
-    // Le validateur asynchrone peut utiliser différentes méthodes du service
-    // d'authentification. Ce proxy renvoie un Observable positif pour chacune.
-    const authServiceMock = new Proxy(
-      {},
-      {
-        get: (_target, property) =>
-          jasmine
-            .createSpy(String(property))
-            .and.returnValue(of(true)),
-      },
-    ) as AuthService;
+    const authServiceMock = jasmine.createSpyObj<AuthService>('AuthService', [
+      'checkUsernameAvailability',
+    ]);
+
+    authServiceMock.checkUsernameAvailability.and.returnValue(
+      of({
+        available: true,
+      }),
+    );
 
     await TestBed.configureTestingModule({
       imports: [ProfileComponent],
@@ -97,335 +100,390 @@ describe('ProfileComponent', () => {
       ],
     })
       .overrideComponent(ProfileComponent, {
-        set: { template: '' },
+        set: {
+          template: '',
+          imports: [],
+        },
       })
       .compileComponents();
 
     fixture = TestBed.createComponent(ProfileComponent);
     component = fixture.componentInstance;
+  });
 
-    // Les tests du formulaire ne dépendent pas du validateur d'API.
-    component['userForm'].controls.username.clearAsyncValidators();
-    component['userForm'].controls.username.updateValueAndValidity();
-
+  function initializeComponent(): void {
     fixture.detectChanges();
+  }
+
+  function prepareValidForm(): void {
+    const { email, username, password } = component.userForm.controls;
+
+    username.clearAsyncValidators();
+    username.setValue('johnDoe');
+
+    email.setValue('john@example.com');
+
+    password.setValue('Password123!');
+    password.setValidators([Validators.required]);
+    password.updateValueAndValidity();
+  }
+
+  describe('creation', () => {
+    it('should create the component', () => {
+      expect(component).toBeTruthy();
+    });
   });
 
   describe('ngOnInit', () => {
-    it('should initialize email and username from the current user', () => {
-      expect(component['userForm'].getRawValue()).toEqual({
-        email: currentUser.email,
-        username: currentUser.username,
-        password: '',
-      });
+    it('should initialize the form with the current user data', () => {
+      initializeComponent();
+
+      expect(component.userForm.controls.email.value).toBe(mockUser.email);
+      expect(component.userForm.controls.username.value).toBe(
+        mockUser.username,
+      );
     });
 
     it('should load the first page of subscribed topics', () => {
+      initializeComponent();
+
       expect(topicService.getSubscribed).toHaveBeenCalledOnceWith(0, 10);
+
+      expect(component['subscribedTopicList']()).toEqual([mockTopic]);
     });
 
-    it('should populate the subscribed topic list', () => {
-      const topics = [
-        createTopic('angular'),
-        createTopic('spring-boot'),
-      ];
+    it('should stop loading after a successful response', () => {
+      initializeComponent();
 
+      expect(component['isLoadingTopics']()).toBeFalse();
+    });
+
+    it('should update hasMore when the last page is reached', () => {
       topicService.getSubscribed.and.returnValue(
-        of(createPage(topics, 0, true)) as ReturnType<
-          TopicService['getSubscribed']
-        >,
+        of(createPage([mockTopic], 0, true)),
       );
 
-      component['loadMoreSubscribed'](0);
+      initializeComponent();
 
-      expect(component['subscribedTopicList']()).toEqual(topics);
       expect(component['hasMore']()).toBeFalse();
+    });
+
+    it('should not load topics when a request is already in progress', () => {
+      component['isLoadingTopics'].set(true);
+
+      initializeComponent();
+
+      expect(topicService.getSubscribed).not.toHaveBeenCalled();
+    });
+
+    it('should not load topics when there are no more pages', () => {
+      component['hasMore'].set(false);
+
+      initializeComponent();
+
+      expect(topicService.getSubscribed).not.toHaveBeenCalled();
+    });
+
+    it('should set an error message when loading topics fails', () => {
+      spyOn(console, 'error');
+
+      topicService.getSubscribed.and.returnValue(
+        throwError(() => new Error('Server error')),
+      );
+
+      initializeComponent();
+
       expect(component['isLoadingTopics']()).toBeFalse();
+      expect(component.topicErrorMessage).toBe(
+        'Impossible de se désabonner au topic',
+      );
+      expect(console.error).toHaveBeenCalled();
     });
   });
 
-  describe('form validation state', () => {
-    it('should expose username pending state', () => {
-      expect(component.isUsernameLoading).toBeFalse();
+  describe('isUsernameLoading', () => {
+    it('should return true when username validation is pending', () => {
+      component.userForm.controls.username.markAsPending();
+
+      expect(component.isUsernameLoading).toBeTrue();
     });
 
-    it('should return email validation errors', () => {
-      const errors = ['Adresse e-mail invalide'];
+    it('should return false when username validation is not pending', () => {
+      const username = component.userForm.controls.username;
 
-      validationErrorService.getErrors.and.returnValue(errors);
+      username.clearAsyncValidators();
+      username.setValue('johnDoe');
 
-      expect(component.emailErrors).toEqual(errors);
+      expect(component.isUsernameLoading).toBeFalse();
+    });
+  });
+
+  describe('validation error getters', () => {
+    it('should return email errors', () => {
+      validationErrorService.getErrors.and.returnValue(['Email invalide']);
+
+      expect(component.emailErrors).toEqual(['Email invalide']);
+
       expect(validationErrorService.getErrors).toHaveBeenCalledWith(
-        component['userForm'].controls.email,
+        component.userForm.controls.email,
         'email',
       );
     });
 
-    it('should return username validation errors', () => {
-      const errors = ['Nom d’utilisateur indisponible'];
+    it('should return username errors', () => {
+      validationErrorService.getErrors.and.returnValue([
+        'Nom utilisateur invalide',
+      ]);
 
-      validationErrorService.getErrors.and.returnValue(errors);
+      expect(component.usernameErrors).toEqual(['Nom utilisateur invalide']);
 
-      expect(component.usernameErrors).toEqual(errors);
       expect(validationErrorService.getErrors).toHaveBeenCalledWith(
-        component['userForm'].controls.username,
+        component.userForm.controls.username,
         'username',
       );
     });
 
-    it('should return password validation errors', () => {
-      const errors = ['Mot de passe invalide'];
+    it('should return password errors', () => {
+      validationErrorService.getErrors.and.returnValue([
+        'Mot de passe invalide',
+      ]);
 
-      validationErrorService.getErrors.and.returnValue(errors);
+      expect(component.passwordErrors).toEqual(['Mot de passe invalide']);
 
-      expect(component.passwordErrors).toEqual(errors);
       expect(validationErrorService.getErrors).toHaveBeenCalledWith(
-        component['userForm'].controls.password,
+        component.userForm.controls.password,
         'password',
       );
     });
   });
 
   describe('submit', () => {
-    const fillValidForm = () => {
-      component['userForm'].setValue({
-        email: 'updated@example.com',
-        username: 'Updated_User',
-        password: 'StrongPassword123!',
-      });
-    };
+    beforeEach(() => {
+      initializeComponent();
+      prepareValidForm();
+    });
 
-    it('should update the user when the form is valid', () => {
-      fillValidForm();
-
-      const updatedUser = {
-        email: 'updated@example.com',
-        username: 'Updated_User',
-      } as User;
-
-      userService.updateUser.and.returnValue(
-        of(updatedUser) as ReturnType<UserService['updateUser']>,
-      );
-
+    it('should submit the form values to the user service', () => {
       component.submit();
 
       expect(userService.updateUser).toHaveBeenCalledOnceWith({
-        email: 'updated@example.com',
-        username: 'Updated_User',
-        password: 'StrongPassword123!',
+        email: 'john@example.com',
+        username: 'johnDoe',
+        password: 'Password123!',
       });
-      expect(component.isLoadingForm).toBeFalse();
-      expect(component.errorMessage).toBe('');
     });
 
-    it('should not update the user when the form is invalid', () => {
-      component['userForm'].controls.email.setValue('invalid-email');
-      component['userForm'].controls.username.setValue('');
-      component['userForm'].controls.password.setValue('');
+    it('should clear the previous error message', () => {
+      component.errorMessage.set('Previous error');
+
+      component.submit();
+
+      expect(component.errorMessage()).toBe('');
+    });
+
+    it('should not submit an invalid form', () => {
+      component.userForm.controls.email.setValue('');
 
       component.submit();
 
       expect(userService.updateUser).not.toHaveBeenCalled();
-      expect(component.isLoadingForm).toBeFalse();
-      expect(component['userForm'].controls.email.touched).toBeTrue();
-      expect(component['userForm'].controls.username.touched).toBeTrue();
-      expect(component['userForm'].controls.password.touched).toBeTrue();
+      expect(component.userForm.controls.email.touched).toBeTrue();
     });
 
-    it('should not submit when the form is pending', () => {
-      fillValidForm();
-
-      spyOnProperty(component['userForm'], 'pending', 'get')
-        .and.returnValue(true);
+    it('should not submit a pending form', () => {
+      component.userForm.controls.username.markAsPending();
 
       component.submit();
 
       expect(userService.updateUser).not.toHaveBeenCalled();
-      expect(component.isLoadingForm).toBeFalse();
     });
 
-    it('should not submit while a previous submission is loading', () => {
-      fillValidForm();
-      component.isLoadingForm = true;
+    it('should not submit while another submission is in progress', () => {
+      component.isLoadingForm.set(true);
 
       component.submit();
 
       expect(userService.updateUser).not.toHaveBeenCalled();
-      expect(component['userForm'].controls.email.touched).toBeTrue();
     });
 
-    it('should clear the previous error before submitting', () => {
-      fillValidForm();
-      component.errorMessage = 'Ancienne erreur';
+    it('should set loading while the request is pending', () => {
+      const request = new Subject<User>();
+
+      userService.updateUser.and.returnValue(request.asObservable());
 
       component.submit();
 
-      expect(component.errorMessage).toBe('');
+      expect(component.isLoadingForm()).toBeTrue();
+
+      request.next(mockUser);
+
+      expect(component.isLoadingForm()).toBeTrue();
+
+      request.complete();
+
+      expect(component.isLoadingForm()).toBeFalse();
     });
 
-    it('should display the server error message when the update fails', () => {
-      fillValidForm();
+    it('should stop loading after a successful response', () => {
+      component.submit();
+
+      expect(component.isLoadingForm()).toBeFalse();
+    });
+
+    it('should set an error message when the request fails', () => {
+      spyOn(console, 'error');
 
       userService.updateUser.and.returnValue(
         throwError(() => ({
-          error: { message: 'Adresse e-mail déjà utilisée' },
+          error: { message: 'Server error' },
         })),
       );
 
       component.submit();
 
-      expect(component.errorMessage).toBe(
-        'Adresse e-mail déjà utilisée',
-      );
-      expect(component.isLoadingForm).toBeFalse();
-    });
-
-    it('should display a default error when the server gives no message', () => {
-      fillValidForm();
-
-      userService.updateUser.and.returnValue(
-        throwError(() => ({})),
-      );
-
-      component.submit();
-
-      expect(component.errorMessage).toBe(
+      expect(component.errorMessage()).toBe(
         "Une erreur est survenue lors de l'inscription.",
       );
-      expect(component.isLoadingForm).toBeFalse();
+
+      expect(component.isLoadingForm()).toBeFalse();
+      expect(console.error).toHaveBeenCalled();
     });
   });
 
   describe('unsubscribeToTopic', () => {
-    it('should remove the topic after successful unsubscription', () => {
-      const angularTopic = createTopic('angular');
-      const springTopic = createTopic('spring-boot');
-
-      component['subscribedTopicList'].set([
-        angularTopic,
-        springTopic,
-      ]);
-
-      topicService.unsubscribe.and.returnValue(of(void 0));
-
-      component['unsubscribeToTopic'](angularTopic);
-
-      expect(topicService.unsubscribe).toHaveBeenCalledOnceWith('angular');
-      expect(component['subscribedTopicList']()).toEqual([springTopic]);
-      expect(component.topicErrorMessage).toBe('');
+    beforeEach(() => {
+      component['subscribedTopicList'].set([mockTopic, mockTopic2]);
     });
 
-    it('should remove the topic immediately while the request is pending', () => {
-      const angularTopic = createTopic('angular');
+    it('should remove the topic optimistically', () => {
+      component['unsubscribeToTopic'](mockTopic);
 
-      topicService.unsubscribe.and.returnValue(
-        new (class extends (Object as { new (): object }) {})() as never,
-      );
-
-      component['subscribedTopicList'].set([angularTopic]);
-
-      component['unsubscribeToTopic'](angularTopic);
-
-      expect(component['subscribedTopicList']()).toEqual([]);
+      expect(component['subscribedTopicList']()).toEqual([mockTopic2]);
     });
 
-    it('should display an error when unsubscription fails', () => {
-      const angularTopic = createTopic('angular');
+    it('should call the topic service with the topic slug', () => {
+      component['unsubscribeToTopic'](mockTopic);
 
-      component['subscribedTopicList'].set([angularTopic]);
+      expect(topicService.unsubscribe).toHaveBeenCalledOnceWith(mockTopic.slug);
+    });
+
+    it('should set an error message when unsubscribe fails', () => {
+      spyOn(console, 'error');
 
       topicService.unsubscribe.and.returnValue(
-        throwError(() => new Error('Request failed')),
+        throwError(() => new Error('Server error')),
       );
 
-      component['unsubscribeToTopic'](angularTopic);
+      component['unsubscribeToTopic'](mockTopic);
 
       expect(component.topicErrorMessage).toBe(
         'Impossible de se désabonner au topic, veuillez rééssayer',
       );
+
+      expect(console.error).toHaveBeenCalled();
+    });
+
+    it('should keep the topic removed after a successful unsubscribe', () => {
+      component['unsubscribeToTopic'](mockTopic);
+
+      expect(component['subscribedTopicList']()).toEqual([mockTopic2]);
     });
   });
 
   describe('loadMore', () => {
-    it('should load the next page when more topics are available', () => {
-      const firstPage = [
-        createTopic('angular'),
-        createTopic('spring-boot'),
-      ];
-      const secondPage = [createTopic('java')];
-
-      topicService.getSubscribed.and.returnValues(
-        of(createPage(firstPage, 0, false)) as ReturnType<
-          TopicService['getSubscribed']
-        >,
-        of(createPage(secondPage, 1, true)) as ReturnType<
-          TopicService['getSubscribed']
-        >,
-      );
-
-      component['loadMoreSubscribed'](0);
-      component['loadMore']();
-
-      expect(topicService.getSubscribed).toHaveBeenCalledTimes(2);
-      expect(topicService.getSubscribed).toHaveBeenCalledWith(1, 10);
-      expect(component['subscribedTopicList']()).toEqual([
-        ...firstPage,
-        ...secondPage,
-      ]);
-      expect(component['hasMore']()).toBeFalse();
-    });
-
-    it('should not load another page when there are no more topics', () => {
-      component['hasMore'].set(false);
+    it('should load the next page', () => {
+      initializeComponent();
 
       topicService.getSubscribed.calls.reset();
 
       component['loadMore']();
 
-      expect(topicService.getSubscribed).not.toHaveBeenCalled();
+      expect(topicService.getSubscribed).toHaveBeenCalledOnceWith(1, 10);
     });
 
-    it('should not load another page while a request is in progress', () => {
+    it('should not load another page while loading', () => {
       component['isLoadingTopics'].set(true);
 
-      topicService.getSubscribed.calls.reset();
-
       component['loadMore']();
 
       expect(topicService.getSubscribed).not.toHaveBeenCalled();
     });
 
-    it('should append topics instead of replacing existing topics', () => {
-      const existingTopic = createTopic('angular');
-      const newTopic = createTopic('typescript');
+    it('should not load another page when hasMore is false', () => {
+      component['hasMore'].set(false);
 
-      component['subscribedTopicList'].set([existingTopic]);
+      component['loadMore']();
+
+      expect(topicService.getSubscribed).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('loadMoreSubscribed', () => {
+    it('should append the returned topics to the existing list', () => {
+      component['subscribedTopicList'].set([mockTopic]);
 
       topicService.getSubscribed.and.returnValue(
-        of(createPage([newTopic], 1, true)) as ReturnType<
-          TopicService['getSubscribed']
-        >,
+        of(createPage([mockTopic2], 1, false)),
       );
 
       component['loadMoreSubscribed'](1);
 
       expect(component['subscribedTopicList']()).toEqual([
-        existingTopic,
-        newTopic,
+        mockTopic,
+        mockTopic2,
       ]);
     });
 
-    it('should display an error when loading topics fails', () => {
+    it('should update the current page number', () => {
       topicService.getSubscribed.and.returnValue(
-        throwError(() => new Error('Request failed')),
+        of(createPage([mockTopic], 2, false)),
+      );
+
+      component['loadMoreSubscribed'](2);
+
+      expect(component['currentPage']).toBe(3);
+    });
+
+    it('should set hasMore to false on the last page', () => {
+      topicService.getSubscribed.and.returnValue(
+        of(createPage([mockTopic], 0, true)),
       );
 
       component['loadMoreSubscribed'](0);
 
+      expect(component['hasMore']()).toBeFalse();
+    });
+
+    it('should set loading to true while the request is pending', () => {
+      const request = new Subject<Page<Topic>>();
+
+      topicService.getSubscribed.and.returnValue(request.asObservable());
+
+      component['loadMoreSubscribed'](0);
+
+      expect(component['isLoadingTopics']()).toBeTrue();
+
+      request.next(createPage([mockTopic], 0, false));
+      request.complete();
+
+      expect(component['isLoadingTopics']()).toBeFalse();
+    });
+
+    it('should reset loading and set an error message on failure', () => {
+      spyOn(console, 'error');
+
+      topicService.getSubscribed.and.returnValue(
+        throwError(() => new Error('Server error')),
+      );
+
+      component['loadMoreSubscribed'](0);
+
+      expect(component['isLoadingTopics']()).toBeFalse();
       expect(component.topicErrorMessage).toBe(
         'Impossible de se désabonner au topic',
       );
-      expect(component['isLoadingTopics']()).toBeFalse();
+
+      expect(console.error).toHaveBeenCalled();
     });
   });
 });

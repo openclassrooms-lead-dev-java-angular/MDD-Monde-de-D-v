@@ -14,8 +14,8 @@ export class TruncatePipe implements PipeTransform {
       return '';
     }
 
-    if (value.length >= limit) {
-      return value.substring(0, limit) + suffix;
+    if (value.length <= limit) {
+      return value;
     }
 
     const truncated = value.slice(0, limit);

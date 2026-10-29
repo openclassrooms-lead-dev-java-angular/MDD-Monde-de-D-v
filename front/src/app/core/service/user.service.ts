@@ -4,6 +4,7 @@ import { environment } from '@env/environment.prod';
 import { User } from '../model/user.model';
 import { Observable } from 'rxjs';
 import { NewUserType } from '@type/new-user.type';
+import { AvailableResponse } from '@type/available-response.type';
 
 @Injectable({
   providedIn: 'root',
@@ -19,8 +20,21 @@ export class UserService {
     });
   }
 
+  public checkUsernameAvailability(
+    username: string,
+  ): Observable<AvailableResponse> {
+    return this.httpClient.get<AvailableResponse>(
+      `${this.path}/username-available`,
+      {
+        params: {
+          username,
+        },
+      },
+    );
+  }
+
   public updateUser(user: NewUserType): Observable<User> {
-    return this.httpClient.put<User>(`${this.path}/me`, user, {
+    return this.httpClient.patch<User>(`${this.path}/me`, user, {
       withCredentials: true,
     });
   }

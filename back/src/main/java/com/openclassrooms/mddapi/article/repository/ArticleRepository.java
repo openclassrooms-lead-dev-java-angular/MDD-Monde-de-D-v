@@ -1,8 +1,6 @@
 package com.openclassrooms.mddapi.article.repository;
 
 import com.openclassrooms.mddapi.article.entity.Article;
-import com.openclassrooms.mddapi.topic.entity.Topic;
-import com.openclassrooms.mddapi.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
@@ -13,15 +11,9 @@ import java.util.Optional;
 
 public interface ArticleRepository extends JpaRepository<Article, Long> {
 
-    boolean existsBySlug(String slug);
+    Optional<Article> findByPublicId(String publicId);
 
-    Optional<Article> findBySlug(String slug);
-
-    Article getReferenceBySlug(String slug);
-
-    boolean existsBySlugAndAuthor(String slug, User author);
-
-    Page<Article> findByTopic(Topic topic, Pageable pageable);
+    Article getReferenceByPublicId(String publicId);
 
     @Query("""
         SELECT a
@@ -37,4 +29,11 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             @Param("userId") Long userId,
             Pageable pageable
     );
+
+    @Query("""
+        SELECT a.topic.id
+        FROM Article a
+        WHERE a.publicId = :publicId
+        """)
+    Optional<Long> findTopicIdByPublicId(@Param("publicId") String publicId);
 }

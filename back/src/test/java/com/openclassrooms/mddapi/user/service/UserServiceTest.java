@@ -19,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -28,9 +27,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
-
-    private static final String MEDIA_URL = "http://localhost:8080/uploads";
-    private static final String RESOURCE_TYPE = "avatars";
 
     @Mock
     private UserRepository userRepository;
@@ -47,17 +43,26 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    private User user;
+    private UserResponseDto userResponseDto;
+
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(userService, "mediaUrl", MEDIA_URL);
-        ReflectionTestUtils.setField(userService, "resourceType", RESOURCE_TYPE);
+        user = new User();
+        user.setId(1L);
+        user.setUsername("john");
+        user.setEmail("john@example.com");
+        user.setPassword("rawPassword");
+
+        userResponseDto = mock(UserResponseDto.class);
     }
 
-    @Test
-    void createUserShouldSaveAndReturnUser() {
-        User user = mock(User.class);
+    // -------------------------------------------------------------------------
+    // createUser
+    // -------------------------------------------------------------------------
 
-        when(user.getUsername()).thenReturn("testuser");
+    @Test
+    void createUserShouldPersistAndReturnUser() {
         when(userRepository.save(user)).thenReturn(user);
 
         User result = userService.createUser(user);
@@ -67,199 +72,209 @@ class UserServiceTest {
     }
 
     @Test
-    void getMeShouldReturnUserResponseDto() {
-        Long userId = 1L;
-        User user = mock(User.class);
-        UserResponseDto expectedDto = mock(UserResponseDto.class);
+    void createUserShouldPropagateRepositoryException() {
+        when(userRepository.save(user))
+                .thenThrow(new DataIntegrityViolationException("Database error"));
 
-        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userMapper.toDto(user)).thenReturn(expectedDto);
+        assertThrows(
+                DataIntegrityViolationException.class,
+                () -> userService.createUser(user)
+        );
+
+        verify(userRepository).save(user);
+    }
+
+    // -------------------------------------------------------------------------
+    // getMe
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getMeShouldReturnMappedUser() {
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.toDto(user)).thenReturn(userResponseDto);
 
         UserResponseDto result = userService.getMe();
 
-        assertSame(expectedDto, result);
+        assertSame(userResponseDto, result);
+        verify(userDetailsServiceImpl).getPrincipalUserId();
+        verify(userRepository).findById(1L);
         verify(userMapper).toDto(user);
     }
 
     @Test
-    void getMeShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
-        Long userId = 1L;
+    void getMeShouldThrowWhenUserDoesNotExist() {
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(99L);
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> userService.getMe());
+
+        verify(userMapper, never()).toDto(any());
+    }
+
+    @Test
+    void getMeShouldPropagatePrincipalException() {
+        when(userDetailsServiceImpl.getPrincipalUserId())
+                .thenThrow(new RuntimeException("No authenticated user"));
+
+        assertThrows(RuntimeException.class, () -> userService.getMe());
+
+        verifyNoInteractions(userRepository, userMapper);
+    }
+
+    // -------------------------------------------------------------------------
+    // updateUser
+    // -------------------------------------------------------------------------
+
+    @Test
+    void updateUserShouldUpdateEncodePasswordAndReturnDto() {
+        UpdateUserDto dto = mock(UpdateUserDto.class);
+
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(1L);
+        when(userRepository.getReferenceById(1L)).thenReturn(user);
+        when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(userResponseDto);
+
+        UserResponseDto result = userService.updateUser(dto);
+
+        assertSame(userResponseDto, result);
+        assertEquals("encodedPassword", user.getPassword());
+
+        verify(userMapper).updateEntity(dto, user);
+        verify(passwordEncoder).encode("rawPassword");
+        verify(userRepository).save(user);
+        verify(userMapper).toDto(user);
+    }
+
+    @Test
+    void updateUserShouldPropagatePrincipalException() {
+        UpdateUserDto dto = mock(UpdateUserDto.class);
+
+        when(userDetailsServiceImpl.getPrincipalUserId())
+                .thenThrow(new RuntimeException("No authenticated user"));
+
+        assertThrows(RuntimeException.class, () -> userService.updateUser(dto));
+
+        verifyNoInteractions(userRepository, userMapper, passwordEncoder);
+    }
+
+    @Test
+    void updateUserShouldPropagateRepositoryException() {
+        UpdateUserDto dto = mock(UpdateUserDto.class);
+
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(1L);
+        when(userRepository.getReferenceById(1L)).thenReturn(user);
+        when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
+        when(userRepository.save(user))
+                .thenThrow(new DataIntegrityViolationException("Database error"));
 
         assertThrows(
-                UserNotFoundException.class,
-                () -> userService.getMe()
+                DataIntegrityViolationException.class,
+                () -> userService.updateUser(dto)
         );
 
-        verify(userMapper, never()).toDto(any(User.class));
-    }
-
-    @Test
-    void updateUserShouldUpdateAndReturnUserResponseDtoWithMedia() {
-        Long userId = 1L;
-
-        User user = mock(User.class);
-        UpdateUserDto userDto = mock(UpdateUserDto.class);
-        UserResponseDto expectedDto = mock(UserResponseDto.class);
-
-        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
-        when(userRepository.getReferenceById(userId)).thenReturn(user);
-        when(userDto.username()).thenReturn("testuser");
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toDto(user)).thenReturn(expectedDto);
-
-        UserResponseDto result = userService.updateUser(userDto);
-
-        assertSame(expectedDto, result);
-
-        verify(userMapper).updateEntity(userDto, user);
+        verify(userMapper).updateEntity(dto, user);
+        verify(passwordEncoder).encode("rawPassword");
         verify(userRepository).save(user);
-        verify(userMapper).toDto(user);
+        verify(userMapper, never()).toDto(any());
     }
 
-    @Test
-    void updateUserShouldUpdateWithoutMedia() {
-        Long userId = 1L;
-
-        User user = mock(User.class);
-        UpdateUserDto userDto = mock(UpdateUserDto.class);
-        UserResponseDto expectedDto = mock(UserResponseDto.class);
-
-        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
-        when(userRepository.getReferenceById(userId)).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toDto(user)).thenReturn(expectedDto);
-
-        UserResponseDto result = userService.updateUser(userDto);
-
-        assertSame(expectedDto, result);
-
-        verify(userMapper).updateEntity(userDto, user);
-        verify(userRepository).save(user);
-    }
-
-    @Test
-    void updateUserShouldNotUploadMediaWhenUpdatedMediaIsFalse() {
-        Long userId = 1L;
-
-        User user = mock(User.class);
-        UpdateUserDto userDto = mock(UpdateUserDto.class);
-        UserResponseDto expectedDto = mock(UserResponseDto.class);
-
-        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
-        when(userRepository.getReferenceById(userId)).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(user);
-        when(userMapper.toDto(user)).thenReturn(expectedDto);
-
-        UserResponseDto result = userService.updateUser(userDto);
-
-        assertSame(expectedDto, result);
-
-        verify(userRepository).save(user);
-    }
+    // -------------------------------------------------------------------------
+    // getByEmail
+    // -------------------------------------------------------------------------
 
     @Test
     void getByEmailShouldReturnUser() {
-        String email = "test@example.com";
-        User user = mock(User.class);
+        when(userRepository.findByEmail("john@example.com"))
+                .thenReturn(Optional.of(user));
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-
-        User result = userService.getByEmail(email);
+        User result = userService.getByEmail("john@example.com");
 
         assertSame(user, result);
+        verify(userRepository).findByEmail("john@example.com");
     }
 
     @Test
-    void getByEmailShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
-        String email = "unknown@example.com";
-
-        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+    void getByEmailShouldThrowWhenUserDoesNotExist() {
+        when(userRepository.findByEmail("unknown@example.com"))
+                .thenReturn(Optional.empty());
 
         assertThrows(
                 UserNotFoundException.class,
-                () -> userService.getByEmail(email)
+                () -> userService.getByEmail("unknown@example.com")
         );
     }
 
+    // -------------------------------------------------------------------------
+    // register
+    // -------------------------------------------------------------------------
+
     @Test
-    void registerShouldCreateUserWithEncodedPassword() {
+    void registerShouldMapEncodeAndPersistUser() {
         RegisterRequestDto dto = mock(RegisterRequestDto.class);
-        User user = mock(User.class);
-        String rawPassword = "password123";
-        String encodedPassword = "encoded-password";
 
         when(userMapper.fromRegisterDto(dto)).thenReturn(user);
-        when(user.getEmail()).thenReturn("test@example.com");
-        when(user.getUsername()).thenReturn("testuser");
-        when(user.getPassword()).thenReturn(rawPassword);
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(userRepository.existsByUsername("testuser")).thenReturn(false);
-        when(passwordEncoder.encode(rawPassword)).thenReturn(encodedPassword);
+        when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("john")).thenReturn(false);
+        when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
+        when(userRepository.save(user)).thenReturn(user);
 
-        userService.register(dto);
+        assertDoesNotThrow(() -> userService.register(dto));
 
-        verify(user).setPassword(encodedPassword);
-        verify(passwordEncoder).encode(rawPassword);
+        assertEquals("encodedPassword", user.getPassword());
+
+        verify(userMapper).fromRegisterDto(dto);
+        verify(userRepository).existsByEmail("john@example.com");
+        verify(userRepository).existsByUsername("john");
+        verify(passwordEncoder).encode("rawPassword");
         verify(userRepository).save(user);
     }
 
     @Test
-    void registerShouldThrowEmailAlreadyExistsException() {
+    void registerShouldThrowWhenEmailAlreadyExists() {
         RegisterRequestDto dto = mock(RegisterRequestDto.class);
-        User user = mock(User.class);
 
         when(userMapper.fromRegisterDto(dto)).thenReturn(user);
-        when(user.getEmail()).thenReturn("test@example.com");
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
+        when(userRepository.existsByEmail("john@example.com")).thenReturn(true);
 
         assertThrows(
                 EmailAlreadyExistsException.class,
                 () -> userService.register(dto)
         );
 
-        verify(userRepository, never()).save(any(User.class));
-        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).existsByUsername(any());
+        verify(passwordEncoder, never()).encode(any());
+        verify(userRepository, never()).save(any());
     }
 
     @Test
-    void registerShouldThrowUsernameAlreadyExistsException() {
+    void registerShouldThrowWhenUsernameAlreadyExists() {
         RegisterRequestDto dto = mock(RegisterRequestDto.class);
-        User user = mock(User.class);
 
         when(userMapper.fromRegisterDto(dto)).thenReturn(user);
-        when(user.getEmail()).thenReturn("test@example.com");
-        when(user.getUsername()).thenReturn("testuser");
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(userRepository.existsByUsername("testuser")).thenReturn(true);
+        when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("john")).thenReturn(true);
 
         assertThrows(
                 UsernameAlreadyExistsException.class,
                 () -> userService.register(dto)
         );
 
-        verify(userRepository, never()).save(any(User.class));
-        verify(passwordEncoder, never()).encode(anyString());
+        verify(passwordEncoder, never()).encode(any());
+        verify(userRepository, never()).save(any());
     }
 
     @Test
-    void registerShouldThrowUserAlreadyExistsExceptionWhenDatabaseConstraintIsViolated() {
+    void registerShouldTranslateDataIntegrityViolation() {
         RegisterRequestDto dto = mock(RegisterRequestDto.class);
-        User user = mock(User.class);
-        String rawPassword = "password123";
 
         when(userMapper.fromRegisterDto(dto)).thenReturn(user);
-        when(user.getEmail()).thenReturn("test@example.com");
-        when(user.getUsername()).thenReturn("testuser");
-        when(user.getPassword()).thenReturn(rawPassword);
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(userRepository.existsByUsername("testuser")).thenReturn(false);
-        when(passwordEncoder.encode(rawPassword)).thenReturn("encoded-password");
+        when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("john")).thenReturn(false);
+        when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
         when(userRepository.save(user))
-                .thenThrow(new DataIntegrityViolationException("Duplicate user"));
+                .thenThrow(new DataIntegrityViolationException("Unique constraint"));
 
         assertThrows(
                 UserAlreadyExistsException.class,
@@ -270,31 +285,82 @@ class UserServiceTest {
     }
 
     @Test
-    void usernameAvailableShouldReturnTrueWhenUsernameDoesNotExist() {
-        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+    void registerShouldNotCheckUsernameWhenEmailAlreadyExists() {
+        RegisterRequestDto dto = mock(RegisterRequestDto.class);
 
-        assertTrue(userService.usernameAvailable("testuser"));
+        when(userMapper.fromRegisterDto(dto)).thenReturn(user);
+        when(userRepository.existsByEmail("john@example.com")).thenReturn(true);
+
+        assertThrows(
+                EmailAlreadyExistsException.class,
+                () -> userService.register(dto)
+        );
+
+        verify(userRepository, never()).existsByUsername(any());
+    }
+
+    // -------------------------------------------------------------------------
+    // usernameAvailable
+    // -------------------------------------------------------------------------
+
+    @Test
+    void usernameAvailableShouldReturnTrueWhenUsernameDoesNotExist() {
+        when(userRepository.existsByUsername("john")).thenReturn(false);
+
+        boolean result = userService.usernameAvailable("john");
+
+        assertTrue(result);
+        verify(userRepository).existsByUsername("john");
     }
 
     @Test
     void usernameAvailableShouldReturnFalseWhenUsernameAlreadyExists() {
-        when(userRepository.existsByUsername("testuser")).thenReturn(true);
+        when(userRepository.existsByUsername("john")).thenReturn(true);
 
-        assertFalse(userService.usernameAvailable("testuser"));
+        boolean result = userService.usernameAvailable("john");
+
+        assertFalse(result);
+        verify(userRepository).existsByUsername("john");
     }
+
+    // -------------------------------------------------------------------------
+    // loadCurrentUserAuthor
+    // -------------------------------------------------------------------------
 
     @Test
     void loadCurrentUserAuthorShouldReturnCurrentUser() {
-        Long userId = 1L;
-        User user = mock(User.class);
-
-        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(userId);
-        when(userRepository.getReferenceById(userId)).thenReturn(user);
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(1L);
+        when(userRepository.getReferenceById(1L)).thenReturn(user);
 
         User result = userService.loadCurrentUserAuthor();
 
         assertSame(user, result);
-        verify(userRepository).getReferenceById(userId);
+        verify(userDetailsServiceImpl).getPrincipalUserId();
+        verify(userRepository).getReferenceById(1L);
+    }
+
+    @Test
+    void loadCurrentUserAuthorShouldPropagatePrincipalException() {
+        when(userDetailsServiceImpl.getPrincipalUserId())
+                .thenThrow(new RuntimeException("No authenticated user"));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> userService.loadCurrentUserAuthor()
+        );
+
+        verify(userRepository, never()).getReferenceById(anyLong());
+    }
+
+    @Test
+    void loadCurrentUserAuthorShouldPropagateRepositoryException() {
+        when(userDetailsServiceImpl.getPrincipalUserId()).thenReturn(1L);
+        when(userRepository.getReferenceById(1L))
+                .thenThrow(new UserNotFoundException());
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> userService.loadCurrentUserAuthor()
+        );
     }
 }
-

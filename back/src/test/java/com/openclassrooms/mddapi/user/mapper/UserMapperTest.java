@@ -54,7 +54,8 @@ class UserMapperTest {
 
         UpdateUserDto dto = new UpdateUserDto(
                 "jane.doe@example.com",
-                "Jane_Doe"
+                "Jane_Doe",
+                "Password/1234"
         );
 
         userMapper.updateEntity(dto, user);

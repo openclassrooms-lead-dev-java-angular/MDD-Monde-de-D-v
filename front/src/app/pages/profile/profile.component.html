@@ -82,7 +82,6 @@
         <div class="profile__form-actions">
           <app-button
             type="submit"
-            [disabled]="isLoadingForm() || userForm.pending || userForm.invalid"
             [label]="isLoadingForm() ? 'Enregistrement...' : 'Sauvegarder'"
           />
         </div>
@@ -106,7 +105,7 @@
           [infiniteScrollThrottle]="150"
           (scrolled)="loadMore()"
         >
-          @for (topic of subscribedTopicList(); track topic.slug) {
+          @for (topic of subscribedTopicList(); track topic.publicId) {
             <app-topic-card
               [topic]="topic"
               [showUnsubscribe]="true"
