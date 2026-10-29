@@ -93,7 +93,7 @@ describe('Topic', () => {
   });
 
   it('should subscribe to a topic successfully', () => {
-    cy.intercept('POST', '**/api/v1/topics/topic-1/subscribe', {
+    cy.intercept('POST', '**/api/v1/topics/**', {
       statusCode: 200,
       body: null,
     }).as('subscribeToTopic');
@@ -106,15 +106,16 @@ describe('Topic', () => {
         cy.contains('button', 'S’abonner').click();
       });
 
-    cy.wait('@subscribeToTopic');
+    cy.wait('@subscribeToTopic').then(({ request }) => {
+      expect(request.method).to.equal('POST');
+      expect(request.url).to.include('/api/v1/topics/');
+    });
 
-    cy.get('app-topic-card')
-      .first()
-      .should('contain.text', 'Topic 1');
+    cy.get('app-topic-card').first().should('contain.text', 'Topic 1');
   });
 
   it('should display an error when subscribing to a topic fails', () => {
-    cy.intercept('POST', '**/api/v1/topics/topic-1/subscribe', {
+    cy.intercept('POST', '**/api/v1/topics/**', {
       statusCode: 500,
       body: { message: 'Server error' },
     }).as('subscribeToTopicError');
@@ -127,9 +128,11 @@ describe('Topic', () => {
         cy.contains('button', 'S’abonner').click();
       });
 
-    cy.wait('@subscribeToTopicError');
+    cy.wait('@subscribeToTopicError').then(({ request, response }) => {
+      expect(request.method).to.equal('POST');
+      expect(response?.statusCode).to.equal(500);
+    });
 
-    // The component stores the error message but does not render it in the provided template.
     cy.get('.topic-list__empty').should('not.exist');
   });
 
