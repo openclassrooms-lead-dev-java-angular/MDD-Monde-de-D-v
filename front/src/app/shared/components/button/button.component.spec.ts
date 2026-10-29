@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-
 import { ButtonComponent } from './button.component';
 
 describe('ButtonComponent', () => {
@@ -16,226 +15,375 @@ describe('ButtonComponent', () => {
     fixture = TestBed.createComponent(ButtonComponent);
     component = fixture.componentInstance;
 
-    fixture.componentRef.setInput('label', 'Test button');
+    fixture.componentRef.setInput('label', 'Click me');
+
     fixture.detectChanges();
   });
 
-  function getButton(): HTMLButtonElement | null {
-    return fixture.nativeElement.querySelector('button');
+  function query<T extends HTMLElement>(selector: string): T | null {
+    return fixture.nativeElement.querySelector(selector) as T | null;
   }
 
-  function getLink(): HTMLAnchorElement | null {
-    return fixture.nativeElement.querySelector('a');
-  }
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
 
-  describe('initialization', () => {
-    it('should create the component', () => {
-      expect(component).toBeTruthy();
+  describe('default inputs', () => {
+    it('should use button as the default type', () => {
+      expect(component.type()).toBe('button');
     });
 
-    it('should use the default input values', () => {
-      expect(component.type()).toBe('button');
+    it('should be enabled by default', () => {
       expect(component.disabled()).toBeFalse();
-      expect(component.outlined()).toBeFalse();
+    });
+
+    it('should use a font weight of 600 by default', () => {
       expect(component.fontWeight()).toBe(600);
-      expect(component.action()).toBeUndefined();
-      expect(component.variant()).toBeUndefined();
-      expect(component.routerLink()).toBeUndefined();
-      expect(component.alt()).toBeUndefined();
+    });
+
+    it('should use false as the default outlined value', () => {
+      expect(component.outlined()).toBeFalse();
+    });
+
+    it('should render a button by default', () => {
+      expect(query('button')).not.toBeNull();
+      expect(query('a')).toBeNull();
     });
 
     it('should display the provided label', () => {
-      expect(getButton()?.textContent?.trim()).toBe('Test button');
+      expect(query<HTMLButtonElement>('button')?.textContent?.trim())
+        .toBe('Click me');
     });
 
-    it('should update the label when the input changes', () => {
-      fixture.componentRef.setInput('label', 'Updated label');
-      fixture.detectChanges();
+    it('should use a flat button by default', () => {
+      const button = query<HTMLButtonElement>('button');
 
-      expect(getButton()?.textContent?.trim()).toBe('Updated label');
+      expect(button).not.toBeNull();
+      expect(button?.classList).toContain('mat-mdc-unelevated-button');
+    });
+
+    it('should not apply a variant class when no variant is provided', () => {
+      expect(component.variantClass()).toBe('');
     });
   });
 
-  describe('button rendering', () => {
-    it('should render a flat button by default', () => {
-      const button = getButton();
-
-      expect(button).not.toBeNull();
-      expect(getLink()).toBeNull();
-      expect(
-        button?.classList.contains('mat-mdc-unelevated-button'),
-      ).toBeTrue();
-    });
-
-    it('should render a stroked button when outlined is true', () => {
-      fixture.componentRef.setInput('outlined', true);
+  describe('label input', () => {
+    it('should update the displayed label', () => {
+      fixture.componentRef.setInput('label', 'Save changes');
       fixture.detectChanges();
 
-      const button = getButton();
-
-      expect(button).not.toBeNull();
-      expect(button?.classList.contains('mat-mdc-outlined-button')).toBeTrue();
+      expect(query<HTMLButtonElement>('button')?.textContent?.trim())
+        .toBe('Save changes');
     });
 
-    it('should render a button with type button by default', () => {
-      expect(getButton()?.type).toBe('button');
+    it('should render an empty label', () => {
+      fixture.componentRef.setInput('label', '');
+      fixture.detectChanges();
+
+      expect(query<HTMLButtonElement>('button')?.textContent?.trim())
+        .toBe('');
+    });
+  });
+
+  describe('button type', () => {
+    it('should render a button with type button', () => {
+      fixture.componentRef.setInput('type', 'button');
+      fixture.detectChanges();
+
+      expect(query<HTMLButtonElement>('button')?.type).toBe('button');
     });
 
-    it('should render a submit button when type is submit', () => {
+    it('should render a button with type submit', () => {
       fixture.componentRef.setInput('type', 'submit');
       fixture.detectChanges();
 
-      expect(getButton()?.type).toBe('submit');
+      expect(query<HTMLButtonElement>('button')?.type).toBe('submit');
     });
 
-    it('should render a reset button when type is reset', () => {
-      fixture.componentRef.setInput('type', 'reset');
-      fixture.detectChanges();
-
-      expect(getButton()?.type).toBe('reset');
-    });
-  });
-
-  describe('link rendering', () => {
-    beforeEach(() => {
+    it('should render a link when type is link', () => {
       fixture.componentRef.setInput('type', 'link');
-      fixture.componentRef.setInput('routerLink', '/articles');
-      fixture.detectChanges();
-    });
-
-    it('should render an anchor instead of a button', () => {
-      expect(getLink()).not.toBeNull();
-      expect(getButton()).toBeNull();
-    });
-
-    it('should navigate to the provided router link', () => {
-      expect(getLink()?.getAttribute('href')).toBe('/articles');
-    });
-
-    it('should display the provided label', () => {
-      expect(getLink()?.textContent?.trim()).toBe('Test button');
-    });
-
-    it('should apply the alt input as the aria-label', () => {
-      fixture.componentRef.setInput('alt', 'Open articles');
+      fixture.componentRef.setInput('routerLink', '/profile');
       fixture.detectChanges();
 
-      expect(getLink()?.getAttribute('aria-label')).toBe('Open articles');
-    });
-
-    it('should apply the alt input as the title', () => {
-      fixture.componentRef.setInput('alt', 'Open articles');
-      fixture.detectChanges();
-
-      expect(getLink()?.getAttribute('title')).toBe('Open articles');
-    });
-
-    it('should not set aria-label when alt is undefined', () => {
-      expect(getLink()?.getAttribute('aria-label')).toBeNull();
-    });
-
-    it('should apply the font weight', () => {
-      fixture.componentRef.setInput('fontWeight', 700);
-      fixture.detectChanges();
-
-      expect(getLink()?.style.fontWeight).toBe('700');
+      expect(query<HTMLAnchorElement>('a')).not.toBeNull();
+      expect(query('button')).toBeNull();
     });
   });
 
-  describe('variantClass', () => {
-    it('should return an empty string when variant is undefined', () => {
+  describe('disabled input', () => {
+    it('should enable the button when disabled is false', () => {
+      fixture.componentRef.setInput('disabled', false);
+      fixture.detectChanges();
+
+      expect(query<HTMLButtonElement>('button')?.disabled).toBeFalse();
+    });
+
+    it('should disable the button when disabled is true', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      expect(query<HTMLButtonElement>('button')?.disabled).toBeTrue();
+    });
+
+    it('should not execute the action when the button is disabled', () => {
+      const action = jasmine.createSpy('action');
+
+      fixture.componentRef.setInput('action', action);
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      query<HTMLButtonElement>('button')?.click();
+
+      expect(action).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('outlined input', () => {
+    it('should use a flat button when outlined is false', () => {
+      fixture.componentRef.setInput('outlined', false);
+      fixture.detectChanges();
+
+      const button = query<HTMLButtonElement>('button');
+
+      expect(button?.classList).toContain('mat-mdc-unelevated-button');
+      expect(button?.classList).not.toContain('mat-mdc-outlined-button');
+    });
+
+    it('should use a stroked button when outlined is true', () => {
+      fixture.componentRef.setInput('outlined', true);
+      fixture.detectChanges();
+
+      const button = query<HTMLButtonElement>('button');
+
+      expect(button?.classList).toContain('mat-mdc-outlined-button');
+      expect(button?.classList).not.toContain('mat-mdc-unelevated-button');
+    });
+
+    it('should render a stroked button when outlined and type submit are set', () => {
+      fixture.componentRef.setInput('outlined', true);
+      fixture.componentRef.setInput('type', 'submit');
+      fixture.detectChanges();
+
+      const button = query<HTMLButtonElement>('button');
+
+      expect(button?.type).toBe('submit');
+      expect(button?.classList).toContain('mat-mdc-outlined-button');
+    });
+  });
+
+  describe('variant input', () => {
+    it('should return an empty class when variant is undefined', () => {
+      fixture.componentRef.setInput('variant', undefined);
+
       expect(component.variantClass()).toBe('');
     });
 
-    it('should return the corresponding CSS class', () => {
+    it('should return button-primary for the primary variant', () => {
       fixture.componentRef.setInput('variant', 'primary');
-      fixture.detectChanges();
 
       expect(component.variantClass()).toBe('button-primary');
     });
 
-    it('should update the CSS class when the variant changes', () => {
+    it('should return button-secondary for the secondary variant', () => {
+      fixture.componentRef.setInput('variant', 'secondary');
+
+      expect(component.variantClass()).toBe('button-secondary');
+    });
+
+    it('should return button-outlined for the outlined variant', () => {
+      fixture.componentRef.setInput('variant', 'outlined');
+
+      expect(component.variantClass()).toBe('button-outlined');
+    });
+
+    it('should apply the primary variant class to the button', () => {
       fixture.componentRef.setInput('variant', 'primary');
       fixture.detectChanges();
 
-      expect(getButton()?.classList.contains('button-primary')).toBeTrue();
+      expect(query<HTMLButtonElement>('button')?.classList)
+        .toContain('button-primary');
+    });
+
+    it('should update the variant class when the input changes', () => {
+      fixture.componentRef.setInput('variant', 'primary');
+      fixture.detectChanges();
+
+      expect(query<HTMLButtonElement>('button')?.classList)
+        .toContain('button-primary');
 
       fixture.componentRef.setInput('variant', 'secondary');
       fixture.detectChanges();
 
-      expect(getButton()?.classList.contains('button-secondary')).toBeTrue();
-      expect(getButton()?.classList.contains('button-primary')).toBeFalse();
+      const button = query<HTMLButtonElement>('button');
+
+      expect(button?.classList).toContain('button-secondary');
+      expect(button?.classList).not.toContain('button-primary');
     });
   });
 
-  describe('styling', () => {
-    it('should apply the default font weight', () => {
-      expect(getButton()?.style.fontWeight).toBe('600');
-    });
-
-    it('should apply a custom font weight', () => {
-      fixture.componentRef.setInput('fontWeight', 400);
-      fixture.detectChanges();
-
-      expect(getButton()?.style.fontWeight).toBe('400');
-    });
-
-    it('should apply the variant class to the button', () => {
-      fixture.componentRef.setInput('variant', 'primary');
-      fixture.detectChanges();
-
-      expect(getButton()?.classList.contains('button-primary')).toBeTrue();
-    });
-
-    it('should apply the variant class to the link', () => {
-      fixture.componentRef.setInput('type', 'link');
-      fixture.componentRef.setInput('routerLink', '/articles');
-      fixture.componentRef.setInput('variant', 'primary');
-      fixture.detectChanges();
-
-      expect(getLink()?.classList.contains('button-primary')).toBeTrue();
-    });
-  });
-
-  describe('action', () => {
-    it('should call the action when the button is clicked', () => {
+  describe('action input', () => {
+    it('should execute the action when the button is clicked', () => {
       const action = jasmine.createSpy('action');
 
       fixture.componentRef.setInput('action', action);
       fixture.detectChanges();
 
-      getButton()?.click();
+      query<HTMLButtonElement>('button')?.click();
 
       expect(action).toHaveBeenCalledTimes(1);
     });
 
-    it('should not throw when action is undefined', () => {
-      expect(() => getButton()?.click()).not.toThrow();
-    });
-
-    it('should call the action only once per click', () => {
-      const action = jasmine.createSpy('action');
-
-      fixture.componentRef.setInput('action', action);
+    it('should not throw when no action is provided', () => {
+      fixture.componentRef.setInput('action', undefined);
       fixture.detectChanges();
 
-      getButton()?.click();
-      getButton()?.click();
-
-      expect(action).toHaveBeenCalledTimes(2);
+      expect(() => query<HTMLButtonElement>('button')?.click())
+        .not.toThrow();
     });
 
-    it('should not execute the action when the link is clicked', () => {
+    it('should execute the updated action after the input changes', () => {
+      const firstAction = jasmine.createSpy('firstAction');
+      const secondAction = jasmine.createSpy('secondAction');
+
+      fixture.componentRef.setInput('action', firstAction);
+      fixture.detectChanges();
+
+      query<HTMLButtonElement>('button')?.click();
+
+      fixture.componentRef.setInput('action', secondAction);
+      fixture.detectChanges();
+
+      query<HTMLButtonElement>('button')?.click();
+
+      expect(firstAction).toHaveBeenCalledTimes(1);
+      expect(secondAction).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not execute the action when a link is clicked', () => {
       const action = jasmine.createSpy('action');
 
       fixture.componentRef.setInput('type', 'link');
-      fixture.componentRef.setInput('routerLink', '/articles');
+      fixture.componentRef.setInput('routerLink', '/profile');
       fixture.componentRef.setInput('action', action);
       fixture.detectChanges();
 
-      getLink()?.click();
+      query<HTMLAnchorElement>('a')?.click();
 
       expect(action).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('fontWeight input', () => {
+    it('should apply the default font weight', () => {
+      const button = query<HTMLButtonElement>('button');
+
+      expect(button?.style.fontWeight).toBe('600');
+    });
+
+    it('should apply a custom font weight to a button', () => {
+      fixture.componentRef.setInput('fontWeight', 700);
+      fixture.detectChanges();
+
+      expect(query<HTMLButtonElement>('button')?.style.fontWeight)
+        .toBe('700');
+    });
+
+    it('should update the font weight when the input changes', () => {
+      fixture.componentRef.setInput('fontWeight', 400);
+      fixture.detectChanges();
+
+      expect(query<HTMLButtonElement>('button')?.style.fontWeight)
+        .toBe('400');
+
+      fixture.componentRef.setInput('fontWeight', 800);
+      fixture.detectChanges();
+
+      expect(query<HTMLButtonElement>('button')?.style.fontWeight)
+        .toBe('800');
+    });
+  });
+
+  describe('link mode', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('type', 'link');
+      fixture.componentRef.setInput('routerLink', '/topics');
+      fixture.detectChanges();
+    });
+
+    it('should display the label inside an anchor', () => {
+      expect(query<HTMLAnchorElement>('a')?.textContent?.trim())
+        .toBe('Click me');
+    });
+
+    it('should bind the routerLink to the anchor', () => {
+      const anchor = query<HTMLAnchorElement>('a');
+
+      expect(anchor?.getAttribute('href')).toBe('/topics');
+    });
+
+    it('should apply the alt input as the aria-label', () => {
+      fixture.componentRef.setInput('alt', 'Browse topics');
+      fixture.detectChanges();
+
+      expect(query<HTMLAnchorElement>('a')?.getAttribute('aria-label'))
+        .toBe('Browse topics');
+    });
+
+    it('should apply the alt input as the title', () => {
+      fixture.componentRef.setInput('alt', 'Browse topics');
+      fixture.detectChanges();
+
+      expect(query<HTMLAnchorElement>('a')?.title).toBe('Browse topics');
+    });
+
+    it('should apply the variant class to the anchor', () => {
+      fixture.componentRef.setInput('variant', 'secondary');
+      fixture.detectChanges();
+
+      expect(query<HTMLAnchorElement>('a')?.classList)
+        .toContain('button-secondary');
+    });
+
+    it('should apply the font weight to the anchor', () => {
+      fixture.componentRef.setInput('fontWeight', 700);
+      fixture.detectChanges();
+
+      expect(query<HTMLAnchorElement>('a')?.style.fontWeight).toBe('700');
+    });
+
+    it('should not render a button element', () => {
+      expect(query('button')).toBeNull();
+    });
+  });
+
+  describe('input combinations', () => {
+    it('should support a disabled outlined secondary button', () => {
+      fixture.componentRef.setInput('outlined', true);
+      fixture.componentRef.setInput('disabled', true);
+      fixture.componentRef.setInput('variant', 'secondary');
+      fixture.detectChanges();
+
+      const button = query<HTMLButtonElement>('button');
+
+      expect(button?.disabled).toBeTrue();
+      expect(button?.classList).toContain('mat-mdc-outlined-button');
+      expect(button?.classList).toContain('button-secondary');
+    });
+
+    it('should support a submit button with a custom action', () => {
+      const action = jasmine.createSpy('action');
+
+      fixture.componentRef.setInput('type', 'submit');
+      fixture.componentRef.setInput('action', action);
+      fixture.detectChanges();
+
+      const button = query<HTMLButtonElement>('button');
+
+      expect(button?.type).toBe('submit');
+
+      button?.click();
+
+      expect(action).toHaveBeenCalledTimes(1);
     });
   });
 });
