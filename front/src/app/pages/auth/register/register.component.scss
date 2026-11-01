@@ -36,12 +36,24 @@
       margin: 0 auto;
     }
 
-    &__logo {
-      width: 100%;
-    }
+    &__header {
+      &__logo-container {
+        width: 100%;
+        
+        .register__content__logo {
+          width: 100%;
+        }
+      }
 
-    &__title {
-      text-align: center;
+      @media (min-width: $breakpoint-md) {
+        &__logo-container {
+          display: none;
+        }
+      }
+
+      &__title {
+        text-align: center;
+      }
     }
 
     form {
