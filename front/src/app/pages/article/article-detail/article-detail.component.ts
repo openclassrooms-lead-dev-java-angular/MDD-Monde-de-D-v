@@ -44,7 +44,6 @@ export class ArticleDetailComponent implements OnInit {
       next: (article) => {
         this.article.set(article);
         this.isLoading.set(false);
-        console.log(article);
       },
       error: (error) => {
         console.error(error);

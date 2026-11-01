@@ -1,9 +1,5 @@
 import { Component, inject, input, OnInit, signal } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -13,9 +9,7 @@ import { ArticleNew } from '@model/article.model';
 import { TopicOption } from '@model/topic.model';
 import { ArticleService } from '@service/article.service';
 import { TopicService } from '@service/topic.service';
-import {
-  finalize,
-} from 'rxjs';
+import { finalize } from 'rxjs';
 import { ButtonComponent } from 'src/app/shared/components/button/button.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
@@ -116,7 +110,7 @@ export class ArticleFormComponent implements OnInit {
 
   protected submitForm(): void {
     this.errorMessage.set('');
-
+    
     if (
       this.articleForm.invalid ||
       this.articleForm.pending ||

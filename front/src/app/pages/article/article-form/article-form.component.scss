@@ -63,11 +63,6 @@
     --mdc-outlined-text-field-focus-label-text-color: #7960c9;
   }
 
-  &__input {
-    display: block;
-    width: 100%;
-  }
-
   &__content-field {
     textarea {
       min-height: 125px;
@@ -98,22 +93,30 @@
   .article-form {
     padding: 24px 16px;
 
-    &__back {
-      border: none;
-      margin: 20px 0 0 50px;
-      background-color: transparent;
-      cursor: pointer;
-    }
+    .article-form__header {
+      &__back {
+        border: none;
+        margin: 20px 0 0 50px;
+        background-color: transparent;
+        cursor: pointer;
+      }
 
-    &__title {
-      margin: 16px 0 18px;
-      text-align: left;
-      font-size: 18px;
+      &__title {
+        margin: 16px 0 18px;
+        text-align: left;
+        font-size: 18px;
+      }
     }
 
     &__form {
       max-width: none;
       gap: 10px;
+
+      .form-input {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
     }
 
     &__content-field textarea {
