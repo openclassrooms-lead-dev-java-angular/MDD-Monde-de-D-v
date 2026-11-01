@@ -3,6 +3,7 @@
 .navbar {
   width: 100%;
   background: #fff;
+  border-bottom: 1px solid black;
 
   &__toolbar {
     display: flex;
@@ -55,6 +56,19 @@
       border-radius: 4px;
     }
 
+    .logout {
+      padding: 0;
+      margin-bottom: 0;
+
+      border: none;
+      background: transparent;
+
+      color: #b00000;
+      font-size: 14px;
+      font-weight: 600;
+
+      cursor: pointer;
+    }
     .active {
       font-weight: 600;
     }
@@ -106,7 +120,6 @@
     &__toolbar {
       height: 56px;
       min-height: 56px;
-
       padding: 0 1rem;
     }
 
@@ -120,14 +133,98 @@
 
     &__menu-button {
       display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      margin-left: auto;
+      z-index: 1002;
+    }
 
+    /* Fond semi-transparent */
+    &__backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25);
+      z-index: 1000;
+    }
+
+    /* Panneau latéral */
+    &__mobile-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+
+      width: 56%;
+      max-width: 320px;
+
+      display: flex;
+      flex-direction: column;
+
+      background-color: #fff;
+      border: 1px solid #222;
+
+      z-index: 1001;
+      box-sizing: border-box;
+    }
+
+    &__close-button {
+      display: none;
+    }
+
+    &__mobile-links {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+
+      padding: 44px 14px 0;
+
+      a {
+        color: #111;
+        font-size: 22px;
+        font-weight: 400;
+        text-decoration: none;
+        line-height: 1.4;
+      }
+    }
+
+    &__logout {
+      padding: 0;
+      margin-bottom: 0;
+
+      border: none;
+      background: transparent;
+
+      color: #b00000;
+      font-size: 14px;
+      font-weight: 600;
+
+      cursor: pointer;
+    }
+
+    &__profile {
+      display: flex;
       align-items: center;
       justify-content: center;
 
-      width: 40px;
-      height: 40px;
+      width: 52px;
+      height: 52px;
 
-      margin-left: auto;
+      margin: auto 8px 4px auto;
+
+      border-radius: 50%;
+      background: #dedede;
+
+      color: #666;
+      text-decoration: none;
+
+      mat-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 32px;
+      }
     }
   }
 }
