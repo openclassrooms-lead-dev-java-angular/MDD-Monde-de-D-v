@@ -48,7 +48,10 @@ describe('TopicComponent', () => {
   beforeEach(async () => {
     topicService = jasmine.createSpyObj<TopicService>('TopicService', [
       'fetchTopics',
+      'fetchTopicOptions',
       'subscribe',
+      'unsubscribe',
+      'fetchSubscribed',
     ]);
 
     topicService.fetchTopics.and.returnValue(
