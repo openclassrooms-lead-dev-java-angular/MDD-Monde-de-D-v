@@ -48,7 +48,7 @@ describe('ProfileComponent', () => {
 
   beforeEach(async () => {
     topicService = jasmine.createSpyObj<TopicService>('TopicService', [
-      'getSubscribed',
+      'fetchSubscribed',
       'unsubscribe',
     ]);
 
@@ -147,7 +147,7 @@ describe('ProfileComponent', () => {
     it('should load the first page of subscribed topics', () => {
       initializeComponent();
 
-      expect(topicService.getSubscribed).toHaveBeenCalledOnceWith(0, 10);
+      expect(topicService.fetchSubscribed).toHaveBeenCalledOnceWith(0, 10);
 
       expect(component['subscribedTopicList']()).toEqual([mockTopic]);
     });
@@ -159,7 +159,7 @@ describe('ProfileComponent', () => {
     });
 
     it('should update hasMore when the last page is reached', () => {
-      topicService.getSubscribed.and.returnValue(
+      topicService.fetchSubscribed.and.returnValue(
         of(createPage([mockTopic], 0, true)),
       );
 
@@ -173,7 +173,7 @@ describe('ProfileComponent', () => {
 
       initializeComponent();
 
-      expect(topicService.getSubscribed).not.toHaveBeenCalled();
+      expect(topicService.fetchSubscribed).not.toHaveBeenCalled();
     });
 
     it('should not load topics when there are no more pages', () => {
@@ -181,13 +181,13 @@ describe('ProfileComponent', () => {
 
       initializeComponent();
 
-      expect(topicService.getSubscribed).not.toHaveBeenCalled();
+      expect(topicService.fetchSubscribed).not.toHaveBeenCalled();
     });
 
     it('should set an error message when loading topics fails', () => {
       spyOn(console, 'error');
 
-      topicService.getSubscribed.and.returnValue(
+      topicService.fetchSubscribed.and.returnValue(
         throwError(() => new Error('Server error')),
       );
 
@@ -361,10 +361,12 @@ describe('ProfileComponent', () => {
       expect(component['subscribedTopicList']()).toEqual([mockTopic2]);
     });
 
-    it('should call the topic service with the topic slug', () => {
+    it('should call the topic service with the topic publicId', () => {
       component['unsubscribeToTopic'](mockTopic);
 
-      expect(topicService.unsubscribe).toHaveBeenCalledOnceWith(mockTopic.slug);
+      expect(topicService.unsubscribe).toHaveBeenCalledOnceWith(
+        mockTopic.publicId,
+      );
     });
 
     it('should set an error message when unsubscribe fails', () => {
@@ -394,11 +396,11 @@ describe('ProfileComponent', () => {
     it('should load the next page', () => {
       initializeComponent();
 
-      topicService.getSubscribed.calls.reset();
+      topicService.fetchSubscribed.calls.reset();
 
       component['loadMore']();
 
-      expect(topicService.getSubscribed).toHaveBeenCalledOnceWith(1, 10);
+      expect(topicService.fetchSubscribed).toHaveBeenCalledOnceWith(1, 10);
     });
 
     it('should not load another page while loading', () => {
@@ -406,7 +408,7 @@ describe('ProfileComponent', () => {
 
       component['loadMore']();
 
-      expect(topicService.getSubscribed).not.toHaveBeenCalled();
+      expect(topicService.fetchSubscribed).not.toHaveBeenCalled();
     });
 
     it('should not load another page when hasMore is false', () => {
@@ -414,7 +416,7 @@ describe('ProfileComponent', () => {
 
       component['loadMore']();
 
-      expect(topicService.getSubscribed).not.toHaveBeenCalled();
+      expect(topicService.fetchSubscribed).not.toHaveBeenCalled();
     });
   });
 
@@ -422,7 +424,7 @@ describe('ProfileComponent', () => {
     it('should append the returned topics to the existing list', () => {
       component['subscribedTopicList'].set([mockTopic]);
 
-      topicService.getSubscribed.and.returnValue(
+      topicService.fetchSubscribed.and.returnValue(
         of(createPage([mockTopic2], 1, false)),
       );
 
@@ -435,7 +437,7 @@ describe('ProfileComponent', () => {
     });
 
     it('should update the current page number', () => {
-      topicService.getSubscribed.and.returnValue(
+      topicService.fetchSubscribed.and.returnValue(
         of(createPage([mockTopic], 2, false)),
       );
 
@@ -445,7 +447,7 @@ describe('ProfileComponent', () => {
     });
 
     it('should set hasMore to false on the last page', () => {
-      topicService.getSubscribed.and.returnValue(
+      topicService.fetchSubscribed.and.returnValue(
         of(createPage([mockTopic], 0, true)),
       );
 
@@ -457,7 +459,7 @@ describe('ProfileComponent', () => {
     it('should set loading to true while the request is pending', () => {
       const request = new Subject<Page<Topic>>();
 
-      topicService.getSubscribed.and.returnValue(request.asObservable());
+      topicService.fetchSubscribed.and.returnValue(request.asObservable());
 
       component['loadMoreSubscribed'](0);
 
@@ -472,7 +474,7 @@ describe('ProfileComponent', () => {
     it('should reset loading and set an error message on failure', () => {
       spyOn(console, 'error');
 
-      topicService.getSubscribed.and.returnValue(
+      topicService.fetchSubscribed.and.returnValue(
         throwError(() => new Error('Server error')),
       );
 

@@ -1,13 +1,14 @@
 <section class="article-form">
-  <a
-    class="article-form__back"
-    routerLink="/feed"
-    aria-label="Retour aux articles"
-  >
-    <mat-icon>arrow_back</mat-icon>
-  </a>
-
-  <h1 class="article-form__title">Créer un nouvel article</h1>
+  <div class="article-form__header">
+    <a
+      class="article-form__back"
+      routerLink="/feed"
+      aria-label="Retour aux articles"
+    >
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <h1 class="article-form__title">Créer un nouvel article</h1>
+  </div>
 
   <form
     class="article-form__form"
@@ -21,7 +22,7 @@
       <mat-form-field appearance="outline" class="article-form__field">
         <mat-select formControlName="topicPublicId">
           @for (topic of topics(); track topic.publicId) {
-            <mat-option [value]="topic.publicId">
+            <mat-option [value]="topic.name">
               {{ topic.name }}
             </mat-option>
           }

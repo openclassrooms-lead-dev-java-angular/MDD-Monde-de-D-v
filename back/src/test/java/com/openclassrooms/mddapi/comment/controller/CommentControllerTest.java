@@ -3,6 +3,7 @@ package com.openclassrooms.mddapi.comment.controller;
 import com.openclassrooms.mddapi.comment.dto.CommentRequestDto;
 import com.openclassrooms.mddapi.comment.dto.CommentResponseDto;
 import com.openclassrooms.mddapi.comment.service.CommentService;
+import com.openclassrooms.mddapi.config.TestSecurityConfig;
 import com.openclassrooms.mddapi.security.TestAuthentication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +13,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import com.openclassrooms.mddapi.config.TestSecurityConfig;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import java.time.LocalDateTime;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CommentController.class)
@@ -42,10 +49,16 @@ class CommentControllerTest {
                 }
                 """;
 
+        CommentResponseDto response = new CommentResponseDto(
+                "testuser",
+                "This is a test comment",
+                LocalDateTime.now()
+        );
+
         when(commentService.create(
-                org.mockito.ArgumentMatchers.eq(articlePublicId),
+                eq(articlePublicId),
                 any(CommentRequestDto.class)
-        )).thenReturn(org.mockito.Mockito.mock(CommentResponseDto.class));
+        )).thenReturn(response);
 
         mockMvc.perform(post(
                         "/api/v1/articles/{publicId}/comments",
@@ -58,7 +71,7 @@ class CommentControllerTest {
                 .andExpect(status().isOk());
 
         verify(commentService).create(
-                org.mockito.ArgumentMatchers.eq(articlePublicId),
+                eq(articlePublicId),
                 any(CommentRequestDto.class)
         );
     }
@@ -85,7 +98,7 @@ class CommentControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(commentService, never()).create(
-                org.mockito.ArgumentMatchers.anyString(),
+                anyString(),
                 any(CommentRequestDto.class)
         );
     }
@@ -113,7 +126,7 @@ class CommentControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(commentService, never()).create(
-                org.mockito.ArgumentMatchers.anyString(),
+                anyString(),
                 any(CommentRequestDto.class)
         );
     }

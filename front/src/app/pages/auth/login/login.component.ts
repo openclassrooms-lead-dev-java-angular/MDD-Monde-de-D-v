@@ -82,11 +82,10 @@ export class LoginComponent {
       .subscribe({
         next: (user) => {
           this.userStateService.setUser(user);
-          console.log('Login success:', user);
           void this.router.navigate(['/feed']);
         },
         error: (error: unknown) => {
-          console.log('LOGIN ERROR', error);
+          console.error('LOGIN ERROR', error);
 
           this.errorMessage.set(
             'Erreur lors de la connexion. Vérifiez vos identifiants et réessayez.',

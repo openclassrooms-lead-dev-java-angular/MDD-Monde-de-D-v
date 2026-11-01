@@ -352,7 +352,6 @@ describe('LoginComponent', () => {
       expect(userServiceSpy.getMe).not.toHaveBeenCalled();
       expect(userStateService.getUser()).toBeNull();
       expect(routerSpy.navigate).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith('LOGIN ERROR', loginError);
     });
 
     it('should display an error when getMe fails', () => {
@@ -371,7 +370,6 @@ describe('LoginComponent', () => {
       expect(component.isLoading).toBeFalse();
       expect(userStateService.getUser()).toBeNull();
       expect(routerSpy.navigate).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith('LOGIN ERROR', userError);
     });
 
     it('should reset isLoading after an asynchronous error', () => {

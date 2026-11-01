@@ -9,11 +9,7 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [
-    ButtonComponent, 
-    ArticleCardComponent,
-    InfiniteScrollDirective,
-  ],
+  imports: [ButtonComponent, ArticleCardComponent, InfiniteScrollDirective],
   templateUrl: './feed.component.html',
   styleUrl: './feed.component.scss',
 })
@@ -62,5 +58,19 @@ export class FeedComponent implements OnInit {
       });
   }
 
-  toggleSort(): void {}
+  toggleSort(): void {
+    if (this.isLoading()) {
+      return;
+    }
+
+    this.sortDirection.update((direction) =>
+      direction === 'desc' ? 'asc' : 'desc',
+    );
+
+    this.articleList.set([]);
+    this.currentPage = 0;
+    this.hasMore.set(true);
+
+    this.loadMore();
+  }
 }

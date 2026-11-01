@@ -1,6 +1,7 @@
 package com.openclassrooms.mddapi.user.service;
 
 import com.openclassrooms.mddapi.auth.dto.RegisterRequestDto;
+import com.openclassrooms.mddapi.auth.dto.UsernameAvailableDto;
 import com.openclassrooms.mddapi.auth.security.userDetails.UserDetailsServiceImpl;
 import com.openclassrooms.mddapi.user.exceptions.EmailAlreadyExistsException;
 import com.openclassrooms.mddapi.user.entity.User;
@@ -150,8 +151,18 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public boolean usernameAvailable(final String username) {
-
         return !userRepository.existsByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
+    public UsernameAvailableDto usernameAvailableForUpdateUser(final String username) {
+        Long currentUserId = userDetailsServiceImpl.getPrincipalUserId();
+
+        boolean available =
+                !userRepository.existsByUsernameForAnotherUser(
+                        username, currentUserId);
+
+        return new UsernameAvailableDto(available);
     }
 
     @Transactional(readOnly = true)

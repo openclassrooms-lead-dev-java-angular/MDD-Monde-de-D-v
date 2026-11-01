@@ -18,8 +18,8 @@ public interface TopicRepository extends JpaRepository<Topic, Long> {
 
     @Query("""
         SELECT new com.openclassrooms.mddapi.topic.dto.TopicOptionDto(
-            t.name,\s
-            t.publicId
+            t.publicId,\s
+            t.name
         )
         FROM Topic t
         ORDER BY t.name ASC

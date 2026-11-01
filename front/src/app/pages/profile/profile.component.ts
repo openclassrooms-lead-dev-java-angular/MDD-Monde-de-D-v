@@ -105,7 +105,7 @@ export class ProfileComponent implements OnInit {
 
   submit(): void {
     this.errorMessage.set('');
-    console.log(this.isLoadingForm());
+
     if (
       this.userForm.invalid ||
       this.userForm.pending ||
@@ -128,8 +128,7 @@ export class ProfileComponent implements OnInit {
       )
       .subscribe({
         next: (res: User) => {
-          console.log(res);
-          // Todo: update user state
+          this.userStateService.setUser(res);
         },
         error: (error: { error?: { message?: string } }) => {
           console.error('Erreur lors de l’inscription :', error);
