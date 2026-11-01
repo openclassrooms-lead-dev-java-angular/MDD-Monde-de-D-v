@@ -3,22 +3,23 @@ package com.openclassrooms.mddapi.user.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mddapi.config.TestSecurityConfig;
 import com.openclassrooms.mddapi.security.TestAuthentication;
-import com.openclassrooms.mddapi.user.service.UserService;
 import com.openclassrooms.mddapi.user.dto.UpdateUserDto;
 import com.openclassrooms.mddapi.user.dto.UserResponseDto;
+import com.openclassrooms.mddapi.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
@@ -36,20 +37,25 @@ class UserControllerTest {
     private UserService userService;
 
     @Test
-    @WithMockUser
     void getMe_shouldReturnAuthenticatedUser() throws Exception {
-        UserResponseDto response = mock(UserResponseDto.class);
+        UserResponseDto response = new UserResponseDto(
+                "user@email.com",
+                "username",
+                null,
+                null
+        );
 
         when(userService.getMe()).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/users/me"))
+        mockMvc.perform(get("/api/v1/users/me")
+                        .with(TestAuthentication.authenticatedUser()))
                 .andExpect(status().isOk());
 
         verify(userService).getMe();
     }
 
     @Test
-    void getMe_shouldReturnUnauthorizedWhenUnauthenticated() throws Exception {
+    void getMe_shouldReturnForbiddenWhenUnauthenticated() throws Exception {
         mockMvc.perform(get("/api/v1/users/me"))
                 .andExpect(status().isForbidden());
 
@@ -59,7 +65,13 @@ class UserControllerTest {
     @Test
     void patch_shouldUpdateUserWhenValidAndCsrfIsPresent() throws Exception {
         UpdateUserDto updateUserDto = createValidUpdateUserDto();
-        UserResponseDto response = mock(UserResponseDto.class);
+
+        UserResponseDto response = new UserResponseDto(
+                "user@email.com",
+                "username",
+                null,
+                null
+        );
 
         when(userService.updateUser(any(UpdateUserDto.class)))
                 .thenReturn(response);

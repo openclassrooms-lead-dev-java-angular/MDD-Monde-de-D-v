@@ -40,12 +40,12 @@ export class ProfileComponent implements OnInit {
   private readonly validationErrorService = inject(ValidationErrorService);
   private readonly userStateService = inject(UserStateService);
 
-  public readonly subscribedTopicList = signal<Topic[]>([]);
+  protected readonly subscribedTopicList = signal<Topic[]>([]);
 
   private currentPage = 0;
   private readonly pageSize = 10;
-  public readonly isLoadingTopics = signal<boolean>(false);
-  public readonly hasMore = signal<boolean>(true);
+  protected readonly hasMore = signal<boolean>(true);
+  protected readonly isLoadingTopics = signal<boolean>(false);
   topicErrorMessage = '';
 
   public userForm = this.fb.group({
@@ -105,7 +105,7 @@ export class ProfileComponent implements OnInit {
 
   submit(): void {
     this.errorMessage.set('');
-    
+
     if (
       this.userForm.invalid ||
       this.userForm.pending ||
