@@ -11,7 +11,7 @@
 
       @if (!isMobile()) {
         <div class="navbar__links">
-          <button type="button" mat-button (click)="logout()">
+          <button type="button" class="logout" mat-button (click)="logout()">
             Se déconnecter
           </button>
           <a mat-button routerLink="/feed">Articles</a>
@@ -58,8 +58,6 @@
           <a routerLink="/feed" (click)="closeMobileMenu()"> Articles </a>
 
           <a routerLink="/topics" (click)="closeMobileMenu()"> Thèmes </a>
-
-          <a routerLink="/about" (click)="closeMobileMenu()"> À propos </a>
         </nav>
 
         <a
@@ -72,5 +70,18 @@
         </a>
       </aside>
     }
+  </nav>
+}
+@else if (!isMobile() && !isLogged() && !isHomePage()) {
+  <nav class="navbar">
+    <mat-toolbar class="navbar__toolbar">
+      <a
+        class="navbar__logo"
+        [routerLink]="getHomeRoute()"
+        aria-label="Accueil"
+      >
+        <img src="/assets/logo_p6.png" alt="Logo" class="navbar__logo-image" />
+      </a>
+    </mat-toolbar>
   </nav>
 }

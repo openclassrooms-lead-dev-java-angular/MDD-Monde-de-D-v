@@ -1,31 +1,33 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import { provideRouter } from '@angular/router';
 
 describe('AppComponent', () => {
   let fixture: ComponentFixture<AppComponent>;
-  let component: AppComponent;
+  let app: AppComponent;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AppComponent);
-    component = fixture.componentInstance;
+    app = fixture.componentInstance;
   });
 
   it('should create the app', () => {
-    expect(component).toBeTruthy();
+    expect(app).toBeTruthy();
   });
 
-  it("should have as title 'MDD'", () => {
-    expect(component.title).toBe('MDD');
+  it('should have the title MDD', () => {
+    expect(app.title).toEqual('MDD');
   });
 
   it('should render the router outlet', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('router-outlet')).not.toBeNull();
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });
