@@ -1,5 +1,6 @@
 package com.openclassrooms.mddapi.topic.mapper;
 
+import com.openclassrooms.mddapi.topic.dto.TopicOptionDto;
 import com.openclassrooms.mddapi.topic.dto.TopicResponseDto;
 import com.openclassrooms.mddapi.topic.entity.Topic;
 import org.mapstruct.Mapper;
@@ -13,4 +14,5 @@ public interface TopicMapper {
     @Mapping(target = "subscribed", source = "subscribed")
     TopicResponseDto toDto(Topic topic, Boolean subscribed);
 
+    TopicOptionDto toOptionDto(Topic topic);
 }
