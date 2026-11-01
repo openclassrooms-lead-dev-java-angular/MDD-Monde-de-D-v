@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.naming.AuthenticationException;
 import java.time.Instant;
 
 @RestControllerAdvice
@@ -60,7 +61,7 @@ public class GlobalExceptionHanler {
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ErrorResponseDto handleMissingServletRequestParameter(
             MissingServletRequestParameterException e) {
-        log.warn(e.getMessage(), e);
+        log.warn("Missing request parameter: {}", e.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
@@ -99,6 +100,19 @@ public class GlobalExceptionHanler {
 
     // unauthorized
 
+    @ExceptionHandler(AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponseDto handleAuthenticationException(
+            AuthenticationException e) {
+
+        log.warn("Authentication failed: {}", e.getMessage());
+
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Identifiants invalides"
+        );
+    }
+
     @ExceptionHandler(value = UnauthorizedException.class)
     @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
     public ErrorResponseDto handleUnauthorizedException(UnauthorizedException e) {
@@ -110,7 +124,7 @@ public class GlobalExceptionHanler {
     @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
     public ErrorResponseDto handleInvalidTokenException(InvalidTokenException e) {
         log.warn(e.getMessage(), e);
-        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, e.getMessage());
     }
 
     // Method argument not valid exceptions
@@ -118,8 +132,15 @@ public class GlobalExceptionHanler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponseDto handleValidationException(MethodArgumentNotValidException e) {
-        log.warn(e.getMessage(), e);
-        return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+
+        String errors = e.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(java.util.stream.Collectors.joining(", "));
+
+        log.warn("Validation failed: {}", errors);
+        return buildResponse(HttpStatus.BAD_REQUEST, errors);
     }
 
     // Internal server error exceptions
