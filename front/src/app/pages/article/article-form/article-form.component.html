@@ -22,7 +22,7 @@
       <mat-form-field appearance="outline" class="article-form__field">
         <mat-select formControlName="topicPublicId">
           @for (topic of topics(); track topic.publicId) {
-            <mat-option [value]="topic.name">
+            <mat-option [value]="topic.publicId">
               {{ topic.name }}
             </mat-option>
           }
